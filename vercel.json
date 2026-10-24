@@ -4,30 +4,33 @@
   "cleanUrls": true,
   "functions": {
     "api/index.js": {
-      "includeFiles": "server/**"
+      "includeFiles": "{server/**,public/**}"
     }
   },
   "rewrites": [
     { "source": "/api", "destination": "/api/index.js" },
     { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/uploads/(.*)", "destination": "/api/index.js" },
-    { "source": "/public/(.*)", "destination": "/$1" },
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/dashboard", "destination": "/citizen-dashboard.html" },
-    { "source": "/dashboard.html", "destination": "/citizen-dashboard.html" },
-    { "source": "/citizen-dashboard", "destination": "/citizen-dashboard.html" },
-    { "source": "/admin", "destination": "/admin-dashboard.html" },
-    { "source": "/admin.html", "destination": "/admin-dashboard.html" },
-    { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
-    { "source": "/staff", "destination": "/staff-dashboard.html" },
-    { "source": "/staff.html", "destination": "/staff-dashboard.html" },
-    { "source": "/staff-dashboard", "destination": "/staff-dashboard.html" },
-    { "source": "/report", "destination": "/report.html" },
-    { "source": "/report-detail", "destination": "/report-detail.html" },
-    { "source": "/reports/(.*)", "destination": "/report-detail.html" },
-    { "source": "/analytics", "destination": "/analytics.html" },
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/ai-result", "destination": "/ai-result.html" },
-    { "source": "/((?!api|uploads).*)", "destination": "/index.html" }
+    { "source": "/css/(.*)", "destination": "/public/css/$1" },
+    { "source": "/js/(.*)", "destination": "/public/js/$1" },
+    { "source": "/images/(.*)", "destination": "/public/images/$1" },
+    { "source": "/", "destination": "/public/index.html" },
+    { "source": "/dashboard", "destination": "/public/citizen-dashboard.html" },
+    { "source": "/dashboard.html", "destination": "/public/citizen-dashboard.html" },
+    { "source": "/citizen-dashboard", "destination": "/public/citizen-dashboard.html" },
+    { "source": "/admin", "destination": "/public/admin-dashboard.html" },
+    { "source": "/admin.html", "destination": "/public/admin-dashboard.html" },
+    { "source": "/admin-dashboard", "destination": "/public/admin-dashboard.html" },
+    { "source": "/staff", "destination": "/public/staff-dashboard.html" },
+    { "source": "/staff.html", "destination": "/public/staff-dashboard.html" },
+    { "source": "/staff-dashboard", "destination": "/public/staff-dashboard.html" },
+    { "source": "/report", "destination": "/public/report.html" },
+    { "source": "/report-detail", "destination": "/public/report-detail.html" },
+    { "source": "/reports/(.*)", "destination": "/public/report-detail.html" },
+    { "source": "/analytics", "destination": "/public/analytics.html" },
+    { "source": "/login", "destination": "/public/login.html" },
+    { "source": "/ai-result", "destination": "/public/ai-result.html" },
+    { "source": "/(.*\\.[\\w]+)", "destination": "/public/$1" },
+    { "source": "/((?!api|uploads).*)", "destination": "/public/index.html" }
   ]
 }
