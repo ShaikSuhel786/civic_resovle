@@ -11,7 +11,8 @@ const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
 // Upload directory for local demo storage
-const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const uploadDir = isVercel ? '/tmp/uploads' : path.join(__dirname, '..', '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }

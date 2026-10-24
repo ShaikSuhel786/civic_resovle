@@ -1,8 +1,33 @@
 {
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "cleanUrls": true,
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "server/**"
     }
+  },
+  "rewrites": [
+    { "source": "/api", "destination": "/api/index.js" },
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/uploads/(.*)", "destination": "/api/index.js" },
+    { "source": "/public/(.*)", "destination": "/$1" },
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/dashboard", "destination": "/citizen-dashboard.html" },
+    { "source": "/dashboard.html", "destination": "/citizen-dashboard.html" },
+    { "source": "/citizen-dashboard", "destination": "/citizen-dashboard.html" },
+    { "source": "/admin", "destination": "/admin-dashboard.html" },
+    { "source": "/admin.html", "destination": "/admin-dashboard.html" },
+    { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
+    { "source": "/staff", "destination": "/staff-dashboard.html" },
+    { "source": "/staff.html", "destination": "/staff-dashboard.html" },
+    { "source": "/staff-dashboard", "destination": "/staff-dashboard.html" },
+    { "source": "/report", "destination": "/report.html" },
+    { "source": "/report-detail", "destination": "/report-detail.html" },
+    { "source": "/reports/(.*)", "destination": "/report-detail.html" },
+    { "source": "/analytics", "destination": "/analytics.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/ai-result", "destination": "/ai-result.html" },
+    { "source": "/((?!api|uploads).*)", "destination": "/index.html" }
   ]
 }

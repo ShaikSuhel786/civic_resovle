@@ -22,7 +22,8 @@ if (isSupabaseConfigured) {
 
 // Always maintain SQLite engine for deterministic tests, fast local transactions, and offline demo
 const Database = require('better-sqlite3');
-const dataDir = path.join(__dirname, '..', 'data');
+const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const dataDir = isVercel ? '/tmp' : path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
@@ -33,6 +34,15 @@ if (fs.existsSync(oldDbPath) && !fs.existsSync(dbPath)) {
     fs.copyFileSync(oldDbPath, dbPath);
   } catch (e) {
     console.warn('[DB] Could not copy old db:', e);
+  }
+}
+// On Vercel, copy pre-seeded database into /tmp on cold start if not present
+const sourceSeedDb = path.join(__dirname, '..', 'data', 'civic_resolve.db');
+if (isVercel && fs.existsSync(sourceSeedDb) && !fs.existsSync(dbPath)) {
+  try {
+    fs.copyFileSync(sourceSeedDb, dbPath);
+  } catch (e) {
+    console.warn('[DB] Could not copy seed db to /tmp:', e);
   }
 }
 db = new Database(dbPath);
