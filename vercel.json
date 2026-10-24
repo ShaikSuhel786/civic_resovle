@@ -1,10 +1,8 @@
 {
-  "version": 2,
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/server/index.js" },
-    { "source": "/uploads/:path*", "destination": "/server/index.js" },
-    { "source": "/((?!api|uploads).*\\.[\\w]+)", "destination": "/public/$1" },
-    { "source": "/", "destination": "/public/index.html" },
-    { "source": "/:page", "destination": "/public/:page.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
