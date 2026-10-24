@@ -28,7 +28,14 @@ const CivicAPI = {
       }
       return data;
     } catch (err) {
-      console.error('[API Error]', endpoint, err);
+      console.warn('[CivicAPI Fallback] Live API returned error or was unreachable for:', endpoint, err.message);
+      if (window.MockCivicData && typeof MockCivicData.handle === 'function') {
+        try {
+          return MockCivicData.handle(endpoint, options);
+        } catch (mockErr) {
+          console.error('[MockCivicData Error]', mockErr);
+        }
+      }
       throw err;
     }
   }
