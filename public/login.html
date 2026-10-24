@@ -202,23 +202,7 @@
                 </strong>
                 <span style="font-size: 0.7rem; color: var(--text-muted);">Mohammed Ali</span>
               </div>
-            <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed var(--pale-blue-border); font-size: 0.78rem;">
-              <div style="font-weight: 700; color: var(--primary-deep); margin-bottom: 0.4rem; display: flex; align-items: center; justify-content: space-between;">
-                <span>Mock Credentials (Email & Password)</span>
-                <span class="badge badge-submitted" style="font-size: 0.65rem;">Pass: DemoCitizen123! / DemoAdmin123!</span>
-              </div>
-              <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="autofill('citizen@civicsync.demo', 'DemoCitizen123!')" style="font-size: 0.72rem; padding: 0.25rem 0.5rem;">
-                  Fill Citizen
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="autofill('admin@civicsync.demo', 'DemoAdmin123!')" style="font-size: 0.72rem; padding: 0.25rem 0.5rem;">
-                  Fill Admin
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="autofill('staff.roads@civicsync.demo', 'DemoStaff123!')" style="font-size: 0.72rem; padding: 0.25rem 0.5rem;">
-                  Fill Roads Staff
-                </button>
-              </div>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -227,7 +211,6 @@
   </main>
 
   <script src="/js/auth.js"></script>
-  <script src="/js/mock-data.js"></script>
   <script src="/js/api.js"></script>
   <script>
     function setAuthTab(tab) {
@@ -283,13 +266,6 @@
       succBox.style.display = 'block';
     }
 
-    function autofill(email, password) {
-      setAuthTab('login');
-      document.getElementById('login-email').value = email;
-      document.getElementById('login-password').value = password;
-      showSuccess(`Filled ${email} with demo password. Click "Sign In" to proceed.`);
-    }
-
     // Quick Login for demo roles
     async function quickLogin(userId) {
       try {
@@ -300,15 +276,6 @@
         CivicAuth.setSession(res.token, res.user);
         redirectByRole(res.user.role);
       } catch (err) {
-        if (window.MockCivicData) {
-          const res = MockCivicData.handle('/api/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ demoUserId: userId })
-          });
-          CivicAuth.setSession(res.token, res.user);
-          redirectByRole(res.user.role);
-          return;
-        }
         showError(err.message);
       }
     }
@@ -330,18 +297,6 @@
         CivicAuth.setSession(res.token, res.user);
         redirectByRole(res.user.role);
       } catch (err) {
-        if (window.MockCivicData) {
-          const mockUser = MockCivicData.findUser(email);
-          if (mockUser) {
-            const res = MockCivicData.handle('/api/auth/login', {
-              method: 'POST',
-              body: JSON.stringify({ demoUserId: mockUser.id })
-            });
-            CivicAuth.setSession(res.token, res.user);
-            redirectByRole(res.user.role);
-            return;
-          }
-        }
         showError(err.message || 'Login failed. Please check your credentials.');
         btn.disabled = false;
         btn.textContent = 'Sign In';
