@@ -15,11 +15,20 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Restore original client request path if altered by Vercel rewrites
+app.use((req, res, next) => {
+  const matched = req.headers['x-matched-path'];
+  if (matched && (req.url.startsWith('/api/index') || req.url === '/api' || req.url === '/api/')) {
+    req.url = matched;
+  }
+  next();
+});
+
 // Ensure uploads directory exists
 const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const uploadDir = isVercel ? '/tmp/uploads' : path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+  try { fs.mkdirSync(uploadDir, { recursive: true }); } catch (_) {}
 }
 app.use('/uploads', express.static(uploadDir));
 
@@ -45,19 +54,50 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve frontend static assets
-const publicDir = path.join(__dirname, '..', 'public');
+// Resolve frontend static assets directory across local and serverless Vercel environments
+const candidateDirs = [
+  path.join(__dirname, '..', 'public'),
+  path.join(process.cwd(), 'public'),
+  path.join(__dirname, 'public')
+];
+const publicDir = candidateDirs.find(d => fs.existsSync(d)) || candidateDirs[0];
 app.use(express.static(publicDir));
 
 // Friendly page routing for HTML screens
+app.get('/', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+app.get('/index.html', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+
 app.get('/report', (req, res) => res.sendFile(path.join(publicDir, 'report.html')));
+app.get('/report.html', (req, res) => res.sendFile(path.join(publicDir, 'report.html')));
+
 app.get('/ai-result', (req, res) => res.sendFile(path.join(publicDir, 'ai-result.html')));
+app.get('/ai-result.html', (req, res) => res.sendFile(path.join(publicDir, 'ai-result.html')));
+
 app.get('/dashboard', (req, res) => res.sendFile(path.join(publicDir, 'citizen-dashboard.html')));
+app.get('/dashboard.html', (req, res) => res.sendFile(path.join(publicDir, 'citizen-dashboard.html')));
+app.get('/citizen-dashboard', (req, res) => res.sendFile(path.join(publicDir, 'citizen-dashboard.html')));
+app.get('/citizen-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, 'citizen-dashboard.html')));
+
+app.get('/reports', (req, res) => res.sendFile(path.join(publicDir, 'report-detail.html')));
 app.get('/reports/:id', (req, res) => res.sendFile(path.join(publicDir, 'report-detail.html')));
+app.get('/report-detail', (req, res) => res.sendFile(path.join(publicDir, 'report-detail.html')));
+app.get('/report-detail.html', (req, res) => res.sendFile(path.join(publicDir, 'report-detail.html')));
+
 app.get('/admin', (req, res) => res.sendFile(path.join(publicDir, 'admin-dashboard.html')));
+app.get('/admin.html', (req, res) => res.sendFile(path.join(publicDir, 'admin-dashboard.html')));
+app.get('/admin-dashboard', (req, res) => res.sendFile(path.join(publicDir, 'admin-dashboard.html')));
+app.get('/admin-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, 'admin-dashboard.html')));
+
 app.get('/staff', (req, res) => res.sendFile(path.join(publicDir, 'staff-dashboard.html')));
+app.get('/staff.html', (req, res) => res.sendFile(path.join(publicDir, 'staff-dashboard.html')));
+app.get('/staff-dashboard', (req, res) => res.sendFile(path.join(publicDir, 'staff-dashboard.html')));
+app.get('/staff-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, 'staff-dashboard.html')));
+
 app.get('/analytics', (req, res) => res.sendFile(path.join(publicDir, 'analytics.html')));
+app.get('/analytics.html', (req, res) => res.sendFile(path.join(publicDir, 'analytics.html')));
+
 app.get('/login', (req, res) => res.sendFile(path.join(publicDir, 'login.html')));
+app.get('/login.html', (req, res) => res.sendFile(path.join(publicDir, 'login.html')));
 
 // Fallback to index.html for client-side navigation
 app.use((req, res) => {
