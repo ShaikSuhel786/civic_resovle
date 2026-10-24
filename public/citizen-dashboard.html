@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citizen Dashboard — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="visibility: hidden;">
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="dashboard-layout">
+      
+      <!-- Left Sidebar (Screen 6 Left) -->
+      <div>
+        <div class="card glass-nav-card" style="margin-bottom: 1.5rem; text-align: center; padding: 1.5rem;">
+          <div style="width: 68px; height: 68px; border-radius: 50%; background: var(--pale-blue-surface); color: var(--interactive-blue); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; border: 2px solid var(--pale-blue-border);" id="user-avatar-initial">
+            <svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          <h3 id="user-profile-name" style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.2rem;">Citizen</h3>
+          <p id="user-profile-email" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">user@example.com</p>
+          <p id="user-profile-phone" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem; display: none;"></p>
+          <span class="badge badge-submitted" id="user-role-badge">Verified Citizen</span>
+        </div>
+
+        <div class="card glass-nav-card" style="padding: 0.5rem;">
+          <a href="/dashboard" class="btn btn-primary" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            My Reports
+          </a>
+          <a href="/report" class="btn btn-secondary" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Report New Issue
+          </a>
+          <button onclick="openProfileModal()" class="btn btn-secondary" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Profile & Settings
+          </button>
+          <button onclick="CivicAuth.logout()" class="btn btn-secondary" style="width: 100%; justify-content: flex-start; color: var(--danger);">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content (Screen 6 Right) -->
+      <div>
+        
+        <!-- Summary Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="card" style="padding: 1.15rem; text-align: center;">
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--interactive-blue);" id="count-active">0</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Active Issues</div>
+          </div>
+          <div class="card" style="padding: 1.15rem; text-align: center;">
+            <div style="font-size: 1.6rem; font-weight: 700; color: #EA580C;" id="count-progress">0</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">In Progress</div>
+          </div>
+          <div class="card" style="padding: 1.15rem; text-align: center;">
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--success);" id="count-resolved">0</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Resolved</div>
+          </div>
+          <div class="card" style="padding: 1.15rem; text-align: center;">
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--danger);" id="count-attention">0</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Needs Attention</div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-size: 1.5rem; color: var(--primary-deep);" data-i18n="my_reports_heading">My Reported Issues</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Real-time status tracking, official municipal assignments, and resolution notes.</p>
+          </div>
+          <a href="/report" class="btn btn-primary">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Report New Issue
+          </a>
+        </div>
+
+        <!-- Industry-Grade Reports Filter Panel -->
+        <div class="reports-filter-panel">
+          <!-- Primary Row: Smart Search & View Switcher -->
+          <div class="filter-row-primary">
+            <div class="smart-search-wrapper">
+              <span class="smart-search-icon">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="report-search-input" class="smart-search-input" placeholder="Search reports by title, landmark, ref ID, or keyword..." oninput="handleSearch(this.value)">
+              <button type="button" class="search-clear-btn" id="search-clear-btn" onclick="clearSearchFilter()" title="Clear search" aria-label="Clear search">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+              <span class="search-kbd-hint">/</span>
+            </div>
+
+            <!-- Toggle Filter Switch (Latest / Popular) -->
+            <label for="filter" class="switch" aria-label="Toggle Filter" style="--_label-padding: 0.44rem 1.15rem; font-size: 0.82rem;">
+              <input type="checkbox" id="filter" onchange="handleToggleFilter(this.checked)" />
+              <span>Latest</span>
+              <span>Popular</span>
+            </label>
+
+            <!-- View Switcher (Grid / List / Table) -->
+            <div class="view-mode-toggle" id="view-mode-switcher">
+              <button type="button" class="view-mode-btn active" data-mode="grid" onclick="setViewMode('grid')" title="Card Grid View">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Grid</span>
+              </button>
+              <button type="button" class="view-mode-btn" data-mode="list" onclick="setViewMode('list')" title="Detailed List View">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <span>List</span>
+              </button>
+              <button type="button" class="view-mode-btn" data-mode="table" onclick="setViewMode('table')" title="Compact Data Table">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                <span>Table</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Secondary Row: Status Pills & Multi-dimensional Dropdowns -->
+          <div class="filter-row-secondary">
+            <!-- Status Pill Track -->
+            <div class="status-pill-track" id="status-filter-track">
+              <button type="button" class="status-pill-btn active" onclick="filterReports('all', this)" id="tab-all">
+                All <span class="status-pill-count" id="tab-cnt-all">0</span>
+              </button>
+              <button type="button" class="status-pill-btn" onclick="filterReports('pending', this)" id="tab-pending">
+                Pending <span class="status-pill-count" id="tab-cnt-pending">0</span>
+              </button>
+              <button type="button" class="status-pill-btn" onclick="filterReports('progress', this)" id="tab-progress">
+                In Progress <span class="status-pill-count" id="tab-cnt-progress">0</span>
+              </button>
+              <button type="button" class="status-pill-btn" onclick="filterReports('resolved', this)" id="tab-resolved">
+                Resolved <span class="status-pill-count" id="tab-cnt-resolved">0</span>
+              </button>
+              <button type="button" class="status-pill-btn" onclick="filterReports('blocked', this)" id="tab-blocked">
+                Alerts & Delayed <span class="status-pill-count" id="tab-cnt-blocked">0</span>
+              </button>
+            </div>
+
+            <!-- Multi-Dimensional Dropdowns -->
+            <div class="filter-dropdowns-group">
+              <select id="filter-category" class="filter-select" onchange="handleCategoryFilter(this.value)">
+                <option value="all">All Departments</option>
+                <option value="dept-roads">Roads & Traffic</option>
+                <option value="dept-sanitation">Sanitation</option>
+                <option value="dept-water">Water & Sewage</option>
+                <option value="dept-electrical">Street Lighting</option>
+                <option value="dept-safety">Public Safety</option>
+              </select>
+
+              <select id="filter-priority" class="filter-select" onchange="handlePriorityFilter(this.value)">
+                <option value="all">All Priorities</option>
+                <option value="urgent">Urgent Hazard</option>
+                <option value="high">High Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="low">Low Priority</option>
+              </select>
+
+              <select id="filter-sort" class="filter-select" onchange="handleSortFilter(this.value)">
+                <option value="newest">Newest First</option>
+                <option value="priority">Highest Priority</option>
+                <option value="updated">Recently Updated</option>
+                <option value="oldest">Oldest First</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Filter Chips Bar -->
+          <div class="active-filters-row" id="active-filters-bar">
+            <div id="active-filters-chips" style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;"></div>
+            <div class="results-count-badge" id="results-count-display">Showing 0 reports</div>
+          </div>
+        </div>
+
+        <!-- Reports List Container -->
+        <div id="citizen-reports-list">
+          <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+            <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Loading your reports...</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Citizen Profile & Settings Modal -->
+  <div class="modal-overlay" id="profile-settings-modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <strong style="font-size: 1.15rem; color: var(--primary-deep);">Citizen Profile & Preferences</strong>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeProfileModal()" title="Close" aria-label="Close">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div id="profile-modal-msg" style="display: none; padding: 0.65rem; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1rem;"></div>
+
+        <form id="edit-profile-form">
+          <div class="form-group">
+            <label class="form-label" for="prof-name">Full Display Name</label>
+            <input type="text" id="prof-name" class="form-input" required minlength="2">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="prof-email">Email Address</label>
+            <input type="email" id="prof-email" class="form-input" disabled style="background: var(--bg-main); opacity: 0.8;">
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Primary login identifier</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="prof-phone">Contact Phone</label>
+            <input type="tel" id="prof-phone" class="form-input" placeholder="+91 98765 43210">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="prof-lang">Preferred Language</label>
+            <select id="prof-lang" class="form-select">
+              <option value="en">English</option>
+              <option value="te">తెలుగు (Telugu)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="btn-save-profile" style="width: 100%;">
+            Save Profile Changes
+          </button>
+        </form>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.5rem 0;">
+
+        <form id="change-pass-form">
+          <div style="font-weight: 600; font-size: 0.95rem; color: var(--primary-deep); margin-bottom: 0.75rem;">Security: Update Password</div>
+          
+          <div class="form-group">
+            <label class="form-label" for="curr-pass">Current Password</label>
+            <input type="password" id="curr-pass" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="new-pass">New Password (Min 8 Chars)</label>
+            <input type="password" id="new-pass" class="form-input" required minlength="8">
+          </div>
+
+          <button type="submit" class="btn btn-secondary" id="btn-change-pass" style="width: 100%;">
+            Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script>
+    let allUserReports = [];
+    let currentFilter = 'all';
+    let currentCategory = 'all';
+    let currentPriority = 'all';
+    let currentSort = 'newest';
+    let searchQuery = '';
+    let currentViewMode = localStorage.getItem('civic_reports_view_mode') || 'grid';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!CivicAuth.requireAuth('citizen')) return;
+      CivicAuth.bootNav();
+
+      const user = CivicAuth.getUser();
+      document.getElementById('user-profile-name').textContent = user.displayName;
+      document.getElementById('user-profile-email').textContent = user.email;
+      document.getElementById('user-avatar-initial').textContent = user.displayName.charAt(0);
+
+      if (user.phone) {
+        const ph = document.getElementById('user-profile-phone');
+        ph.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: -1px; margin-right: 4px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>${escapeHtml(user.phone)}`;
+        ph.style.display = 'block';
+      }
+
+      // Initialize view mode switcher
+      document.querySelectorAll('.view-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === currentViewMode);
+      });
+
+      // Keyboard shortcut '/' to focus search
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          const searchInput = document.getElementById('report-search-input');
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+          }
+        }
+      });
+
+      await loadReports();
+    });
+
+    async function loadReports() {
+      try {
+        const res = await CivicAPI.request('/api/reports');
+        allUserReports = res.reports || [];
+
+        // Update summary cards
+        document.getElementById('count-active').textContent = res.counts.active;
+        document.getElementById('count-progress').textContent = res.counts.inProgress;
+        document.getElementById('count-resolved').textContent = res.counts.resolved;
+        document.getElementById('count-attention').textContent = res.counts.needsAttention;
+
+        let pendingCount = allUserReports.filter(r => ['Submitted', 'Under Review', 'Assigned'].includes(r.status)).length;
+        let progressCount = allUserReports.filter(r => r.status === 'In Progress').length;
+        let resolvedCount = allUserReports.filter(r => r.status === 'Resolved').length;
+        let blockedCount = allUserReports.filter(r => r.status === 'Blocked' || r.safety_flag).length;
+
+        document.getElementById('tab-cnt-all').textContent = allUserReports.length;
+        document.getElementById('tab-cnt-pending').textContent = pendingCount;
+        document.getElementById('tab-cnt-progress').textContent = progressCount;
+        document.getElementById('tab-cnt-resolved').textContent = resolvedCount;
+        document.getElementById('tab-cnt-blocked').textContent = blockedCount;
+
+        applyFilters();
+      } catch (err) {
+        document.getElementById('citizen-reports-list').innerHTML = `
+          <div style="padding: 2rem; text-align: center; color: var(--danger);">
+            Failed to load reports: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    function setViewMode(mode) {
+      currentViewMode = mode;
+      localStorage.setItem('civic_reports_view_mode', mode);
+      document.querySelectorAll('.view-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      applyFilters();
+    }
+
+    function filterReports(statusGroup, tabBtn) {
+      document.querySelectorAll('.status-pill-btn').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+      currentFilter = statusGroup;
+      applyFilters();
+    }
+
+    function handleSearch(val) {
+      searchQuery = val.trim().toLowerCase();
+      const clearBtn = document.getElementById('search-clear-btn');
+      if (clearBtn) {
+        clearBtn.style.display = searchQuery ? 'flex' : 'none';
+      }
+      applyFilters();
+    }
+
+    function clearSearchFilter() {
+      const input = document.getElementById('report-search-input');
+      if (input) input.value = '';
+      const clearBtn = document.getElementById('search-clear-btn');
+      if (clearBtn) clearBtn.style.display = 'none';
+      searchQuery = '';
+      applyFilters();
+    }
+
+    function handleCategoryFilter(val) {
+      currentCategory = val;
+      applyFilters();
+    }
+
+    function handlePriorityFilter(val) {
+      currentPriority = val;
+      applyFilters();
+    }
+
+    function handleSortFilter(val) {
+      currentSort = val;
+      const toggle = document.getElementById('filter');
+      if (toggle) toggle.checked = (val === 'priority');
+      applyFilters();
+    }
+
+    function handleToggleFilter(isPopular) {
+      currentSort = isPopular ? 'priority' : 'newest';
+      const select = document.getElementById('filter-sort');
+      if (select) select.value = currentSort;
+      applyFilters();
+    }
+
+    function clearStatusFilter() {
+      currentFilter = 'all';
+      document.querySelectorAll('.status-pill-btn').forEach(b => b.classList.toggle('active', b.id === 'tab-all'));
+      applyFilters();
+    }
+
+    function clearCategoryFilter() {
+      currentCategory = 'all';
+      const el = document.getElementById('filter-category');
+      if (el) el.value = 'all';
+      applyFilters();
+    }
+
+    function clearPriorityFilter() {
+      currentPriority = 'all';
+      const el = document.getElementById('filter-priority');
+      if (el) el.value = 'all';
+      applyFilters();
+    }
+
+    function resetAllFilters() {
+      currentFilter = 'all';
+      currentCategory = 'all';
+      currentPriority = 'all';
+      currentSort = 'newest';
+      searchQuery = '';
+
+      const input = document.getElementById('report-search-input');
+      if (input) input.value = '';
+      const clearBtn = document.getElementById('search-clear-btn');
+      if (clearBtn) clearBtn.style.display = 'none';
+
+      document.querySelectorAll('.status-pill-btn').forEach(b => b.classList.toggle('active', b.id === 'tab-all'));
+      const catEl = document.getElementById('filter-category');
+      if (catEl) catEl.value = 'all';
+      const priEl = document.getElementById('filter-priority');
+      if (priEl) priEl.value = 'all';
+      const sortEl = document.getElementById('filter-sort');
+      if (sortEl) sortEl.value = 'newest';
+
+      applyFilters();
+    }
+
+    function applyFilters() {
+      let filtered = [...allUserReports];
+
+      // 1. Status Filter
+      if (currentFilter === 'pending') {
+        filtered = filtered.filter(r => ['Submitted', 'Under Review', 'Assigned'].includes(r.status));
+      } else if (currentFilter === 'progress') {
+        filtered = filtered.filter(r => r.status === 'In Progress');
+      } else if (currentFilter === 'resolved') {
+        filtered = filtered.filter(r => r.status === 'Resolved');
+      } else if (currentFilter === 'blocked') {
+        filtered = filtered.filter(r => r.status === 'Blocked' || r.safety_flag);
+      }
+
+      // 2. Department / Category Filter
+      if (currentCategory !== 'all') {
+        filtered = filtered.filter(r => r.department_id === currentCategory || r.category_id === currentCategory);
+      }
+
+      // 3. Priority Filter
+      if (currentPriority !== 'all') {
+        if (currentPriority === 'urgent') {
+          filtered = filtered.filter(r => (r.priority_level && r.priority_level.toLowerCase() === 'urgent') || r.safety_flag);
+        } else {
+          filtered = filtered.filter(r => r.priority_level && r.priority_level.toLowerCase() === currentPriority.toLowerCase());
+        }
+      }
+
+      // 4. Search Filter
+      if (searchQuery) {
+        filtered = filtered.filter(r => 
+          (r.title && r.title.toLowerCase().includes(searchQuery)) ||
+          (r.reference_number && r.reference_number.toLowerCase().includes(searchQuery)) ||
+          (r.location_text && r.location_text.toLowerCase().includes(searchQuery)) ||
+          (r.category_name && r.category_name.toLowerCase().includes(searchQuery)) ||
+          (r.description && r.description.toLowerCase().includes(searchQuery))
+        );
+      }
+
+      // 5. Sorting
+      if (currentSort === 'newest') {
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      } else if (currentSort === 'oldest') {
+        filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      } else if (currentSort === 'priority') {
+        filtered.sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
+      } else if (currentSort === 'updated') {
+        filtered.sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at));
+      }
+
+      updateActiveFilterChips(filtered.length);
+      renderReportsList(filtered);
+    }
+
+    function updateActiveFilterChips(resultCount) {
+      const chipsContainer = document.getElementById('active-filters-chips');
+      const countBadge = document.getElementById('results-count-display');
+      const panel = document.getElementById('active-filters-bar');
+      if (!chipsContainer || !panel) return;
+
+      let chips = [];
+
+      const chipCloseSvg = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: middle;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+
+      if (searchQuery) {
+        chips.push(`<span class="filter-chip">Search: "${escapeHtml(searchQuery)}" <button type="button" class="filter-chip-remove" onclick="clearSearchFilter()" aria-label="Remove filter">${chipCloseSvg}</button></span>`);
+      }
+      if (currentFilter !== 'all') {
+        const labels = { pending: 'Pending', progress: 'In Progress', resolved: 'Resolved', blocked: 'Alerts & Delayed' };
+        chips.push(`<span class="filter-chip">Status: ${labels[currentFilter] || currentFilter} <button type="button" class="filter-chip-remove" onclick="clearStatusFilter()" aria-label="Remove filter">${chipCloseSvg}</button></span>`);
+      }
+      if (currentCategory !== 'all') {
+        const catEl = document.getElementById('filter-category');
+        const catName = catEl ? catEl.options[catEl.selectedIndex].text : currentCategory;
+        chips.push(`<span class="filter-chip">Dept: ${catName} <button type="button" class="filter-chip-remove" onclick="clearCategoryFilter()" aria-label="Remove filter">${chipCloseSvg}</button></span>`);
+      }
+      if (currentPriority !== 'all') {
+        const priEl = document.getElementById('filter-priority');
+        const priName = priEl ? priEl.options[priEl.selectedIndex].text : currentPriority;
+        chips.push(`<span class="filter-chip">${priName} <button type="button" class="filter-chip-remove" onclick="clearPriorityFilter()" aria-label="Remove filter">${chipCloseSvg}</button></span>`);
+      }
+
+      if (chips.length > 0) {
+        chipsContainer.innerHTML = chips.join('') + `<button type="button" class="clear-all-filters-btn" onclick="resetAllFilters()">Clear All</button>`;
+        panel.classList.add('has-filters');
+      } else {
+        chipsContainer.innerHTML = '';
+        panel.classList.remove('has-filters');
+      }
+
+      if (countBadge) {
+        countBadge.textContent = `Showing ${resultCount} of ${allUserReports.length} reports`;
+      }
+    }
+
+    function getStatusClass(status) {
+      if (!status) return 'status-submitted';
+      const s = status.toLowerCase();
+      if (s === 'in progress') return 'status-in-progress';
+      if (s === 'resolved') return 'status-resolved';
+      if (s === 'blocked') return 'status-blocked';
+      if (s === 'under review') return 'status-under-review';
+      if (s === 'assigned') return 'status-assigned';
+      return 'status-submitted';
+    }
+
+    function getStatusBadge(status) {
+      if (!status) return 'badge-submitted';
+      const s = status.toLowerCase();
+      if (s === 'in progress') return 'badge-progress';
+      if (s === 'resolved') return 'badge-resolved';
+      if (s === 'blocked') return 'badge-blocked';
+      if (s === 'under review') return 'badge-review';
+      if (s === 'assigned') return 'badge-assigned';
+      if (s === 'duplicate') return 'badge-duplicate';
+      return 'badge-submitted';
+    }
+
+    function getCategoryIcon(cat) {
+      const c = (cat || '').toLowerCase();
+      if (c.includes('road') || c.includes('traffic')) {
+        return '<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: -2px; margin-right: 4px;"><path d="M4 19L12 4l8 15H4z"></path><path d="M12 11v4"></path></svg>';
+      }
+      if (c.includes('sanitat') || c.includes('garbage') || c.includes('waste')) {
+        return '<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: -2px; margin-right: 4px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+      }
+      if (c.includes('water') || c.includes('drain') || c.includes('sewag')) {
+        return '<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: -2px; margin-right: 4px;"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>';
+      }
+      if (c.includes('electric') || c.includes('light') || c.includes('power')) {
+        return '<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: -2px; margin-right: 4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>';
+      }
+      if (c.includes('safety') || c.includes('hazard') || c.includes('manhole')) {
+        return '<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: -2px; margin-right: 4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+      }
+      return '<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: -2px; margin-right: 4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderReportsList(reports) {
+      const container = document.getElementById('citizen-reports-list');
+      if (reports.length === 0) {
+        container.className = '';
+        container.innerHTML = `
+          <div class="card" style="padding: 3.5rem 1.5rem; text-align: center; color: var(--text-muted); background: #FFFFFF;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--pale-blue-surface); color: var(--interactive-blue); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+              <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <h4 style="font-size: 1.2rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No matching reports found</h4>
+            <p style="font-size: 0.9rem; max-width: 480px; margin: 0 auto 1.25rem; line-height: 1.5;">
+              We couldn't find any reports matching your active filters. Try clearing some criteria or report a new civic issue.
+            </p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="resetAllFilters()">Reset All Filters</button>
+              <a href="/report" class="btn btn-primary btn-sm">+ Report New Issue</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 1. GRID VIEW
+      if (currentViewMode === 'grid') {
+        container.className = 'reports-grid-view';
+        container.innerHTML = reports.map(r => {
+          const statusClass = getStatusClass(r.status);
+          const formattedDate = new Date(r.created_at).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+          });
+          const catIcon = getCategoryIcon(r.category_name || r.category_id);
+
+          return `
+            <div class="report-grid-card ${statusClass}">
+              <div class="report-grid-header">
+                <div>
+                  <span style="font-size: 0.72rem; font-weight: 700; color: var(--interactive-blue); text-transform: uppercase; letter-spacing: 0.04em; display: inline-flex; align-items: center;">
+                    ${catIcon} ${r.category_name || 'Civic Issue'}
+                  </span>
+                  <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">#${r.reference_number}</div>
+                </div>
+                <div style="display: flex; gap: 0.35rem; align-items: center;">
+                  ${r.safety_flag ? '<span class="badge badge-urgent" style="font-size: 0.68rem; padding: 0.15rem 0.4rem; display: inline-flex; align-items: center; gap: 0.25rem;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>Hazard</span>' : ''}
+                  <span class="badge ${getStatusBadge(r.status)}" style="font-size: 0.72rem;">${r.status}</span>
+                </div>
+              </div>
+
+              <div class="report-grid-body">
+                <a href="/reports/${r.id}" class="report-grid-title" title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</a>
+                <p class="report-grid-desc">${escapeHtml(r.description || 'No detailed description provided.')}</p>
+
+                <div class="report-grid-meta">
+                  <div style="display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--interactive-blue); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span style="overflow: hidden; text-overflow: ellipsis;">${escapeHtml(r.location_text)}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.2rem;">
+                    <span style="display: inline-flex; align-items: center; gap: 0.3rem;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>${formattedDate}</span>
+                    <span class="badge badge-${(r.priority_level || 'medium').toLowerCase()}" style="font-size: 0.7rem;">${r.priority_level || 'Medium'} (${r.priority_score || 50})</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-grid-footer">
+                <span style="font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.35rem;">
+                  ${r.department_name ? `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="22.01"></line><line x1="15" y1="22" x2="15" y2="22.01"></line></svg>${r.department_name}` : 'Pending Assignment'}
+                </span>
+                <a href="/reports/${r.id}" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+                  Track Live
+                </a>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 2. LIST VIEW
+      else if (currentViewMode === 'list') {
+        container.className = 'reports-list-view';
+        container.innerHTML = reports.map(r => {
+          const statusClass = getStatusClass(r.status);
+          const formattedDate = new Date(r.created_at).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+          });
+          const catIcon = getCategoryIcon(r.category_name || r.category_id);
+
+          return `
+            <div class="report-list-card ${statusClass}">
+              <div class="report-list-icon-box">
+                ${catIcon}
+              </div>
+
+              <div class="report-list-content">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; flex-wrap: wrap;">
+                  <a href="/reports/${r.id}" style="font-size: 1.05rem; font-weight: 700; color: var(--primary-deep); text-decoration: none;">${escapeHtml(r.title)}</a>
+                  <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">#${r.reference_number}</span>
+                  ${r.safety_flag ? '<span class="badge badge-urgent" style="font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.25rem;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>Hazard Flag</span>' : ''}
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.35rem; flex-wrap: wrap;">
+                  <span style="font-weight: 600; color: var(--interactive-blue);">${r.category_name || 'Civic Issue'}</span>
+                  <span>•</span>
+                  <span style="display: inline-flex; align-items: center; gap: 0.3rem;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--interactive-blue); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>${escapeHtml(r.location_text)}</span>
+                  <span>•</span>
+                  <span style="display: inline-flex; align-items: center; gap: 0.3rem;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>${formattedDate}</span>
+                </div>
+
+                ${r.status === 'Blocked' ? `
+                  <div style="font-size: 0.78rem; color: #991B1B; background: #FEE2E2; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); display: inline-block; margin-top: 0.2rem;">
+                    Delayed: ${escapeHtml(r.blocked_reason || 'Pending department resource')}
+                  </div>
+                ` : ''}
+              </div>
+
+              <div class="report-list-actions">
+                <span class="badge badge-${(r.priority_level || 'medium').toLowerCase()}">${r.priority_level || 'Medium'}</span>
+                <span class="badge ${getStatusBadge(r.status)}">${r.status}</span>
+                <a href="/reports/${r.id}" class="btn btn-secondary btn-sm" style="padding: 0.45rem 0.85rem;">View</a>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 3. TABLE / COMPACT VIEW
+      else if (currentViewMode === 'table') {
+        container.className = 'reports-table-view';
+        container.innerHTML = `
+          <table class="reports-compact-table">
+            <thead>
+              <tr>
+                <th>Ref ID</th>
+                <th>Issue Title & Category</th>
+                <th>Location</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${reports.map(r => {
+                const formattedDate = new Date(r.created_at).toLocaleDateString('en-US', {
+                  month: 'short', day: 'numeric', year: 'numeric'
+                });
+                const catIcon = getCategoryIcon(r.category_name || r.category_id);
+
+                return `
+                  <tr>
+                    <td><strong style="font-family: monospace; color: var(--interactive-blue);">${r.reference_number}</strong></td>
+                    <td>
+                      <a href="/reports/${r.id}" style="font-weight: 600; color: var(--primary-deep);">${escapeHtml(r.title)}</a>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem; display: inline-flex; align-items: center;">${catIcon} ${r.category_name || 'Civic Issue'}</div>
+                    </td>
+                    <td><span style="font-size: 0.82rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.3rem;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--interactive-blue); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>${escapeHtml(r.location_text)}</span></td>
+                    <td><span class="badge badge-${(r.priority_level || 'medium').toLowerCase()}" style="font-size: 0.72rem;">${r.priority_level || 'Medium'} (${r.priority_score || 50})</span></td>
+                    <td><span class="badge ${getStatusBadge(r.status)}" style="font-size: 0.72rem;">${r.status}</span></td>
+                    <td style="white-space: nowrap; font-size: 0.8rem; color: var(--text-muted);">${formattedDate}</td>
+                    <td style="text-align: right; white-space: nowrap;">
+                      <a href="/reports/${r.id}" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">View</a>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Profile Settings Modal Handlers
+    function openProfileModal() {
+      const user = CivicAuth.getUser();
+      document.getElementById('prof-name').value = user.displayName || '';
+      document.getElementById('prof-email').value = user.email || '';
+      document.getElementById('prof-phone').value = user.phone || '';
+      document.getElementById('prof-lang').value = user.preferredLanguage || 'en';
+      document.getElementById('profile-modal-msg').style.display = 'none';
+      document.getElementById('profile-settings-modal').classList.add('active');
+    }
+
+    function closeProfileModal() {
+      document.getElementById('profile-settings-modal').classList.remove('active');
+    }
+
+    document.getElementById('edit-profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const displayName = document.getElementById('prof-name').value.trim();
+      const phone = document.getElementById('prof-phone').value.trim();
+      const preferredLanguage = document.getElementById('prof-lang').value;
+      const msg = document.getElementById('profile-modal-msg');
+
+      try {
+        const res = await CivicAPI.request('/api/auth/profile', {
+          method: 'PUT',
+          body: JSON.stringify({ displayName, phone, preferredLanguage })
+        });
+
+        // Update local session
+        CivicAuth.setSession(CivicAuth.getToken(), res.user);
+        document.getElementById('user-profile-name').textContent = res.user.displayName;
+        if (res.user.phone) {
+          const ph = document.getElementById('user-profile-phone');
+          ph.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: -1px; margin-right: 4px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>${escapeHtml(res.user.phone)}`;
+          ph.style.display = 'block';
+        }
+        CivicAuth.bootNav();
+
+        msg.style.display = 'block';
+        msg.style.background = '#ECFDF5';
+        msg.style.color = '#065F46';
+        msg.textContent = 'Profile updated successfully!';
+        setTimeout(() => msg.style.display = 'none', 3000);
+      } catch (err) {
+        msg.style.display = 'block';
+        msg.style.background = '#FEE2E2';
+        msg.style.color = '#991B1B';
+        msg.textContent = err.message || 'Failed to update profile.';
+      }
+    });
+
+    document.getElementById('change-pass-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('curr-pass').value;
+      const newPassword = document.getElementById('new-pass').value;
+      const msg = document.getElementById('profile-modal-msg');
+
+      try {
+        await CivicAPI.request('/api/auth/change-password', {
+          method: 'PUT',
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        msg.style.display = 'block';
+        msg.style.background = '#ECFDF5';
+        msg.style.color = '#065F46';
+        msg.textContent = 'Password updated successfully!';
+        document.getElementById('curr-pass').value = '';
+        document.getElementById('new-pass').value = '';
+        setTimeout(() => msg.style.display = 'none', 3000);
+      } catch (err) {
+        msg.style.display = 'block';
+        msg.style.background = '#FEE2E2';
+        msg.style.color = '#991B1B';
+        msg.textContent = err.message || 'Failed to update password.';
+      }
+    });
+  </script>
+</body>
+</html>

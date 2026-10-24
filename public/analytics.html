@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics & Insights — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.85rem;
+      font-size: 0.88rem;
+    }
+    .bar-label {
+      width: 140px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bar-track {
+      flex: 1;
+      height: 14px;
+      background: #E2E8F0;
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+      background: var(--interactive-blue);
+    }
+    @media (max-width: 900px) {
+      .analytics-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 1.8rem; color: var(--primary-deep);">Analytics & Insights</h1>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Aggregate civic health metrics, category distribution, and municipal response indicators.</p>
+      </div>
+      <span class="badge badge-submitted" style="font-size: 0.85rem; padding: 0.4rem 0.85rem;">Reporting Period: 2026-Q4</span>
+    </div>
+
+    <!-- Top 4 KPIs (Screen 9 Top) -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" style="color: var(--success);" id="an-res-rate">72%</div>
+        <div class="stat-label">Resolution Rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #7C3AED;" id="an-avg-days">12</div>
+        <div class="stat-label">Avg. Resolution Days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #EA580C;" id="an-improvement">+15%</div>
+        <div class="stat-label">Efficiency Improvement</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: var(--interactive-blue);" id="an-total">1,248</div>
+        <div class="stat-label">Total Issues Processed</div>
+      </div>
+    </div>
+
+    <!-- Charts Grid (Screen 9) -->
+    <div class="analytics-grid">
+      
+      <!-- Chart 1: Monthly Trend -->
+      <div class="card">
+        <div class="card-header">
+          <strong style="color: var(--primary-deep);">Monthly Trend (Reported vs. Resolved)</strong>
+          <div style="display: flex; gap: 1rem; font-size: 0.78rem; align-items: center;">
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #2563EB; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #2563EB;"></span> Reported</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #16A34A; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A;"></span> Resolved</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <svg viewBox="0 0 500 220" style="width: 100%; height: auto;">
+            <!-- Grid lines -->
+            <line x1="40" y1="30" x2="480" y2="30" stroke="#E2E8F0" stroke-dasharray="3,3"/>
+            <line x1="40" y1="80" x2="480" y2="80" stroke="#E2E8F0" stroke-dasharray="3,3"/>
+            <line x1="40" y1="130" x2="480" y2="130" stroke="#E2E8F0" stroke-dasharray="3,3"/>
+            <line x1="40" y1="180" x2="480" y2="180" stroke="#CBD5E1"/>
+
+            <!-- Y Axis labels -->
+            <text x="15" y="35" font-size="10" fill="#94A3B8">300</text>
+            <text x="15" y="85" font-size="10" fill="#94A3B8">200</text>
+            <text x="15" y="135" font-size="10" fill="#94A3B8">100</text>
+            <text x="25" y="185" font-size="10" fill="#94A3B8">0</text>
+
+            <!-- Line: Reported (Blue) -->
+            <polyline fill="none" stroke="#2563EB" stroke-width="3" points="
+              60,150 130,130 210,110 290,85 370,60 450,45
+            "/>
+            <circle cx="60" cy="150" r="4" fill="#2563EB"/>
+            <circle cx="130" cy="130" r="4" fill="#2563EB"/>
+            <circle cx="210" cy="110" r="4" fill="#2563EB"/>
+            <circle cx="290" cy="85" r="4" fill="#2563EB"/>
+            <circle cx="370" cy="60" r="4" fill="#2563EB"/>
+            <circle cx="450" cy="45" r="4" fill="#2563EB"/>
+
+            <!-- Line: Resolved (Green) -->
+            <polyline fill="none" stroke="#16A34A" stroke-width="3" points="
+              60,170 130,155 210,135 290,120 370,95 450,75
+            "/>
+            <circle cx="60" cy="170" r="4" fill="#16A34A"/>
+            <circle cx="130" cy="155" r="4" fill="#16A34A"/>
+            <circle cx="210" cy="135" r="4" fill="#16A34A"/>
+            <circle cx="290" cy="120" r="4" fill="#16A34A"/>
+            <circle cx="370" cy="95" r="4" fill="#16A34A"/>
+            <circle cx="450" cy="75" r="4" fill="#16A34A"/>
+
+            <!-- X Axis Months -->
+            <text x="50" y="205" font-size="11" fill="#64748B">Jan</text>
+            <text x="120" y="205" font-size="11" fill="#64748B">Feb</text>
+            <text x="200" y="205" font-size="11" fill="#64748B">Mar</text>
+            <text x="280" y="205" font-size="11" fill="#64748B">Apr</text>
+            <text x="360" y="205" font-size="11" fill="#64748B">May</text>
+            <text x="440" y="205" font-size="11" fill="#64748B">Jun</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Chart 2: Issues by Category -->
+      <div class="card">
+        <div class="card-header">
+          <strong style="color: var(--primary-deep);">Distribution by Category</strong>
+        </div>
+        <div class="card-body">
+          <div class="bar-row">
+            <span class="bar-label">Roads & Potholes</span>
+            <div class="bar-track"><div class="bar-fill" style="width: 32%; background: #2563EB;"></div></div>
+            <span style="font-weight: 700; width: 40px; text-align: right;">32%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Sanitation</span>
+            <div class="bar-track"><div class="bar-fill" style="width: 24%; background: #10B981;"></div></div>
+            <span style="font-weight: 700; width: 40px; text-align: right;">24%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Water & Drainage</span>
+            <div class="bar-track"><div class="bar-fill" style="width: 18%; background: #06B6D4;"></div></div>
+            <span style="font-weight: 700; width: 40px; text-align: right;">18%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Streetlights</span>
+            <div class="bar-track"><div class="bar-fill" style="width: 14%; background: #F59E0B;"></div></div>
+            <span style="font-weight: 700; width: 40px; text-align: right;">14%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Public Works / Other</span>
+            <div class="bar-track"><div class="bar-fill" style="width: 12%; background: #8B5CF6;"></div></div>
+            <span style="font-weight: 700; width: 40px; text-align: right;">12%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Community Impact Callout Cards (Screen 9 Bottom) -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+      <div class="card" style="padding: 1.5rem; text-align: center; background: #F0FDF4; border-color: #BBF7D0;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #DCFCE7; color: #166534; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+        </div>
+        <h4 style="color: #166534; margin-bottom: 0.35rem;">Cleaner Streets</h4>
+        <p style="font-size: 0.85rem; color: #15803D;">89% of sanitation and garbage overflow reports resolved within 48 hours.</p>
+      </div>
+
+      <div class="card" style="padding: 1.5rem; text-align: center; background: #EFF6FF; border-color: #BFDBFE;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #DBEAFE; color: #1E40AF; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <h4 style="color: #1E40AF; margin-bottom: 0.35rem;">Safer Communities</h4>
+        <p style="font-size: 0.85rem; color: #1D4ED8;">Critical safety hazards (open manholes, live wires) escalated in real time.</p>
+      </div>
+
+      <div class="card" style="padding: 1.5rem; text-align: center; background: #FAF5FF; border-color: #E9D5FF;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #F3E8FF; color: #6B21A8; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M8 10h.01"></path><path d="M16 10h.01"></path><path d="M8 14h.01"></path><path d="M16 14h.01"></path></svg>
+        </div>
+        <h4 style="color: #6B21A8; margin-bottom: 0.35rem;">Sustainable Cities</h4>
+        <p style="font-size: 0.85rem; color: #7E22CE;">Transparent municipal accountability with verified public milestones.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      CivicAuth.bootNav();
+
+      try {
+        const res = await CivicAPI.request('/api/analytics/summary');
+        if (res && res.kpis) {
+          document.getElementById('an-res-rate').textContent = res.kpis.resolutionRate;
+          document.getElementById('an-avg-days').textContent = res.kpis.avgResolutionDays;
+          document.getElementById('an-improvement').textContent = res.kpis.improvementRate;
+          document.getElementById('an-total').textContent = res.kpis.totalIssues.toLocaleString();
+        }
+      } catch (e) {
+        console.warn('Analytics API error:', e);
+      }
+    });
+  </script>
+</body>
+</html>

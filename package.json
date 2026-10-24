@@ -1,0 +1,35 @@
+{
+  "name": "civic_resovle",
+  "version": "1.0.0",
+  "description": "A web application prototype developed using HTML, CSS, JavaScript, and Node.js. This project focuses on designing a user-friendly interface and implementing the core functionality required to demonstrate the proposed concept. It serves as an initial version for testing ideas, validating features, and making improvements before further development.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "seed": "node scripts/seed.js",
+    "test": "node tests/workflow.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShaikSuhel786/civic_resovle.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ShaikSuhel786/civic_resovle/issues"
+  },
+  "homepage": "https://github.com/ShaikSuhel786/civic_resovle#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "liquid-glass-react": "^1.1.1",
+    "multer": "^2.5.0"
+  }
+}

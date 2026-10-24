@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Civic Resolve AI — Smart Civic Issue Resolution Prototype</title>
+  <meta name="description" content="AI-powered civic issue reporting and resolution prototype for smarter and safer communities.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions">
+        <!-- Rendered dynamically by CivicAuth.bootNav() -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section (Screen 1) -->
+  <section class="hero-section">
+    <div class="container" style="max-width: 900px; padding: 0;">
+      <h1 class="hero-title" data-i18n="hero_title">Smarter Cities<br>Happier Communities</h1>
+      <p class="hero-subtitle" data-i18n="hero_sub">
+        AI-powered civic issue reporting and resolution for cleaner, safer, and more sustainable cities.
+      </p>
+
+      <div class="hero-actions">
+        <a href="/report" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" data-i18n="hero_btn_report">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+          Report an Issue
+        </a>
+        <a href="/analytics" class="btn btn-secondary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" data-i18n="hero_btn_dashboard">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+          Explore Dashboard
+        </a>
+      </div>
+
+      <!-- Aggregate Synthetic Metrics Cards (Matching Reference Screen 1) -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-val" id="stat-total">1,248</div>
+          <div class="stat-label" data-i18n="stat_reported">Issues Reported</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: var(--success);" id="stat-resolved">892</div>
+          <div class="stat-label" data-i18n="stat_resolved">Resolved</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: #EA580C;" id="stat-rate">72%</div>
+          <div class="stat-label" data-i18n="stat_rate">Resolution Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color: #7C3AED;" id="stat-days">12</div>
+          <div class="stat-label" data-i18n="stat_days">Avg. Days</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section (Screen 1) -->
+  <section class="container" id="how-it-works">
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+      <h2>How It Works</h2>
+      <p style="color: var(--text-muted); font-size: 1.05rem;">An end-to-end transparent workflow from citizen reporting to verified resolution</p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-icon">
+          <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </div>
+        <div class="step-title" data-i18n="step_1_title">1. Report</div>
+        <div class="step-desc" data-i18n="step_1_desc">Submit civic issues with description, map location and optional photos.</div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-icon" style="background: #FEF3C7; color: #D97706;">
+          <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </div>
+        <div class="step-title" data-i18n="step_2_title">2. AI Analyses</div>
+        <div class="step-desc" data-i18n="step_2_desc">Smart categorisation, priority scoring (0-100) & duplicate candidate detection.</div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-icon" style="background: #E0E7FF; color: #4F46E5;">
+          <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <div class="step-title" data-i18n="step_3_title">3. Assign</div>
+        <div class="step-desc" data-i18n="step_3_desc">Admin reviews and assigns to an active staff member in the mapped department.</div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-icon" style="background: #DCFCE7; color: #16A34A;">
+          <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <div class="step-title" data-i18n="step_4_title">4. Track</div>
+        <div class="step-desc" data-i18n="step_4_desc">Follow live progress on a transparent citizen timeline with in-app notifications.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Prototype Notice & Evaluator Quick Jump -->
+  <section class="container" style="padding-top: 0;">
+    <div class="card" style="background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%); border: 1px solid var(--pale-blue-border); padding: 1.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h3 style="margin-bottom: 0.35rem; color: var(--primary-deep);">Hackathon Prototype Evaluator Center</h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 650px;">
+            Test the complete end-to-end Citizen → Admin → Department Staff → Citizen workflow with preconfigured demo accounts and synthetic data.
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <a href="/login" class="btn btn-secondary">Switch Demo Account</a>
+          <a href="/report" class="btn btn-primary">Start New Report</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div>
+        <strong>CIVIC RESOLVE AI</strong> — 24-Hour Hackathon Prototype. Demonstration Only.
+      </div>
+      <div style="display: flex; gap: 1.5rem;">
+        <a href="/login">Demo Accounts</a>
+        <a href="/analytics">Analytics</a>
+        <a href="https://github.com/ShaikSuhel786/civic_resovle" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CivicAuth.bootNav();
+
+      // Fetch live aggregate statistics
+      CivicAPI.request('/api/analytics/summary')
+        .then(data => {
+          if (data && data.kpis) {
+            document.getElementById('stat-total').textContent = data.kpis.totalIssues.toLocaleString();
+            document.getElementById('stat-resolved').textContent = data.kpis.resolvedIssues.toLocaleString();
+            document.getElementById('stat-rate').textContent = data.kpis.resolutionRate;
+            document.getElementById('stat-days').textContent = data.kpis.avgResolutionDays;
+          }
+        })
+        .catch(e => console.warn('Analytics fetch error:', e));
+    });
+  </script>
+</body>
+</html>

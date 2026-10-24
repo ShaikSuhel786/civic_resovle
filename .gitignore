@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Civic Sync local data & uploads
+server/data/
+uploads/
+*.db
+*.sqlite

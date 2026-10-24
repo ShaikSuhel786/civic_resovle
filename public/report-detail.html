@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Detail & Timeline — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body style="visibility: hidden;">
+
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Back to Dashboard Link (Screen 7 Top) -->
+    <div style="margin-bottom: 1.5rem;">
+      <a href="/dashboard" class="btn btn-secondary btn-sm" id="btn-back-dashboard" data-i18n="nav_back_dashboard">
+        ← Back to My Reports
+      </a>
+    </div>
+
+    <!-- Header Section (Screen 7) -->
+    <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+        <div>
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); letter-spacing: 0.05em; text-transform: uppercase;" id="det-ref">REP-2026-000</span>
+          <h1 style="font-size: 1.6rem; color: var(--primary-deep); margin-top: 0.25rem;" id="det-title">Loading Issue Details...</h1>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <span class="badge" id="det-priority-badge">Priority</span>
+          <span class="badge" id="det-status-badge">Status</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()" title="Print official receipt" style="padding: 0.35rem 0.75rem;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            <span>Print Receipt</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.88rem; color: var(--text-muted); flex-wrap: wrap;">
+        <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <strong id="det-category" style="color: var(--text-main);">Category</strong>
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <span id="det-location">Location</span>
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Reported on <span id="det-date">Date</span></span>
+        </span>
+      </div>
+      <!-- Duplicate Notification if applicable -->
+      <div id="duplicate-alert" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; background: #F3E8FF; border: 1px solid #D8B4FE; border-radius: var(--radius-md); font-size: 0.85rem; color: #6B21A8;">
+        <strong>Duplicate Relationship:</strong> This issue was linked to canonical primary report <a href="#" id="det-primary-link" style="color: #4C1D95; font-weight: 700; text-decoration: underline;">REP-...</a>.
+      </div>
+    </div>
+
+    <!-- Main Detail Grid (Screen 7) -->
+    <div class="detail-grid">
+      
+      <!-- Left Column: Media & Description & Citizen Actions -->
+      <div>
+        
+        <!-- Photo Gallery Card -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-header">
+            <strong>Photo Evidence</strong>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Verified media</span>
+          </div>
+          <div class="card-body">
+            <div id="photo-gallery-box" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <div style="width: 100%; height: 220px; background: var(--bg-main); border: 1px dashed var(--border-color); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 0.88rem;" id="no-photo-placeholder">
+                No photo provided with this report.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description Card -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-header">
+            <strong>Original Citizen Description</strong>
+          </div>
+          <div class="card-body">
+            <p id="det-desc" style="font-size: 0.92rem; color: var(--text-main); line-height: 1.6;"></p>
+          </div>
+        </div>
+
+        <!-- Add Follow-up Note Form (FR-09) -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-header">
+            <strong>Add Follow-up Information</strong>
+          </div>
+          <div class="card-body">
+            <form id="follow-up-form">
+              <div class="form-group">
+                <textarea id="follow-up-input" class="form-textarea" placeholder="Provide additional details or progress observations..." rows="3" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-secondary btn-sm" id="btn-submit-followup">Post Follow-up Note</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Citizen Review Requests (FR-09: Correction, Challenge, Withdrawal, Reopen) -->
+        <div class="card" style="border: 1px dashed var(--border-strong);">
+          <div class="card-header" style="background: var(--bg-main);">
+            <strong style="font-size: 0.88rem;">Citizen Request Actions</strong>
+          </div>
+          <div class="card-body" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="openActionModal('correction')">Request Correction</button>
+            <button class="btn btn-secondary btn-sm" onclick="openActionModal('challenge')">Challenge Priority/Category</button>
+            <button class="btn btn-secondary btn-sm" onclick="openActionModal('withdrawal')" style="color: var(--danger);">Request Withdrawal</button>
+            <button class="btn btn-secondary btn-sm" id="btn-reopen-request" onclick="openActionModal('reopening')" style="display: none; color: var(--interactive-blue);">Request Reopening</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Status Timeline & Latest Update (Screen 7 Right) -->
+      <div>
+        
+        <!-- Latest Update Card (Screen 7 Callout) -->
+        <div class="card" style="background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%); border: 1px solid var(--pale-blue-border); margin-bottom: 1.5rem;" id="latest-update-card">
+          <div class="card-body" style="padding: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--interactive-blue); color: white; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+              <div>
+                <strong style="color: var(--primary-deep); font-size: 0.95rem;" id="latest-update-title">Status: Submitted</strong>
+                <div style="font-size: 0.75rem; color: var(--text-light);" id="latest-update-time">Just now</div>
+              </div>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;" id="latest-update-text">
+              Your issue has been recorded and submitted for municipal verification.
+            </p>
+          </div>
+        </div>
+
+        <!-- Status Timeline (Screen 7) -->
+        <div class="card">
+          <div class="card-header">
+            <strong style="color: var(--primary-deep);">Status Timeline</strong>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Verified milestones</span>
+          </div>
+          <div class="card-body">
+            <div class="timeline" id="timeline-container">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Citizen Action Modal -->
+  <div class="modal-overlay" id="action-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <strong id="action-modal-title">Citizen Request</strong>
+        <button class="btn btn-secondary btn-sm" onclick="closeActionModal()" aria-label="Close" style="display:inline-flex;align-items:center;justify-content:center;padding:0.35rem 0.6rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="modal-body">
+        <div id="action-modal-error" style="display: none; padding: 0.5rem; background: var(--danger-bg); color: var(--danger); font-size: 0.82rem; margin-bottom: 0.75rem; border-radius: var(--radius-sm);"></div>
+        <div class="form-group">
+          <label class="form-label" for="action-reason-input">Reason & Proposed Value <span style="color: var(--danger);">*</span></label>
+          <textarea id="action-reason-input" class="form-textarea" placeholder="Explain the rationale for your request (minimum 10 characters)..." rows="3" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-action">Submit Request</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script>
+    let reportId = null;
+    let currentReport = null;
+    let activeActionType = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!CivicAuth.requireAuth()) return;
+      CivicAuth.bootNav();
+
+      const pathParts = window.location.pathname.split('/');
+      reportId = pathParts[pathParts.length - 1];
+      if (!reportId || reportId === 'report-detail.html' || reportId === 'reports') {
+        const params = new URLSearchParams(window.location.search);
+        reportId = params.get('id');
+      }
+
+      if (!reportId) {
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      // If user is admin, change back link
+      const user = CivicAuth.getUser();
+      if (user && user.role === 'admin') {
+        document.getElementById('btn-back-dashboard').href = '/admin';
+        document.getElementById('btn-back-dashboard').textContent = '← Back to Admin Queues';
+      } else if (user && user.role === 'staff') {
+        document.getElementById('btn-back-dashboard').href = '/staff';
+        document.getElementById('btn-back-dashboard').textContent = '← Back to Staff Queue';
+      }
+
+      await loadReportDetail();
+    });
+
+    async function loadReportDetail() {
+      try {
+        const res = await CivicAPI.request(`/api/reports/${reportId}`);
+        currentReport = res.report;
+        renderReport(res);
+      } catch (err) {
+        alert('Failed to load report: ' + err.message);
+        window.location.href = '/dashboard';
+      }
+    }
+
+    function renderReport(data) {
+      const r = data.report;
+      document.getElementById('det-ref').textContent = r.reference_number;
+      document.getElementById('det-title').textContent = r.title;
+      document.getElementById('det-category').textContent = r.category_name || 'Civic Issue';
+      document.getElementById('det-location').textContent = r.location_text;
+      document.getElementById('det-date').textContent = new Date(r.created_at).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      document.getElementById('det-desc').textContent = r.description;
+
+      // Status Badge
+      const statusBadge = document.getElementById('det-status-badge');
+      statusBadge.textContent = r.status;
+      statusBadge.className = 'badge badge-' + r.status.toLowerCase().replace(' ', '-');
+
+      // Priority Badge
+      const prioBadge = document.getElementById('det-priority-badge');
+      prioBadge.textContent = `${r.priority_level} Priority (${r.priority_score}/100)`;
+      prioBadge.className = 'badge badge-' + r.priority_level.toLowerCase();
+
+      // Show reopen request button if Resolved
+      if (r.status === 'Resolved') {
+        document.getElementById('btn-reopen-request').style.display = 'inline-flex';
+      }
+
+      // Duplicate Notice
+      if (r.status === 'Duplicate' && data.primaryReport) {
+        document.getElementById('duplicate-alert').style.display = 'block';
+        const primaryLink = document.getElementById('det-primary-link');
+        primaryLink.textContent = data.primaryReport.reference_number;
+        primaryLink.href = `/reports/${data.primaryReport.id}`;
+      }
+
+      // Photos
+      if (data.photos && data.photos.length > 0) {
+        document.getElementById('no-photo-placeholder').style.display = 'none';
+        const gallery = document.getElementById('photo-gallery-box');
+        gallery.innerHTML = data.photos.map(p => `
+          <div style="border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); width: 140px; height: 140px;">
+            <img src="${p.storage_path}" alt="Issue photo" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${p.storage_path}', '_blank')">
+          </div>
+        `).join('');
+      }
+
+      // Timeline Rendering (Screen 7 Right)
+      const timelineContainer = document.getElementById('timeline-container');
+      if (data.timeline && data.timeline.length > 0) {
+        timelineContainer.innerHTML = data.timeline.map((evt, idx) => {
+          const isLatest = idx === data.timeline.length - 1;
+          const dateStr = new Date(evt.created_at).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+
+          return `
+            <div class="timeline-item">
+              <div class="timeline-dot ${evt.event_type === 'resolved' ? 'completed' : ''}"></div>
+              <div class="timeline-time">${dateStr}</div>
+              <div class="timeline-title">${evt.message}</div>
+              ${evt.actor_name ? `<div style="font-size: 0.78rem; color: var(--text-light);">By: ${evt.actor_name} (${evt.actor_role})</div>` : ''}
+            </div>
+          `;
+        }).join('');
+
+        // Latest update callout card
+        const lastEvt = data.timeline[data.timeline.length - 1];
+        document.getElementById('latest-update-title').textContent = `Status: ${r.status}`;
+        document.getElementById('latest-update-time').textContent = new Date(lastEvt.created_at).toLocaleString();
+        document.getElementById('latest-update-text').textContent = lastEvt.message;
+      }
+    }
+
+    // Follow-up Note submission
+    document.getElementById('follow-up-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('follow-up-input');
+      const note = input.value.trim();
+      if (!note) return;
+
+      const btn = document.getElementById('btn-submit-followup');
+      btn.disabled = true;
+      btn.textContent = 'Posting...';
+
+      try {
+        await CivicAPI.request(`/api/reports/${reportId}/follow-up`, {
+          method: 'POST',
+          body: JSON.stringify({ note })
+        });
+        input.value = '';
+        btn.disabled = false;
+        btn.textContent = 'Post Follow-up Note';
+        await loadReportDetail();
+      } catch (err) {
+        alert('Failed to post follow-up: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Post Follow-up Note';
+      }
+    });
+
+    // Action Modal Logic
+    function openActionModal(actionType) {
+      activeActionType = actionType;
+      document.getElementById('action-modal-title').textContent = `Citizen Request: ${actionType.toUpperCase()}`;
+      document.getElementById('action-modal-error').style.display = 'none';
+      document.getElementById('action-reason-input').value = '';
+      document.getElementById('action-modal').classList.add('active');
+    }
+
+    function closeActionModal() {
+      document.getElementById('action-modal').classList.remove('active');
+    }
+
+    document.getElementById('btn-submit-action').addEventListener('click', async () => {
+      const reason = document.getElementById('action-reason-input').value.trim();
+      const errBox = document.getElementById('action-modal-error');
+
+      if (reason.length < 10) {
+        errBox.textContent = 'Please provide a reason of at least 10 characters.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      try {
+        await CivicAPI.request(`/api/reports/${reportId}/request-action`, {
+          method: 'POST',
+          body: JSON.stringify({ actionType: activeActionType, reason })
+        });
+        closeActionModal();
+        alert(`Your ${activeActionType} request has been submitted for administrative review.`);
+        await loadReportDetail();
+      } catch (err) {
+        errBox.textContent = err.message || 'Action request failed.';
+        errBox.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

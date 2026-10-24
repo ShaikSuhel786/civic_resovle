@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In & Register — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column;">
+
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span>CIVIC RESOLVE AI</span>
+      </a>
+      <a href="/" class="btn btn-secondary btn-sm">← Back to Home</a>
+    </div>
+  </header>
+
+  <main style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2.5rem 1rem;">
+    <div style="max-width: 980px; width: 100%; display: grid; grid-template-columns: 1.15fr 1fr; gap: 2rem; align-items: start;">
+      
+      <!-- Authentication Card: Sign In & Registration -->
+      <div class="card" style="box-shadow: var(--shadow-lg); background: #FFFFFF;">
+        <div class="card-header" style="background: var(--bg-main); border-bottom: 1px solid var(--border-color); padding: 1.25rem 1.5rem 0.75rem;">
+          <div class="auth-tabs" id="auth-mode-tabs">
+            <button type="button" class="auth-tab-btn active" id="tab-btn-login" onclick="setAuthTab('login')">
+              Sign In
+            </button>
+            <button type="button" class="auth-tab-btn" id="tab-btn-register" onclick="setAuthTab('register')">
+              Create Account
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body" style="padding: 1.5rem;">
+          <div id="auth-error" style="display: none; padding: 0.75rem 1rem; border-radius: var(--radius-sm); background: var(--danger-bg); color: var(--danger); font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
+          <div id="auth-success" style="display: none; padding: 0.75rem 1rem; border-radius: var(--radius-sm); background: #ECFDF5; color: #065F46; font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
+
+          <!-- 1. SIGN IN FORM -->
+          <form id="login-form">
+            <div style="margin-bottom: 1.25rem;">
+              <h3 style="font-size: 1.2rem; color: var(--primary-deep); margin-bottom: 0.25rem;">Welcome Back</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Sign in to your registered citizen or municipal account</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="login-email">Email Address</label>
+              <input type="email" id="login-email" class="form-input" placeholder="e.g. citizen@example.com" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="login-password">Password</label>
+              <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="login-submit-btn" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+              Sign In
+            </button>
+
+            <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+              New to Civic Resolve AI? <a href="javascript:void(0)" onclick="setAuthTab('register')" style="font-weight: 600;">Create an account</a>
+            </div>
+          </form>
+
+          <!-- 2. REGISTRATION FORM (Real Citizens) -->
+          <form id="register-form" style="display: none;">
+            <div style="margin-bottom: 1.25rem;">
+              <h3 style="font-size: 1.2rem; color: var(--primary-deep); margin-bottom: 0.25rem;">Create Citizen Account</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Register to report issues, track live municipal progress, and receive updates</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Full Name <span style="color: var(--danger);">*</span></label>
+              <input type="text" id="reg-name" class="form-input" placeholder="e.g. Rahul Varma" required minlength="2">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-email">Email Address <span style="color: var(--danger);">*</span></label>
+              <input type="email" id="reg-email" class="form-input" placeholder="e.g. rahul@example.com" required autocomplete="email">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div class="form-group">
+                <label class="form-label" for="reg-phone">Phone (Optional)</label>
+                <input type="tel" id="reg-phone" class="form-input" placeholder="+91 98765 43210">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="reg-lang">Language Preference</label>
+                <select id="reg-lang" class="form-select">
+                  <option value="en">English</option>
+                  <option value="te">తెలుగు (Telugu)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-password">Password <span style="color: var(--danger);">*</span></label>
+              <input type="password" id="reg-password" class="form-input" placeholder="Minimum 8 characters" required minlength="8" autocomplete="new-password">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-confirm-password">Confirm Password <span style="color: var(--danger);">*</span></label>
+              <input type="password" id="reg-confirm-password" class="form-input" placeholder="Re-enter password" required minlength="8" autocomplete="new-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="reg-submit-btn" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+              Create Citizen Account
+            </button>
+
+            <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+              Already have an account? <a href="javascript:void(0)" onclick="setAuthTab('login')" style="font-weight: 600;">Sign In</a>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+      <!-- Quick Evaluator / Demo Role Switcher -->
+      <div class="card" style="border: 2px solid var(--interactive-blue); background: #FFFFFF;">
+        <div class="card-header" style="background: var(--pale-blue-surface); border-bottom-color: var(--pale-blue-border);">
+          <div>
+            <span class="badge badge-progress" style="margin-bottom: 0.35rem;">Evaluation & Testing</span>
+            <h3 style="font-size: 1.15rem; color: var(--primary-deep);">1-Click Role Accounts</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted);">Pre-configured accounts for reviewing Admin triage and Field Staff workflows</p>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 1.25rem;">
+          <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); margin-bottom: 0.5rem;">Citizen Accounts</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.25rem;">
+            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-citizen-01')" style="justify-content: flex-start; text-align: left; height: auto; padding: 0.55rem 0.75rem;">
+              <div>
+                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.82rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span>Priya Sharma</span>
+                </strong>
+                <span style="font-size: 0.72rem; color: var(--text-muted);">Citizen (English)</span>
+              </div>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-citizen-02')" style="justify-content: flex-start; text-align: left; height: auto; padding: 0.55rem 0.75rem;">
+              <div>
+                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.82rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span>Rajesh Kumar</span>
+                </strong>
+                <span style="font-size: 0.72rem; color: var(--text-muted);">Citizen (తెలుగు)</span>
+              </div>
+            </button>
+          </div>
+
+          <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); margin-bottom: 0.5rem;">Administration</div>
+          <div style="margin-bottom: 1.25rem;">
+            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-admin-01')" style="width: 100%; justify-content: flex-start; text-align: left; background: #FFF1F2; border-color: #FECDD3; padding: 0.65rem 0.85rem;">
+              <div>
+                <strong style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--danger);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span>Municipal Admin Officer</span>
+                </strong>
+                <span style="font-size: 0.75rem; color: #9F1239;">Full queue triage, staff assignment & safety handling</span>
+              </div>
+            </button>
+          </div>
+
+          <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); margin-bottom: 0.5rem;">Department Field Staff</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-staff-roads')" style="justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem;">
+              <div>
+                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="8" y2="3"></line><line x1="20" y1="21" x2="16" y2="3"></line><line x1="12" y1="7" x2="12" y2="10"></line><line x1="12" y1="14" x2="12" y2="17"></line></svg>
+                  <span>Roads & Transport</span>
+                </strong>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Venkatesh Rao</span>
+              </div>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-staff-sanitation')" style="justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem;">
+              <div>
+                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <span>Sanitation</span>
+                </strong>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">K. Anitha</span>
+              </div>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-staff-electrical')" style="justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem;">
+              <div>
+                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                  <span>Electrical Services</span>
+                </strong>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Suresh Babu</span>
+              </div>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-staff-water')" style="justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem;">
+              <div>
+                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                  <span>Water & Drainage</span>
+                </strong>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Mohammed Ali</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    function setAuthTab(tab) {
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+      const tabLogin = document.getElementById('tab-btn-login');
+      const tabRegister = document.getElementById('tab-btn-register');
+      const errBox = document.getElementById('auth-error');
+      const succBox = document.getElementById('auth-success');
+
+      errBox.style.display = 'none';
+      succBox.style.display = 'none';
+
+      if (tab === 'register') {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+      } else {
+        registerForm.style.display = 'none';
+        loginForm.style.display = 'block';
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+      }
+    }
+
+    function redirectByRole(role) {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get('redirect');
+      if (redirect) {
+        window.location.href = redirect;
+        return;
+      }
+
+      if (role === 'admin') window.location.href = '/admin';
+      else if (role === 'staff') window.location.href = '/staff';
+      else window.location.href = '/dashboard';
+    }
+
+    function showError(msg) {
+      const errBox = document.getElementById('auth-error');
+      const succBox = document.getElementById('auth-success');
+      succBox.style.display = 'none';
+      errBox.textContent = msg;
+      errBox.style.display = 'block';
+    }
+
+    function showSuccess(msg) {
+      const errBox = document.getElementById('auth-error');
+      const succBox = document.getElementById('auth-success');
+      errBox.style.display = 'none';
+      succBox.textContent = msg;
+      succBox.style.display = 'block';
+    }
+
+    // Quick Login for demo roles
+    async function quickLogin(userId) {
+      try {
+        const res = await CivicAPI.request('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ demoUserId: userId })
+        });
+        CivicAuth.setSession(res.token, res.user);
+        redirectByRole(res.user.role);
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    // Sign In Submit
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      try {
+        const res = await CivicAPI.request('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        CivicAuth.setSession(res.token, res.user);
+        redirectByRole(res.user.role);
+      } catch (err) {
+        showError(err.message || 'Login failed. Please check your credentials.');
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    });
+
+    // Register Submit (Real Citizen)
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const preferredLanguage = document.getElementById('reg-lang').value;
+      const password = document.getElementById('reg-password').value;
+      const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+      if (password !== confirmPassword) {
+        showError('Passwords do not match. Please re-enter.');
+        return;
+      }
+
+      if (password.length < 8) {
+        showError('Password must be at least 8 characters long.');
+        return;
+      }
+
+      const btn = document.getElementById('reg-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      try {
+        const res = await CivicAPI.request('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            fullName,
+            email,
+            password,
+            phone,
+            preferredLanguage
+          })
+        });
+
+        CivicAuth.setSession(res.token, res.user);
+        showSuccess('Account created successfully! Redirecting...');
+        setTimeout(() => {
+          redirectByRole('citizen');
+        }, 800);
+      } catch (err) {
+        showError(err.message || 'Registration failed. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Create Citizen Account';
+      }
+    });
+  </script>
+</body>
+</html>

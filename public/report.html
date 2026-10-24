@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report a Civic Issue — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <style>
+    .report-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .report-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body style="visibility: hidden;">
+
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="report-grid">
+      
+      <!-- Form Section (Screen 2 Left) -->
+      <div class="card" style="box-shadow: var(--shadow-md);">
+        <div class="card-header" style="background: var(--pale-blue-surface); border-bottom-color: var(--pale-blue-border);">
+          <div>
+            <h2 style="font-size: 1.4rem; color: var(--primary-deep);" data-i18n="report_page_heading">Report a Civic Issue</h2>
+            <p style="font-size: 0.88rem; color: var(--text-muted);" data-i18n="report_page_sub">Help us build a cleaner, safer, and more sustainable city.</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div id="submit-error" style="display: none; padding: 0.85rem; border-radius: var(--radius-md); background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); font-size: 0.88rem; margin-bottom: 1.25rem;"></div>
+
+          <form id="report-issue-form">
+            
+            <div class="form-group">
+              <label class="form-label" for="report-title">
+                Issue Title <span style="color: var(--text-light); font-weight: 400;">(Auto-generated if left blank)</span>
+              </label>
+              <input type="text" id="report-title" class="form-input" placeholder="e.g. Large pothole on main road causing hazard">
+            </div>
+
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <label class="form-label" for="report-desc">Description <span style="color: var(--danger);">*</span></label>
+                <span id="char-counter" style="font-size: 0.78rem; color: var(--text-light);">0 / 2000 chars (min 20)</span>
+              </div>
+              <textarea id="report-desc" class="form-textarea" placeholder="Describe the civic issue in detail (location landmarks, safety risk, vehicle or pedestrian impact)..." required minlength="20" maxlength="2000"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="report-category">Category <span style="color: var(--text-light); font-weight: 400;">(Optional — Simulated AI will categorize if unsure)</span></label>
+              <select id="report-category" class="form-select">
+                <option value="">-- Let AI Suggest Category --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <label class="form-label" for="report-location">Location / Landmark <span style="color: var(--danger);">*</span></label>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-use-gps" style="padding: 0.25rem 0.65rem; font-size: 0.78rem;" title="Detect GPS or Area Location">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                  <span>Use My Location</span>
+                </button>
+              </div>
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+                <input type="text" id="report-location" class="form-input" style="flex: 1;" placeholder="Enter street, landmark, or search..." required autocomplete="off">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-search-location" style="padding: 0.5rem 0.85rem;" title="Locate on map">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <span>Locate</span>
+                </button>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; align-items: center;">
+                <span style="font-size: 0.74rem; color: var(--text-muted);">Quick pick:</span>
+                <button type="button" class="location-chip" data-lat="17.4156" data-lng="78.4750" data-loc="Banjara Hills, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Banjara Hills</button>
+                <button type="button" class="location-chip" data-lat="17.4483" data-lng="78.3915" data-loc="Hitech City, Madhapur"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Hitech City</button>
+                <button type="button" class="location-chip" data-lat="17.3616" data-lng="78.4747" data-loc="Charminar, Old City"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Charminar</button>
+                <button type="button" class="location-chip" data-lat="17.4399" data-lng="78.4983" data-loc="Secunderabad Clock Tower"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Secunderabad</button>
+              </div>
+              <div id="location-status-msg" style="display: none; font-size: 0.78rem; padding: 0.35rem 0.6rem; border-radius: var(--radius-sm); margin-top: 0.4rem;"></div>
+            </div>
+
+            <!-- Optional Photo Upload Dropzone (FR-11) -->
+            <div class="form-group">
+              <label class="form-label">Upload Photo <span style="color: var(--text-light); font-weight: 400;">(Optional, Max 5MB, JPG/PNG/WebP)</span></label>
+              <div class="photo-dropzone" id="photo-dropzone-box" onclick="document.getElementById('report-photo-input').click()">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--interactive-blue); margin-bottom: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main);">Click to upload or drag and drop</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">JPG, PNG, WebP (Max 5MB)</div>
+              </div>
+              <input type="file" id="report-photo-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
+              
+              <div id="photo-preview-container" style="display: none; align-items: center; gap: 0.75rem; margin-top: 0.75rem; padding: 0.5rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                <img id="photo-preview-img" style="width: 54px; height: 54px; object-fit: cover; border-radius: var(--radius-sm);">
+                <div style="flex: 1; overflow: hidden;">
+                  <div id="photo-preview-name" style="font-size: 0.82rem; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"></div>
+                  <div id="photo-preview-size" style="font-size: 0.75rem; color: var(--text-muted);"></div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="clearPhoto()" aria-label="Remove photo" style="color: var(--danger); display: inline-flex; align-items: center; justify-content: center; padding: 0.35rem 0.55rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="btn-submit-report" style="width: 100%; padding: 0.85rem; font-size: 1.05rem; margin-top: 1rem;">
+              Submit Issue
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Map & Tips (Screen 2 Right) -->
+      <div>
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <strong>Pin Issue Location</strong>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Drag marker or click map to locate</div>
+            </div>
+            <div class="map-view-toggle">
+              <button type="button" class="map-toggle-btn active" id="btn-view-street" title="Standard Streets Map">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                <span>Streets</span>
+              </button>
+              <button type="button" class="map-toggle-btn" id="btn-view-satellite" title="High-Resolution Satellite View">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                <span>Satellite</span>
+              </button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0.75rem;">
+            <div id="map" class="map-container"></div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; justify-content: space-between;">
+              <span>Lat: <span id="display-lat">17.4201</span>, Lng: <span id="display-lng">78.4485</span></span>
+              <span id="location-verified-tag" class="badge badge-resolved">Verified Pin</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="background: #FFFFFF;">
+          <div class="card-header" style="background: var(--bg-main);">
+            <strong style="color: var(--primary-deep);">Tips for a good report</strong>
+          </div>
+          <div class="card-body" style="font-size: 0.88rem; line-height: 1.6;">
+            <div style="display: flex; gap: 0.65rem; margin-bottom: 0.65rem; align-items: flex-start;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:4px;" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Add a clear and descriptive title</strong> describing the physical issue</span>
+            </div>
+            <div style="display: flex; gap: 0.65rem; margin-bottom: 0.65rem; align-items: flex-start;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:4px;" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Include exact location</strong> with nearby prominent landmarks</span>
+            </div>
+            <div style="display: flex; gap: 0.65rem; margin-bottom: 0.65rem; align-items: flex-start;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:4px;" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Upload a clear photo</strong> showing the scale of the defect</span>
+            </div>
+            <div style="display: flex; gap: 0.65rem; align-items: flex-start;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:4px;" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Provide safety risk details</strong> (e.g. sparking wires, crater depth)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Privacy Notice Modal (Mandatory PRD FR-03, FR-14) -->
+  <div class="modal-overlay" id="privacy-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <strong style="font-size: 1.1rem; color: var(--primary-deep);">Citizen Privacy Notice & Acknowledgement</strong>
+      </div>
+      <div class="modal-body" style="font-size: 0.88rem; line-height: 1.6;">
+        <p><strong>Civic Resolve AI (Version 1.0)</strong></p>
+        <p style="margin-top: 0.5rem; color: var(--text-muted);">
+          Before submitting civic reports, please acknowledge the prototype terms:
+        </p>
+        <ul style="margin: 0.75rem 0 0.75rem 1.25rem; color: var(--text-muted);">
+          <li>Only synthetic or non-sensitive public civic issue details should be submitted. <strong>Do not submit real personal phone numbers, Aadhaar, or private IDs.</strong></li>
+          <li>Your submitted description and location will be analyzed by simulated AI for heuristic priority scoring and municipal routing.</li>
+          <li>Civic Resolve AI is a 24-hour hackathon prototype and not an official emergency service or authorized municipal agency. For emergency safety risks, dial 112.</li>
+        </ul>
+        <div style="margin-top: 1rem; padding: 0.75rem; background: var(--pale-blue-surface); border-radius: var(--radius-sm); border: 1px solid var(--pale-blue-border);">
+          <label style="display: flex; align-items: center; gap: 0.65rem; font-weight: 600; cursor: pointer;">
+            <input type="checkbox" id="privacy-check" required>
+            <span>I have read and acknowledge this notice (నేను ఈ నోటీసును చదివి అంగీకరిస్తున్నాను)</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btn-agree-privacy" disabled>I Agree & Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script>
+    let map = null;
+    let marker = null;
+    let streetLayer = null;
+    let satelliteLayer = null;
+    let currentMapMode = 'street';
+    let selectedPhotoFile = null;
+    let currentLat = 17.4201;
+    let currentLng = 78.4485;
+
+    // Stable idempotency key for this session submission
+    const idempotencyKey = 'cli-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Report page requires auth (any role)
+      if (!CivicAuth.requireAuth()) return;
+      CivicAuth.bootNav();
+
+      // Check Privacy Acknowledgement
+      const acknowledged = localStorage.getItem('civic_resolve_privacy_acknowledged') || localStorage.getItem('civic_sync_privacy_acknowledged');
+      if (!acknowledged) {
+        document.getElementById('privacy-modal').classList.add('active');
+      }
+
+      // Load Categories
+      try {
+        const catRes = await CivicAPI.request('/api/reports/categories');
+        const select = document.getElementById('report-category');
+        for (const cat of catRes.categories) {
+          const opt = document.createElement('option');
+          opt.value = cat.id;
+          opt.textContent = `${cat.name} (${cat.department_name})`;
+          select.appendChild(opt);
+        }
+      } catch (e) {
+        console.warn('Category load error:', e);
+      }
+
+      // Initialize Leaflet Map (Hyderabad Default Center)
+      initMap(currentLat, currentLng);
+    });
+
+    // Privacy Modal handler
+    document.getElementById('privacy-check').addEventListener('change', (e) => {
+      document.getElementById('btn-agree-privacy').disabled = !e.target.checked;
+    });
+
+    document.getElementById('btn-agree-privacy').addEventListener('click', () => {
+      localStorage.setItem('civic_resolve_privacy_acknowledged', '1.0');
+      localStorage.setItem('civic_sync_privacy_acknowledged', '1.0');
+      document.getElementById('privacy-modal').classList.remove('active');
+    });
+
+    // Character Counter
+    document.getElementById('report-desc').addEventListener('input', (e) => {
+      const len = e.target.value.length;
+      document.getElementById('char-counter').textContent = `${len} / 2000 chars (min 20)`;
+      if (len < 20) {
+        document.getElementById('char-counter').style.color = 'var(--danger)';
+      } else {
+        document.getElementById('char-counter').style.color = 'var(--text-light)';
+      }
+    });
+
+    // Map & Geocoding Engine
+    let reverseGeocodeTimer = null;
+
+    function reverseGeocode(lat, lng) {
+      clearTimeout(reverseGeocodeTimer);
+      reverseGeocodeTimer = setTimeout(async () => {
+        try {
+          const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.display_name) {
+              const addr = data.address || {};
+              const parts = [
+                addr.road || addr.pedestrian || addr.suburb || addr.neighbourhood,
+                addr.city || addr.town || addr.county || 'Hyderabad'
+              ].filter(Boolean);
+              const label = parts.length > 0 ? parts.join(', ') : data.display_name.split(',').slice(0, 3).join(',');
+              document.getElementById('report-location').value = label;
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Reverse geocode error, using pin fallback:', e);
+        }
+        const locInput = document.getElementById('report-location');
+        if (!locInput.value || locInput.value.startsWith('GPS Pin:') || locInput.value.includes('Dropped Pin')) {
+          locInput.value = `Dropped Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        }
+      }, 350);
+    }
+
+    async function searchLocation(query) {
+      if (!query || query.trim().length === 0) return;
+      const q = query.trim();
+      const searchBtn = document.getElementById('btn-search-location');
+      const originalHtml = searchBtn.innerHTML;
+      searchBtn.disabled = true;
+      searchBtn.innerHTML = '<span>Searching...</span>';
+
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`);
+        if (resp.ok) {
+          const results = await resp.json();
+          if (results && results.length > 0) {
+            const item = results[0];
+            const lat = parseFloat(item.lat);
+            const lng = parseFloat(item.lon);
+            map.flyTo([lat, lng], 16, { duration: 1.2 });
+            marker.setLatLng([lat, lng]);
+            updateCoordinates(lat, lng, false);
+            showLocationStatus(`Located: ${item.display_name.split(',').slice(0, 2).join(',')}`, 'success');
+            searchBtn.innerHTML = originalHtml;
+            searchBtn.disabled = false;
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Search geocode error:', e);
+      }
+
+      // Built-in Municipal Landmarks fallback
+      const knownLandmarks = {
+        'banjara hills': [17.4156, 78.4750],
+        'hitech city': [17.4483, 78.3915],
+        'madhapur': [17.4483, 78.3915],
+        'charminar': [17.3616, 78.4747],
+        'secunderabad': [17.4399, 78.4983],
+        'kukatpally': [17.4875, 78.3953],
+        'gachibowli': [17.4401, 78.3489],
+        'jubilee hills': [17.4319, 78.4073],
+        'ameerpet': [17.4375, 78.4483]
+      };
+
+      const match = Object.keys(knownLandmarks).find(k => q.toLowerCase().includes(k));
+      if (match) {
+        const [lat, lng] = knownLandmarks[match];
+        map.flyTo([lat, lng], 16, { duration: 1.2 });
+        marker.setLatLng([lat, lng]);
+        updateCoordinates(lat, lng, false);
+        showLocationStatus(`Located ${match.toUpperCase()}`, 'success');
+      } else {
+        showLocationStatus('Could not find exact address. Drag the map pin to position precisely.', 'warning');
+      }
+      searchBtn.innerHTML = originalHtml;
+      searchBtn.disabled = false;
+    }
+
+    function showLocationStatus(msg, type = 'info') {
+      const el = document.getElementById('location-status-msg');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+      if (type === 'success') {
+        el.style.background = '#ECFDF5';
+        el.style.color = '#065F46';
+      } else if (type === 'warning') {
+        el.style.background = '#FEF3C7';
+        el.style.color = '#92400E';
+      } else {
+        el.style.background = '#EFF6FF';
+        el.style.color = '#1E40AF';
+      }
+      setTimeout(() => {
+        el.style.display = 'none';
+      }, 5000);
+    }
+
+    // Map Mode Switcher (Street / Satellite)
+    function setMapMode(mode) {
+      if (!map || mode === currentMapMode) return;
+      currentMapMode = mode;
+      const streetBtn = document.getElementById('btn-view-street');
+      const satBtn = document.getElementById('btn-view-satellite');
+
+      if (mode === 'satellite') {
+        if (streetLayer && map.hasLayer(streetLayer)) map.removeLayer(streetLayer);
+        if (satelliteLayer && !map.hasLayer(satelliteLayer)) map.addLayer(satelliteLayer);
+        if (satBtn) satBtn.classList.add('active');
+        if (streetBtn) streetBtn.classList.remove('active');
+      } else {
+        if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+        if (streetLayer && !map.hasLayer(streetLayer)) map.addLayer(streetLayer);
+        if (streetBtn) streetBtn.classList.add('active');
+        if (satBtn) satBtn.classList.remove('active');
+      }
+
+      setTimeout(() => {
+        document.querySelectorAll('.leaflet-control-attribution, .leaflet-bottom.leaflet-right').forEach(el => el.remove());
+      }, 50);
+    }
+
+    // Map Initialization
+    function initMap(lat, lng) {
+      if (map) return;
+      map = L.map('map', { 
+        attributionControl: false,
+        zoomControl: true 
+      }).setView([lat, lng], 14);
+
+      if (map.attributionControl) {
+        map.attributionControl.remove();
+      }
+
+      // Streets Tile Layer (OpenStreetMap)
+      streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: ''
+      });
+
+      // Satellite Imagery Tile Layer (Esri / ArcGIS World Imagery)
+      satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: ''
+      });
+
+      // Default to Streets
+      streetLayer.addTo(map);
+
+      setTimeout(() => {
+        document.querySelectorAll('.leaflet-control-attribution, .leaflet-bottom.leaflet-right').forEach(el => el.remove());
+      }, 50);
+
+      marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+      marker.on('dragend', function (e) {
+        const pos = marker.getLatLng();
+        updateCoordinates(pos.lat, pos.lng, true);
+      });
+
+      map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        updateCoordinates(e.latlng.lat, e.latlng.lng, true);
+      });
+
+      setTimeout(() => {
+        if (map) map.invalidateSize();
+      }, 250);
+
+      window.addEventListener('resize', () => {
+        if (map) map.invalidateSize();
+      });
+
+      // Wire up street / satellite buttons
+      const btnStreet = document.getElementById('btn-view-street');
+      const btnSat = document.getElementById('btn-view-satellite');
+      if (btnStreet) btnStreet.addEventListener('click', () => setMapMode('street'));
+      if (btnSat) btnSat.addEventListener('click', () => setMapMode('satellite'));
+    }
+
+    function updateCoordinates(lat, lng, shouldReverse = true) {
+      currentLat = parseFloat(lat.toFixed(6));
+      currentLng = parseFloat(lng.toFixed(6));
+      document.getElementById('display-lat').textContent = currentLat;
+      document.getElementById('display-lng').textContent = currentLng;
+
+      if (shouldReverse) {
+        reverseGeocode(currentLat, currentLng);
+      }
+    }
+
+    // GPS "Use My Location"
+    document.getElementById('btn-use-gps').addEventListener('click', () => {
+      const gpsBtn = document.getElementById('btn-use-gps');
+      const originalHtml = gpsBtn.innerHTML;
+      gpsBtn.disabled = true;
+      gpsBtn.innerHTML = '<span>Locating...</span>';
+
+      const applyLocation = (lat, lng, label) => {
+        map.flyTo([lat, lng], 16, { duration: 1.2 });
+        marker.setLatLng([lat, lng]);
+        updateCoordinates(lat, lng, false);
+        if (label) {
+          document.getElementById('report-location').value = label;
+        } else {
+          reverseGeocode(lat, lng);
+        }
+        gpsBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Located</span>';
+        setTimeout(() => {
+          gpsBtn.innerHTML = originalHtml;
+          gpsBtn.disabled = false;
+        }, 2000);
+      };
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            applyLocation(pos.coords.latitude, pos.coords.longitude);
+          },
+          (err) => {
+            console.warn('Geolocation error:', err.message);
+            // Fallback to IP geolocation or central hub
+            fetch('https://ipapi.co/json/')
+              .then(res => res.json())
+              .then(data => {
+                if (data && data.latitude && data.longitude) {
+                  const place = [data.city, data.region].filter(Boolean).join(', ') || 'Current Location';
+                  applyLocation(data.latitude, data.longitude, place);
+                } else {
+                  applyLocation(17.4201, 78.4485, 'Banjara Hills, Hyderabad');
+                  showLocationStatus('GPS permission blocked. Centered to central hub — adjust pin as needed.', 'info');
+                }
+              })
+              .catch(() => {
+                applyLocation(17.4201, 78.4485, 'Banjara Hills, Hyderabad');
+                showLocationStatus('GPS permission blocked. Centered to central hub — adjust pin as needed.', 'info');
+              });
+          },
+          { timeout: 6000, enableHighAccuracy: true, maximumAge: 60000 }
+        );
+      } else {
+        applyLocation(17.4201, 78.4485, 'Banjara Hills, Hyderabad');
+      }
+    });
+
+    // Search button and Enter key
+    document.getElementById('btn-search-location').addEventListener('click', () => {
+      searchLocation(document.getElementById('report-location').value);
+    });
+
+    document.getElementById('report-location').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchLocation(e.target.value);
+      }
+    });
+
+    // Quick location chips
+    document.querySelectorAll('.location-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const lat = parseFloat(chip.dataset.lat);
+        const lng = parseFloat(chip.dataset.lng);
+        const loc = chip.dataset.loc;
+        map.flyTo([lat, lng], 16, { duration: 1 });
+        marker.setLatLng([lat, lng]);
+        updateCoordinates(lat, lng, false);
+        document.getElementById('report-location').value = loc;
+        showLocationStatus(`Set location to ${loc}`, 'success');
+      });
+    });
+
+    // Photo input handling
+    document.getElementById('report-photo-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5 MB limit. Please select a smaller photo.');
+        e.target.value = '';
+        return;
+      }
+
+      selectedPhotoFile = file;
+      document.getElementById('photo-preview-name').textContent = file.name;
+      document.getElementById('photo-preview-size').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+      
+      const reader = new FileReader();
+      reader.onload = (re) => {
+        document.getElementById('photo-preview-img').src = re.target.result;
+        document.getElementById('photo-preview-container').style.display = 'flex';
+        document.getElementById('photo-dropzone-box').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function clearPhoto() {
+      selectedPhotoFile = null;
+      document.getElementById('report-photo-input').value = '';
+      document.getElementById('photo-preview-container').style.display = 'none';
+      document.getElementById('photo-dropzone-box').style.display = 'block';
+    }
+
+    // Submit Report Form
+    document.getElementById('report-issue-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('submit-error');
+      errBox.style.display = 'none';
+
+      const title = document.getElementById('report-title').value.trim();
+      const description = document.getElementById('report-desc').value.trim();
+      const categoryId = document.getElementById('report-category').value;
+      const locationText = document.getElementById('report-location').value.trim();
+
+      if (description.length < 20) {
+        errBox.textContent = 'Description must be at least 20 characters long.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      const submitBtn = document.getElementById('btn-submit-report');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Analyzing and Saving Report...';
+
+      try {
+        // Step 1: Submit Report (Always persists first per PRD Section 1)
+        const reportRes = await CivicAPI.request('/api/reports', {
+          method: 'POST',
+          body: JSON.stringify({
+            title,
+            description,
+            categoryId: categoryId || null,
+            locationText,
+            latitude: currentLat,
+            longitude: currentLng,
+            idempotencyKey,
+            privacyNoticeAcknowledged: true
+          })
+        });
+
+        const createdReport = reportRes.report;
+
+        // Step 2: Upload photo if selected (Photo failure never rolls back report)
+        if (selectedPhotoFile && createdReport) {
+          try {
+            const formData = new FormData();
+            formData.append('photo', selectedPhotoFile);
+            await fetch(`/api/reports/${createdReport.id}/photos`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${CivicAuth.getToken()}`
+              },
+              body: formData
+            });
+          } catch (uploadErr) {
+            console.warn('Photo upload failed, report preserved:', uploadErr);
+          }
+        }
+
+        // Store analysis result temporarily in sessionStorage for Screen 3
+        sessionStorage.setItem('last_submitted_report', JSON.stringify({
+          report: createdReport,
+          analysis: reportRes.analysis,
+          warning: reportRes.warning
+        }));
+
+        // Redirect to AI Analysis Result Screen (Screen 3)
+        window.location.href = `/ai-result?id=${createdReport.id}`;
+
+      } catch (err) {
+        errBox.textContent = err.message || 'Submission failed. Please verify your connection.';
+        errBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Issue';
+      }
+    });
+  </script>
+</body>
+</html>
