@@ -222,13 +222,15 @@
         reportId = params.get('id');
       }
 
+      const user = CivicAuth.getUser();
+      const roleHome = (user && user.role) ? CivicAuth.getRoleDashboard(user.role) : '/dashboard';
+
       if (!reportId) {
-        window.location.href = '/dashboard';
+        window.location.href = roleHome;
         return;
       }
 
       // If user is admin, change back link
-      const user = CivicAuth.getUser();
       if (user && user.role === 'admin') {
         document.getElementById('btn-back-dashboard').href = '/admin';
         document.getElementById('btn-back-dashboard').textContent = '← Back to Admin Queues';
@@ -247,7 +249,8 @@
         renderReport(res);
       } catch (err) {
         alert('Failed to load report: ' + err.message);
-        window.location.href = '/dashboard';
+        const user = CivicAuth.getUser();
+        window.location.href = (user && user.role) ? CivicAuth.getRoleDashboard(user.role) : '/dashboard';
       }
     }
 

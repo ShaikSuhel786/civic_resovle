@@ -18,8 +18,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Restore original client request path if altered by Vercel rewrites
 app.use((req, res, next) => {
   const matched = req.headers['x-matched-path'];
-  if (matched && (req.url.startsWith('/api/index') || req.url === '/api' || req.url === '/api/')) {
-    req.url = matched;
+  if (matched) {
+    if (req.url.startsWith('/api/index') || req.url === '/api' || req.url === '/api/' || req.url.includes('[...path]') || (!req.url.startsWith('/api/') && matched.startsWith('/api/'))) {
+      req.url = matched;
+    }
   }
   next();
 });
@@ -73,25 +75,29 @@ app.get('/report.html', (req, res) => res.sendFile(path.join(publicDir, 'report.
 app.get('/ai-result', (req, res) => res.sendFile(path.join(publicDir, 'ai-result.html')));
 app.get('/ai-result.html', (req, res) => res.sendFile(path.join(publicDir, 'ai-result.html')));
 
-app.get('/dashboard', (req, res) => res.sendFile(path.join(publicDir, 'citizen-dashboard.html')));
-app.get('/dashboard.html', (req, res) => res.sendFile(path.join(publicDir, 'citizen-dashboard.html')));
-app.get('/citizen-dashboard', (req, res) => res.sendFile(path.join(publicDir, 'citizen-dashboard.html')));
-app.get('/citizen-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, 'citizen-dashboard.html')));
+const citizenDashboardFile = fs.existsSync(path.join(publicDir, 'dashboard.html')) ? 'dashboard.html' : 'citizen-dashboard.html';
+const adminDashboardFile = fs.existsSync(path.join(publicDir, 'admin.html')) ? 'admin.html' : 'admin-dashboard.html';
+const staffDashboardFile = fs.existsSync(path.join(publicDir, 'staff.html')) ? 'staff.html' : 'staff-dashboard.html';
+
+app.get('/dashboard', (req, res) => res.sendFile(path.join(publicDir, citizenDashboardFile)));
+app.get('/dashboard.html', (req, res) => res.sendFile(path.join(publicDir, citizenDashboardFile)));
+app.get('/citizen-dashboard', (req, res) => res.sendFile(path.join(publicDir, citizenDashboardFile)));
+app.get('/citizen-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, citizenDashboardFile)));
 
 app.get('/reports', (req, res) => res.sendFile(path.join(publicDir, 'report-detail.html')));
 app.get('/reports/:id', (req, res) => res.sendFile(path.join(publicDir, 'report-detail.html')));
 app.get('/report-detail', (req, res) => res.sendFile(path.join(publicDir, 'report-detail.html')));
 app.get('/report-detail.html', (req, res) => res.sendFile(path.join(publicDir, 'report-detail.html')));
 
-app.get('/admin', (req, res) => res.sendFile(path.join(publicDir, 'admin-dashboard.html')));
-app.get('/admin.html', (req, res) => res.sendFile(path.join(publicDir, 'admin-dashboard.html')));
-app.get('/admin-dashboard', (req, res) => res.sendFile(path.join(publicDir, 'admin-dashboard.html')));
-app.get('/admin-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, 'admin-dashboard.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(publicDir, adminDashboardFile)));
+app.get('/admin.html', (req, res) => res.sendFile(path.join(publicDir, adminDashboardFile)));
+app.get('/admin-dashboard', (req, res) => res.sendFile(path.join(publicDir, adminDashboardFile)));
+app.get('/admin-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, adminDashboardFile)));
 
-app.get('/staff', (req, res) => res.sendFile(path.join(publicDir, 'staff-dashboard.html')));
-app.get('/staff.html', (req, res) => res.sendFile(path.join(publicDir, 'staff-dashboard.html')));
-app.get('/staff-dashboard', (req, res) => res.sendFile(path.join(publicDir, 'staff-dashboard.html')));
-app.get('/staff-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, 'staff-dashboard.html')));
+app.get('/staff', (req, res) => res.sendFile(path.join(publicDir, staffDashboardFile)));
+app.get('/staff.html', (req, res) => res.sendFile(path.join(publicDir, staffDashboardFile)));
+app.get('/staff-dashboard', (req, res) => res.sendFile(path.join(publicDir, staffDashboardFile)));
+app.get('/staff-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, staffDashboardFile)));
 
 app.get('/analytics', (req, res) => res.sendFile(path.join(publicDir, 'analytics.html')));
 app.get('/analytics.html', (req, res) => res.sendFile(path.join(publicDir, 'analytics.html')));

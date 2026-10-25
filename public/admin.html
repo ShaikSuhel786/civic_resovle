@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    .queue-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .queue-table th {
+      background: var(--bg-main);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .queue-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+    .queue-table tr:hover {
+      background: #F8FAFC;
+    }
+    @media (max-width: 950px) {
+      .admin-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body style="visibility: hidden;">
+
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="admin-layout">
+      
+      <!-- Left Navigation / Admin Info -->
+      <div>
+        <div class="card glass-nav-card" style="padding: 1.25rem; margin-bottom: 1.5rem; text-align: center;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: #FFE4E6; color: var(--danger); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; border: 2px solid #FECDD3;">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </div>
+          <h3 id="admin-display-name" style="font-size: 1.05rem; color: var(--primary-deep); margin-bottom: 0.2rem;">Municipal Admin</h3>
+          <span class="badge badge-urgent">Administrator</span>
+        </div>
+
+        <div class="card glass-nav-card" style="padding: 0.5rem;">
+          <a href="#section-urgent" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem; color: var(--danger);">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Urgent Safety Queue (<span id="badge-urgent-cnt">0</span>)
+          </a>
+          <a href="#section-review" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem; color: #B45309;">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            Review Queue (<span id="badge-review-cnt">0</span>)
+          </a>
+          <a href="#section-blocked" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem;">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>
+            Blocked Issues (<span id="badge-blocked-cnt">0</span>)
+          </a>
+          <a href="#section-workload" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem;">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            Staff Workloads
+          </a>
+          <a href="/analytics" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem;">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            Public Analytics
+          </a>
+          <button onclick="CivicAuth.logout()" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; color: var(--danger);">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Action Queues -->
+      <div>
+        
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h1 style="font-size: 1.6rem; color: var(--primary-deep);">Operational Command Center</h1>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">Action-first triage: Urgent hazards, manual AI reviews, and mapped department assignments.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadQueues()">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            Refresh Queues
+          </button>
+        </div>
+
+        <!-- Operational Triage Filter Panel -->
+        <div class="reports-filter-panel" style="margin-bottom: 2rem;">
+          <div class="filter-row-primary">
+            <div class="smart-search-wrapper">
+              <span class="smart-search-icon">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="admin-triage-search" class="smart-search-input" placeholder="Search triage queues by title, ref #, keyword, location..." oninput="handleAdminSearch(this.value)">
+              <button type="button" class="search-clear-btn" id="admin-search-clear-btn" onclick="clearAdminSearch()" title="Clear search" aria-label="Clear search">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+              <span class="search-kbd-hint">/</span>
+            </div>
+
+            <div class="view-mode-toggle" id="admin-view-toggle">
+              <button type="button" class="view-mode-btn active" data-mode="table" onclick="setAdminViewMode('table')" title="Tabular Queue View">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                <span>Table</span>
+              </button>
+              <button type="button" class="view-mode-btn" data-mode="grid" onclick="setAdminViewMode('grid')" title="Executive Cards Grid">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Grid</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-row-secondary">
+            <!-- Quick Filter Pill Jumps -->
+            <div class="status-pill-track">
+              <a href="#section-urgent" class="status-pill-btn" style="color: var(--danger); display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Urgent (<span id="pill-urgent-cnt">0</span>)
+              </a>
+              <a href="#section-review" class="status-pill-btn" style="color: #B45309; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                Review (<span id="pill-review-cnt">0</span>)
+              </a>
+              <a href="#section-blocked" class="status-pill-btn" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>
+                Blocked (<span id="pill-blocked-cnt">0</span>)
+              </a>
+            </div>
+
+            <!-- Department Triage Filter -->
+            <div class="filter-dropdowns-group">
+              <select id="admin-dept-filter" class="filter-select" onchange="handleAdminDeptFilter(this.value)">
+                <option value="all">All Departments</option>
+                <option value="dept-roads">Roads & Traffic</option>
+                <option value="dept-sanitation">Sanitation</option>
+                <option value="dept-water">Water & Sewage</option>
+                <option value="dept-electrical">Street Lighting</option>
+                <option value="dept-safety">Public Safety</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. Urgent Safety Alerts & High-Priority Unassigned Queue (PRD FR-12 Priority 1) -->
+        <div class="card" id="section-urgent" style="margin-bottom: 2rem; border-color: #FECDD3; box-shadow: var(--shadow-sm);">
+          <div class="card-header" style="background: #FFF1F2; border-bottom-color: #FECDD3;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="badge badge-urgent">Priority 1</span>
+              <strong style="color: #9F1239; font-size: 1.05rem;">Urgent Safety Alerts & High-Priority Unassigned</strong>
+            </div>
+            <span style="font-size: 0.82rem; font-weight: 700; color: #9F1239;" id="cnt-urgent-badge">0 Issues</span>
+          </div>
+
+          <div id="container-urgent-table" style="overflow-x: auto;">
+            <table class="queue-table">
+              <thead>
+                <tr>
+                  <th>Ref ID / Title</th>
+                  <th>Department</th>
+                  <th>Priority</th>
+                  <th>Hazard Status</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-urgent-queue">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading urgent issues...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="container-urgent-grid" class="reports-grid-view" style="display: none; padding: 1.25rem;"></div>
+        </div>
+
+        <!-- 2. Reports Requiring Administrative Review (PRD FR-12 Priority 2) -->
+        <div class="card" id="section-review" style="margin-bottom: 2rem; border-color: #FDE68A;">
+          <div class="card-header" style="background: #FEF9C3; border-bottom-color: #FDE68A;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="badge badge-review">Priority 2</span>
+              <strong style="color: #854D0E; font-size: 1.05rem;">Reports Requiring Administrative Review</strong>
+            </div>
+            <span style="font-size: 0.82rem; font-weight: 700; color: #854D0E;" id="cnt-review-badge">0 Issues</span>
+          </div>
+
+          <div id="container-review-table" style="overflow-x: auto;">
+            <table class="queue-table">
+              <thead>
+                <tr>
+                  <th>Ref ID / Title</th>
+                  <th>Review Trigger</th>
+                  <th>Confidence</th>
+                  <th>Current State</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-review-queue">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading review queue...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="container-review-grid" class="reports-grid-view" style="display: none; padding: 1.25rem;"></div>
+        </div>
+
+        <!-- 3. Blocked Issues Queue (PRD FR-12 Priority 3) -->
+        <div class="card" id="section-blocked" style="margin-bottom: 2rem;">
+          <div class="card-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="badge badge-blocked">Priority 3</span>
+              <strong style="color: var(--primary-deep); font-size: 1.05rem;">Blocked Issues (Awaiting Field Dependencies)</strong>
+            </div>
+            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);" id="cnt-blocked-badge">0 Issues</span>
+          </div>
+
+          <div id="container-blocked-table" style="overflow-x: auto;">
+            <table class="queue-table">
+              <thead>
+                <tr>
+                  <th>Ref ID / Title</th>
+                  <th>Assigned Staff</th>
+                  <th>Reported Obstacle</th>
+                  <th>Last Updated</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-blocked-queue">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading blocked queue...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="container-blocked-grid" class="reports-grid-view" style="display: none; padding: 1.25rem;"></div>
+        </div>
+
+        <!-- 4. Staff Workload Summary by Department (PRD FR-12 Priority 4) -->
+        <div class="card" id="section-workload" style="margin-bottom: 2rem;">
+          <div class="card-header">
+            <strong style="color: var(--primary-deep); font-size: 1.05rem;">Department Workload & Staffing Distribution</strong>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;" id="dept-workload-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Staff Assignment Modal (FR-05, FR-07) -->
+  <div class="modal-overlay" id="assign-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <strong>Assign Report to Department Staff</strong>
+        <button class="btn btn-secondary btn-sm" onclick="closeAssignModal()" title="Close" aria-label="Close">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="assign-modal-error" style="display: none; padding: 0.5rem; background: var(--danger-bg); color: var(--danger); font-size: 0.82rem; margin-bottom: 0.75rem; border-radius: var(--radius-sm);"></div>
+        
+        <div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pale-blue-surface); border-radius: var(--radius-md); font-size: 0.85rem;">
+          <div>Report: <strong id="assign-report-ref">REP-...</strong></div>
+          <div style="margin-top: 0.2rem;">Mapped Department: <strong id="assign-report-dept" style="color: var(--interactive-blue);">Roads & Transport</strong></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="assign-staff-select">Active Staff Member <span style="color: var(--danger);">*</span></label>
+          <select id="assign-staff-select" class="form-select" required>
+            <option value="">-- Select Active Staff --</option>
+          </select>
+          <div class="form-help">Only active staff from the mapped department are permitted.</div>
+        </div>
+
+        <div class="form-group" id="reassign-reason-group" style="display: none;">
+          <label class="form-label" for="assign-reason-input">Reassignment Reason <span style="color: var(--danger);">*</span></label>
+          <textarea id="assign-reason-input" class="form-textarea" placeholder="Explain the reason for reassigning work..." rows="2"></textarea>
+          <div class="form-help">Required by audit policy for reassignments.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-assign" onclick="submitAssignment()">Confirm Assignment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Safety Hazard Flag Modal (FR-04, FR-14) -->
+  <div class="modal-overlay" id="hazard-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <strong style="color: var(--danger);">Clear Critical Safety Hazard Flag</strong>
+        <button class="btn btn-secondary btn-sm" onclick="closeHazardModal()" title="Close" aria-label="Close">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="hazard-modal-error" style="display: none; padding: 0.5rem; background: var(--danger-bg); color: var(--danger); font-size: 0.82rem; margin-bottom: 0.75rem; border-radius: var(--radius-sm);"></div>
+        
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Safety hazard flags cannot be cleared silently. An audited reason is required for administrative verification.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="hazard-clear-reason">Audited Reason for Clearing Flag <span style="color: var(--danger);">*</span></label>
+          <textarea id="hazard-clear-reason" class="form-textarea" placeholder="e.g. Field inspection confirmed wire is insulated telecom cable, not live electrical current..." rows="3" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeHazardModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="submitClearHazard()">Clear Hazard Flag</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script>
+    let activeAssignReport = null;
+    let activeHazardReportId = null;
+    let allAvailableStaff = [];
+    let currentUrgentQueue = [];
+    let currentReviewQueue = [];
+    let currentBlockedQueue = [];
+    let adminSearchQuery = '';
+    let adminDeptFilter = 'all';
+    let adminViewMode = localStorage.getItem('civic_admin_view_mode') || 'table';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!CivicAuth.requireAuth('admin')) return;
+      CivicAuth.bootNav();
+
+      const user = CivicAuth.getUser();
+      document.getElementById('admin-display-name').textContent = user.displayName;
+
+      // Initialize view mode
+      document.querySelectorAll('#admin-view-toggle .view-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === adminViewMode);
+      });
+
+      // Keyboard shortcut '/' to focus search
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          const searchInput = document.getElementById('admin-triage-search');
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+          }
+        }
+      });
+
+      await loadQueues();
+      await loadStaff();
+    });
+
+    async function loadStaff() {
+      try {
+        const res = await CivicAPI.request('/api/admin/staff');
+        allAvailableStaff = res.staff || [];
+      } catch (e) {
+        console.warn('Staff load error:', e);
+      }
+    }
+
+    async function loadQueues() {
+      try {
+        const res = await CivicAPI.request('/api/admin/queues');
+        currentUrgentQueue = res.urgentQueue || [];
+        currentReviewQueue = res.reviewQueue || [];
+        currentBlockedQueue = res.blockedQueue || [];
+
+        // Update pill counts
+        const pillUrgent = document.getElementById('pill-urgent-cnt');
+        if (pillUrgent) pillUrgent.textContent = currentUrgentQueue.length;
+        const pillReview = document.getElementById('pill-review-cnt');
+        if (pillReview) pillReview.textContent = currentReviewQueue.length;
+        const pillBlocked = document.getElementById('pill-blocked-cnt');
+        if (pillBlocked) pillBlocked.textContent = currentBlockedQueue.length;
+
+        applyAdminFilters();
+        renderDepartmentWorkload(res.departmentWorkload || []);
+      } catch (err) {
+        console.error('Queue load error:', err);
+      }
+    }
+
+    function setAdminViewMode(mode) {
+      adminViewMode = mode;
+      localStorage.setItem('civic_admin_view_mode', mode);
+      document.querySelectorAll('#admin-view-toggle .view-mode-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === mode);
+      });
+      applyAdminFilters();
+    }
+
+    function handleAdminSearch(val) {
+      adminSearchQuery = val.trim().toLowerCase();
+      const clearBtn = document.getElementById('admin-search-clear-btn');
+      if (clearBtn) clearBtn.style.display = adminSearchQuery ? 'flex' : 'none';
+      applyAdminFilters();
+    }
+
+    function clearAdminSearch() {
+      const input = document.getElementById('admin-triage-search');
+      if (input) input.value = '';
+      const clearBtn = document.getElementById('admin-search-clear-btn');
+      if (clearBtn) clearBtn.style.display = 'none';
+      adminSearchQuery = '';
+      applyAdminFilters();
+    }
+
+    function handleAdminDeptFilter(val) {
+      adminDeptFilter = val;
+      applyAdminFilters();
+    }
+
+    function applyAdminFilters() {
+      function match(r) {
+        if (adminDeptFilter !== 'all') {
+          if (r.department_id !== adminDeptFilter && r.department_name !== adminDeptFilter) {
+            return false;
+          }
+        }
+        if (adminSearchQuery) {
+          const q = adminSearchQuery;
+          const matchTitle = r.title && r.title.toLowerCase().includes(q);
+          const matchRef = r.reference_number && r.reference_number.toLowerCase().includes(q);
+          const matchLoc = r.location_text && r.location_text.toLowerCase().includes(q);
+          const matchStaff = r.staff_name && r.staff_name.toLowerCase().includes(q);
+          const matchDept = r.department_name && r.department_name.toLowerCase().includes(q);
+          if (!matchTitle && !matchRef && !matchLoc && !matchStaff && !matchDept) return false;
+        }
+        return true;
+      }
+
+      renderUrgentQueue(currentUrgentQueue.filter(match));
+      renderReviewQueue(currentReviewQueue.filter(match));
+      renderBlockedQueue(currentBlockedQueue.filter(match));
+    }
+
+    function openAssignModalById(reportId) {
+      const all = [...currentUrgentQueue, ...currentReviewQueue, ...currentBlockedQueue];
+      const r = all.find(x => x.id === reportId);
+      if (r) {
+        openAssignModal(r);
+      }
+    }
+
+    function renderUrgentQueue(items) {
+      document.getElementById('cnt-urgent-badge').textContent = `${items.length} Issues`;
+      document.getElementById('badge-urgent-cnt').textContent = items.length;
+      const tableContainer = document.getElementById('container-urgent-table');
+      const gridContainer = document.getElementById('container-urgent-grid');
+      const tbody = document.getElementById('table-urgent-queue');
+
+      if (adminViewMode === 'grid') {
+        tableContainer.style.display = 'none';
+        gridContainer.style.display = 'grid';
+
+        if (items.length === 0) {
+          gridContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No urgent safety hazards matching criteria.</div>';
+          return;
+        }
+
+        gridContainer.innerHTML = items.map(r => `
+          <div class="report-grid-card status-urgent" style="border-left: 4px solid var(--danger);">
+            <div class="report-grid-header">
+              <div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: var(--danger); text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.35rem;">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  ${r.department_name || 'Unassigned'}
+                </span>
+                <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">#${r.reference_number}</div>
+              </div>
+              <span class="badge badge-urgent">Priority ${r.priority_score}</span>
+            </div>
+            <div class="report-grid-body">
+              <a href="/reports/${r.id}" class="report-grid-title">${r.title}</a>
+              <div class="report-grid-meta">
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--interactive-blue); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span>${r.location_text}</span>
+                </div>
+                <div style="color: var(--danger); font-size: 0.76rem; font-weight: 600; display: flex; align-items: center; gap: 0.35rem;">
+                  ${r.safety_flag ? `
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    Verified Hazard Active
+                  ` : 'High Priority Queue'}
+                </div>
+              </div>
+            </div>
+            <div class="report-grid-footer">
+              ${r.safety_flag ? `<button class="btn btn-secondary btn-sm" onclick="openHazardModal('${r.id}')" style="font-size: 0.75rem;">Clear Flag</button>` : '<span></span>'}
+              <button class="btn btn-primary btn-sm" onclick="openAssignModalById('${r.id}')">Assign Staff</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        gridContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No urgent safety hazards or high-priority unassigned reports.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map(r => `
+          <tr>
+            <td>
+              <a href="/reports/${r.id}" style="font-weight: 700; color: var(--primary-deep);">${r.reference_number}</a>
+              <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.15rem;">${r.title}</div>
+              <div style="font-size: 0.75rem; color: var(--text-light); display: flex; align-items: center; gap: 0.3rem; margin-top: 0.15rem;">
+                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--interactive-blue); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span>${r.location_text}</span>
+              </div>
+            </td>
+            <td><strong>${r.department_name || 'Unmapped'}</strong></td>
+            <td>
+              <span class="badge badge-${r.priority_level.toLowerCase()}">${r.priority_level} (${r.priority_score})</span>
+            </td>
+            <td>
+              ${r.safety_flag ? `
+                <span class="badge badge-urgent" style="font-size: 0.72rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  Hazard Active
+                </span>
+                <button class="btn btn-secondary btn-sm" onclick="openHazardModal('${r.id}')" style="margin-top: 0.35rem; padding: 0.2rem 0.5rem; font-size: 0.72rem;">Clear Flag</button>
+              ` : '<span class="badge badge-low">No Hazard</span>'}
+            </td>
+            <td style="text-align: right;">
+              <button class="btn btn-primary btn-sm" onclick="openAssignModalById('${r.id}')">Assign</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function renderReviewQueue(items) {
+      document.getElementById('cnt-review-badge').textContent = `${items.length} Issues`;
+      document.getElementById('badge-review-cnt').textContent = items.length;
+      const tableContainer = document.getElementById('container-review-table');
+      const gridContainer = document.getElementById('container-review-grid');
+      const tbody = document.getElementById('table-review-queue');
+
+      if (adminViewMode === 'grid') {
+        tableContainer.style.display = 'none';
+        gridContainer.style.display = 'grid';
+
+        if (items.length === 0) {
+          gridContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No reports requiring review matching criteria.</div>';
+          return;
+        }
+
+        gridContainer.innerHTML = items.map(r => `
+          <div class="report-grid-card status-review" style="border-left: 4px solid #EAB308;">
+            <div class="report-grid-header">
+              <div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: #854D0E; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.35rem;">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  AI Review
+                </span>
+                <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">#${r.reference_number}</div>
+              </div>
+              <span class="badge badge-review">${r.confidence_score}% Confidence</span>
+            </div>
+            <div class="report-grid-body">
+              <a href="/reports/${r.id}" class="report-grid-title">${r.title}</a>
+              <div class="report-grid-meta">
+                <div style="color: #92400E; font-size: 0.78rem;">${r.review_reason || 'Manual review required'}</div>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--interactive-blue); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span>${r.location_text || 'Pending location'}</span>
+                </div>
+              </div>
+            </div>
+            <div class="report-grid-footer">
+              <span class="badge badge-submitted">${r.status}</span>
+              <button class="btn btn-secondary btn-sm" onclick="openAssignModalById('${r.id}')">Review & Assign</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        gridContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No reports currently requiring administrative review.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map(r => `
+          <tr>
+            <td>
+              <a href="/reports/${r.id}" style="font-weight: 700; color: var(--primary-deep);">${r.reference_number}</a>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">${r.title}</div>
+            </td>
+            <td style="color: #92400E; font-size: 0.82rem;">${r.review_reason || 'Manual review required'}</td>
+            <td>${r.confidence_score}%</td>
+            <td><span class="badge badge-submitted">${r.status}</span></td>
+            <td style="text-align: right;">
+              <button class="btn btn-secondary btn-sm" onclick="openAssignModalById('${r.id}')">Review & Assign</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function renderBlockedQueue(items) {
+      document.getElementById('cnt-blocked-badge').textContent = `${items.length} Issues`;
+      document.getElementById('badge-blocked-cnt').textContent = items.length;
+      const tableContainer = document.getElementById('container-blocked-table');
+      const gridContainer = document.getElementById('container-blocked-grid');
+      const tbody = document.getElementById('table-blocked-queue');
+
+      if (adminViewMode === 'grid') {
+        tableContainer.style.display = 'none';
+        gridContainer.style.display = 'grid';
+
+        if (items.length === 0) {
+          gridContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No blocked reports matching criteria.</div>';
+          return;
+        }
+
+        gridContainer.innerHTML = items.map(r => `
+          <div class="report-grid-card status-blocked" style="border-left: 4px solid var(--danger);">
+            <div class="report-grid-header">
+              <div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: var(--danger); text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.35rem;">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>
+                  Field Obstacle
+                </span>
+                <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">#${r.reference_number}</div>
+              </div>
+              <span class="badge badge-blocked">Blocked</span>
+            </div>
+            <div class="report-grid-body">
+              <a href="/reports/${r.id}" class="report-grid-title">${r.title}</a>
+              <div class="report-grid-meta">
+                <div style="color: var(--danger); font-size: 0.8rem; font-weight: 500; display: flex; align-items: center; gap: 0.35rem;">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  ${r.blocked_reason || 'Obstacle reported'}
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span>Staff: ${r.staff_name || 'Assigned Staff'}</span>
+                </div>
+              </div>
+            </div>
+            <div class="report-grid-footer">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(r.updated_at).toLocaleDateString()}</span>
+              <button class="btn btn-secondary btn-sm" onclick="openAssignModalById('${r.id}')">Reassign</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        gridContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No blocked reports.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map(r => `
+          <tr>
+            <td>
+              <a href="/reports/${r.id}" style="font-weight: 700; color: var(--primary-deep);">${r.reference_number}</a>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">${r.title}</div>
+            </td>
+            <td><strong>${r.staff_name || 'Assigned Staff'}</strong></td>
+            <td style="color: var(--danger); font-size: 0.82rem;">${r.blocked_reason || 'Obstacle reported'}</td>
+            <td style="font-size: 0.78rem; color: var(--text-light);">${new Date(r.updated_at).toLocaleDateString()}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-secondary btn-sm" onclick="openAssignModalById('${r.id}')">Reassign</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function renderDepartmentWorkload(depts) {
+      const grid = document.getElementById('dept-workload-grid');
+      grid.innerHTML = depts.map(d => `
+        <div style="padding: 1rem; border-radius: var(--radius-md); background: var(--bg-main); border: 1px solid var(--border-color);">
+          <strong style="color: var(--primary-deep); font-size: 0.95rem; display: block; margin-bottom: 0.35rem;">${d.department_name}</strong>
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.2rem;">
+            <span>Active Workload:</span>
+            <strong style="color: var(--interactive-blue);">${d.active_workload}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.2rem;">
+            <span>Resolved:</span>
+            <strong style="color: var(--success);">${d.resolved_count}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted);">
+            <span>Staff Count:</span>
+            <span>${d.staff_count} active</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Assign Modal
+    function openAssignModal(report) {
+      activeAssignReport = report;
+      document.getElementById('assign-report-ref').textContent = report.reference_number;
+      document.getElementById('assign-report-dept').textContent = report.department_name || 'Unmapped Category';
+      document.getElementById('assign-modal-error').style.display = 'none';
+
+      // Show reassignment reason if already assigned
+      const isReassign = Boolean(report.assigned_staff_id);
+      document.getElementById('reassign-reason-group').style.display = isReassign ? 'block' : 'none';
+
+      // Filter staff: ONLY active staff in report's department (FR-05)
+      const select = document.getElementById('assign-staff-select');
+      select.innerHTML = '<option value="">-- Select Active Staff --</option>';
+
+      const eligibleStaff = allAvailableStaff.filter(s => !report.department_id || s.department_id === report.department_id);
+      for (const s of eligibleStaff) {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.display_name} (${s.department_name}) — ${s.current_assigned_count} active tasks`;
+        if (s.id === report.assigned_staff_id) opt.selected = true;
+        select.appendChild(opt);
+      }
+
+      document.getElementById('assign-modal').classList.add('active');
+    }
+
+    function closeAssignModal() {
+      document.getElementById('assign-modal').classList.remove('active');
+    }
+
+    async function submitAssignment() {
+      const staffId = document.getElementById('assign-staff-select').value;
+      const reason = document.getElementById('assign-reason-input').value.trim();
+      const errBox = document.getElementById('assign-modal-error');
+
+      if (!staffId) {
+        errBox.textContent = 'Please select a staff member.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (activeAssignReport.assigned_staff_id && activeAssignReport.assigned_staff_id !== staffId && reason.length < 5) {
+        errBox.textContent = 'Reassignment requires an audited reason (minimum 5 characters).';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      try {
+        await CivicAPI.request(`/api/admin/reports/${activeAssignReport.id}/assign`, {
+          method: 'POST',
+          body: JSON.stringify({ staffId, reason })
+        });
+        closeAssignModal();
+        alert('Report assigned successfully.');
+        await loadQueues();
+      } catch (err) {
+        errBox.textContent = err.message || 'Assignment failed.';
+        errBox.style.display = 'block';
+      }
+    }
+
+    // Clear Hazard Modal
+    function openHazardModal(reportId) {
+      activeHazardReportId = reportId;
+      document.getElementById('hazard-modal-error').style.display = 'none';
+      document.getElementById('hazard-clear-reason').value = '';
+      document.getElementById('hazard-modal').classList.add('active');
+    }
+
+    function closeHazardModal() {
+      document.getElementById('hazard-modal').classList.remove('active');
+    }
+
+    async function submitClearHazard() {
+      const reason = document.getElementById('hazard-clear-reason').value.trim();
+      const errBox = document.getElementById('hazard-modal-error');
+
+      if (reason.length < 10) {
+        errBox.textContent = 'Please provide an audited reason of at least 10 characters.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      try {
+        await CivicAPI.request(`/api/admin/reports/${activeHazardReportId}/clear-safety-flag`, {
+          method: 'POST',
+          body: JSON.stringify({ reason })
+        });
+        closeHazardModal();
+        alert('Hazard flag cleared and recorded in audit log.');
+        await loadQueues();
+      } catch (err) {
+        errBox.textContent = err.message || 'Action failed.';
+        errBox.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
