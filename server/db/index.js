@@ -57,20 +57,21 @@ try {
         }
         prepare(sql) {
           const stmt = this._db.prepare(sql);
-          const normalize = (p) => {
-            if (p === undefined || p === null) return [];
-            if (Array.isArray(p)) return p;
-            return [p];
+          const normalize = (args) => {
+            if (args.length === 0) return [];
+            if (args.length === 1 && Array.isArray(args[0])) return args[0];
+            if (args.length === 1 && (args[0] === undefined || args[0] === null)) return [];
+            return args;
           };
           return {
-            all(params = []) {
-              return stmt.all(...normalize(params));
+            all(...args) {
+              return stmt.all(...normalize(args));
             },
-            get(params = []) {
-              return stmt.get(...normalize(params));
+            get(...args) {
+              return stmt.get(...normalize(args));
             },
-            run(params = []) {
-              const res = stmt.run(...normalize(params));
+            run(...args) {
+              const res = stmt.run(...normalize(args));
               return {
                 changes: res.changes,
                 lastInsertRowid: res.lastInsertRowid

@@ -9,30 +9,25 @@ const JWT_SECRET = process.env.SESSION_SECRET || 'civic_resolve_secure_session_s
 function requireAuth(req, res, next) {
   let userId = null;
 
-  // 1. Check Bearer token
+  // 1. Check Bearer token strictly
   const authHeader = req.headers['authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      userId = decoded.userId;
-    } catch (e) {
-      // Invalid token
-    }
-  }
-
-  // 2. Fallback to demo header for streamlined evaluator testing if configured
-  if (!userId && req.headers['x-demo-user-id']) {
-    userId = req.headers['x-demo-user-id'];
-  }
-
-  // 3. Fallback to query param or cookie for simple preview
-  if (!userId && req.query && req.query.demo_user_id) {
-    userId = req.query.demo_user_id;
-  }
-
-  if (!userId) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required. Invalid authorization header format.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || !decoded.userId) {
+      return res.status(401).json({ error: 'Invalid or expired session token.' });
+    }
+    userId = decoded.userId;
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid or expired session token.' });
   }
 
   // Look up profile in database and verify active state

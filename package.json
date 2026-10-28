@@ -7,7 +7,7 @@
     "start": "node server/index.js",
     "dev": "node server/index.js",
     "seed": "node scripts/seed.js",
-    "test": "node tests/workflow.test.js"
+    "test": "node tests/workflow.test.js && node tests/auth.test.js"
   },
   "repository": {
     "type": "git",

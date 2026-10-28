@@ -93,15 +93,47 @@ router.post('/register', (req, res) => {
   }
 });
 
-// Sign-in endpoint (Supports both real users and demo evaluator accounts)
+// Designated seeded demo accounts for prototype evaluation
+const SEEDED_DEMO_USER_IDS = new Set([
+  'usr-admin-01',
+  'usr-citizen-01',
+  'usr-citizen-02',
+  'usr-staff-roads',
+  'usr-staff-sanitation',
+  'usr-staff-electrical',
+  'usr-staff-water',
+  'usr-staff-publicworks'
+]);
+
+// Sign-in endpoint (Supports both real users and explicitly-enabled demo accounts)
 router.post('/login', (req, res) => {
-  const { email, password, demoUserId } = req.body;
+  const { email, password, demoUserId } = req.body || {};
 
   let user = null;
 
   if (demoUserId) {
-    user = db.get('SELECT * FROM profiles WHERE id = ? AND active = 1', [demoUserId]);
-  } else if (email) {
+    const isDemoLoginAllowed = process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEMO_LOGIN === 'true';
+    if (!isDemoLoginAllowed) {
+      return res.status(403).json({ error: 'Demo login is disabled in production environments.' });
+    }
+
+    if (typeof demoUserId !== 'string' || !SEEDED_DEMO_USER_IDS.has(demoUserId.trim())) {
+      return res.status(401).json({ error: 'Invalid demo user account.' });
+    }
+
+    user = db.get('SELECT * FROM profiles WHERE id = ? AND active = 1', [demoUserId.trim()]);
+    if (!user) {
+      return res.status(401).json({ error: 'Demo account not found or deactivated.' });
+    }
+  } else {
+    // Normal email + password sign-in
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ error: 'Email and password are required.' });
+    }
+    if (!password || typeof password !== 'string' || !password.trim()) {
+      return res.status(400).json({ error: 'Email and password are required.' });
+    }
+
     const cleanEmail = email.trim().toLowerCase();
     const altEmail = cleanEmail.includes('@civicresolve.demo') 
       ? cleanEmail.replace('@civicresolve.demo', '@civicsync.demo')
@@ -112,17 +144,14 @@ router.post('/login', (req, res) => {
       altEmail
     ]);
 
-    if (user && password) {
-      const match = user.password_hash ? bcrypt.compareSync(password, user.password_hash) : false;
-      const isDemoPass = ['DemoAdmin123!', 'DemoCitizen123!', 'DemoStaff123!', 'password', 'password123', 'admin'].includes(password);
-      if (!match && !isDemoPass) {
-        return res.status(401).json({ error: 'Invalid email or password.' });
-      }
+    if (!user || !user.password_hash) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
-  }
 
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid email or password.' });
+    const passwordMatches = bcrypt.compareSync(password, user.password_hash);
+    if (!passwordMatches) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
   }
 
   const token = jwt.sign(
@@ -226,12 +255,12 @@ router.put('/change-password', requireAuth, (req, res) => {
   const user = db.get('SELECT * FROM profiles WHERE id = ?', [req.user.id]);
   if (!user) return res.status(404).json({ error: 'User not found.' });
 
-  if (user.password_hash) {
-    const isCurrentValid = bcrypt.compareSync(currentPassword, user.password_hash);
-    const isDemoFallback = ['DemoAdmin123!', 'DemoCitizen123!', 'DemoStaff123!', 'password123'].includes(currentPassword);
-    if (!isCurrentValid && !isDemoFallback) {
-      return res.status(400).json({ error: 'Current password does not match.' });
-    }
+  if (!currentPassword || typeof currentPassword !== 'string') {
+    return res.status(400).json({ error: 'Current password is required.' });
+  }
+
+  if (!user.password_hash || !bcrypt.compareSync(currentPassword, user.password_hash)) {
+    return res.status(400).json({ error: 'Current password does not match.' });
   }
 
   const newHash = bcrypt.hashSync(newPassword, 10);
