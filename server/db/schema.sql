@@ -178,6 +178,23 @@ CREATE TABLE IF NOT EXISTS notification_jobs (
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- 13. Maintenance Schedules Table (PRD Section 4: Confirmed Maintenance Activities)
+CREATE TABLE IF NOT EXISTS maintenance_schedules (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    department_id TEXT REFERENCES departments(id) ON DELETE SET NULL,
+    department_name TEXT NOT NULL,
+    area TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Scheduled' CHECK(status IN ('Scheduled', 'In Progress', 'Completed', 'Delayed', 'Overdue')),
+    official_source TEXT,
+    description TEXT NOT NULL,
+    created_by TEXT REFERENCES profiles(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_reports_citizen ON reports(citizen_id);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
@@ -188,3 +205,6 @@ CREATE INDEX IF NOT EXISTS idx_reports_priority ON reports(priority_score DESC);
 CREATE INDEX IF NOT EXISTS idx_assignments_active ON assignments(report_id, staff_id, active);
 CREATE INDEX IF NOT EXISTS idx_report_events_report ON report_events(report_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id, read);
+CREATE INDEX IF NOT EXISTS idx_maint_dates ON maintenance_schedules(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_maint_status ON maintenance_schedules(status);
+CREATE INDEX IF NOT EXISTS idx_maint_dept ON maintenance_schedules(department_id);

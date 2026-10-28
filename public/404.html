@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found (404) — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .not-found-container {
+      min-height: calc(100vh - 160px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    .not-found-code {
+      font-size: 5rem;
+      font-weight: 800;
+      color: var(--primary-deep);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .not-found-desc {
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto 2rem auto;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    .destinations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      width: 100%;
+      max-width: 640px;
+      margin-top: 1.5rem;
+    }
+    .dest-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      text-decoration: none;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+    .dest-card:hover {
+      border-color: var(--interactive-blue);
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container not-found-container">
+    <div class="not-found-code">404</div>
+    <h1 style="font-size: 1.6rem; color: var(--primary-deep); margin-bottom: 0.75rem;">Page Not Found</h1>
+    <p class="not-found-desc">
+      The requested civic destination does not exist or has been moved. Unknown routes do not silently display the Home page.
+    </p>
+
+    <a href="/" class="btn btn-primary" style="padding: 0.75rem 1.75rem;">
+      ← Return to Civic Home
+    </a>
+
+    <div class="destinations-grid">
+      <a href="/transparency" class="dest-card">
+        <strong style="color: var(--interactive-blue); margin-bottom: 0.25rem;">City Impact & Transparency</strong>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Verified resolution rates & SLAs</span>
+      </a>
+      <a href="/maintenance" class="dest-card">
+        <strong style="color: var(--interactive-blue); margin-bottom: 0.25rem;">Maintenance Calendar</strong>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Scheduled municipal civil works</span>
+      </a>
+      <a href="/knowledge" class="dest-card">
+        <strong style="color: var(--interactive-blue); margin-bottom: 0.25rem;">Knowledge Center</strong>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Grounded municipal citations & FAQs</span>
+      </a>
+      <a href="/digital-twin" class="dest-card">
+        <strong style="color: var(--interactive-blue); margin-bottom: 0.25rem;">Civic Digital Twin</strong>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Geo-spatial map & signal directory</span>
+      </a>
+      <a href="/radar" class="dest-card">
+        <strong style="color: var(--interactive-blue); margin-bottom: 0.25rem;">Predictive Problem Radar</strong>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Recurring hotspot forecast models</span>
+      </a>
+      <a href="/report" class="dest-card">
+        <strong style="color: var(--interactive-blue); margin-bottom: 0.25rem;">Report an Issue</strong>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Submit a new civic complaint</span>
+      </a>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CivicAuth.bootNav();
+    });
+  </script>
+</body>
+</html>
+

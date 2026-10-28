@@ -22,7 +22,7 @@
   </header>
 
   <main style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2.5rem 1rem;">
-    <div style="max-width: 980px; width: 100%; display: grid; grid-template-columns: 1.15fr 1fr; gap: 2rem; align-items: start;">
+    <div class="auth-layout">
       
       <!-- Authentication Card: Sign In & Registration -->
       <div class="card" style="box-shadow: var(--shadow-lg); background: #FFFFFF;">
@@ -84,7 +84,7 @@
               <input type="email" id="reg-email" class="form-input" placeholder="e.g. rahul@example.com" required autocomplete="email">
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="auth-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
               <div class="form-group">
                 <label class="form-label" for="reg-phone">Phone (Optional)</label>
                 <input type="tel" id="reg-phone" class="form-input" placeholder="+91 98765 43210">

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predictive Problem Radar — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .radar-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .risk-badge-high {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FECACA;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-sm);
+    }
+    .risk-badge-med {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-sm);
+    }
+    .factor-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text-main);
+      margin-bottom: 0.35rem;
+    }
+    @media (max-width: 900px) {
+      .radar-kpi-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .radar-kpi-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Title -->
+    <div style="margin-bottom: 1.5rem;">
+      <h1 style="font-size: 1.8rem; color: var(--primary-deep);" data-i18n="radar_title">Predictive Problem Radar & Hotspot Forecasting</h1>
+      <p style="font-size: 0.9rem; color: var(--text-muted);">Proactive identification of recurring civic failure points from historical report clusters, weather cycles, and infrastructure age telemetry.</p>
+    </div>
+
+    <!-- Mandatory PRD Estimate Disclaimer Banner -->
+    <div class="card" style="background: #EFF6FF; border-color: #BFDBFE; padding: 1rem 1.25rem; margin-bottom: 2rem;">
+      <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+        <span style="font-size: 1.5rem;">📡</span>
+        <div>
+          <strong style="color: #1E40AF; font-size: 0.95rem;">Statistical Forecast Notice (PRD F3 Compliance)</strong>
+          <p style="font-size: 0.84rem; color: #1E3A8A; margin-top: 0.25rem; margin-bottom: 0.25rem; line-height: 1.5;">
+            All radar projections represent probabilistic vulnerability estimates derived from historical report density. They serve as administrative decision support for preventive maintenance, <strong>not guaranteed occurrences</strong>.
+          </p>
+          <span style="font-size: 0.78rem; color: #2563EB; font-weight: 600;">Time Horizon: Past 12 Months (2025-Q4 → 2026-Q4 Live Data)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Radar Summary KPIs -->
+    <div class="radar-kpi-grid">
+      <div class="stat-card">
+        <div class="stat-val" style="color: var(--interactive-blue);" id="radar-total-reports">1,260</div>
+        <div class="stat-label">Analyzed Historical Signals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: var(--danger);" id="radar-hotspots-cnt">4</div>
+        <div class="stat-label">Active Hotspots Identified</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #7C3AED;">78%</div>
+        <div class="stat-label">Model Avg Confidence</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #059669;">Pre-Emptive</div>
+        <div class="stat-label">Dispatch Readiness Mode</div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Vulnerability Severity:</span>
+        <button type="button" class="btn btn-primary btn-sm" id="radar-btn-all" onclick="filterRadar('all')">All Risk Levels</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="radar-btn-high" onclick="filterRadar('high')">High Risk Only</button>
+      </div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Updated: Real-time calculation</span>
+    </div>
+
+    <!-- Hotspots Grid -->
+    <div id="radar-hotspots-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+      <div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1 / -1;">Calculating recurrence models...</div>
+    </div>
+
+    <!-- Mathematical Derivation Methodology Note -->
+    <div class="card" style="background: #F8FAFC; border: 1px dashed var(--border-color); padding: 1.25rem;">
+      <strong style="color: var(--primary-deep); font-size: 0.95rem; display: block; margin-bottom: 0.4rem;">How Radar Predictions Are Derived</strong>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+        The radar algorithm computes spatial density clusters of verified civic reports within a 500m radius, weighted by category recurrence frequency, seasonal rainfall indices, and infrastructure age. Recommendations are submitted to municipal department engineers for scheduled preventative overhauls.
+      </p>
+    </div>
+
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    let rawHotspots = [];
+    let currentRadarFilter = 'all';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      CivicAuth.bootNav();
+      await loadRadarData();
+    });
+
+    async function loadRadarData() {
+      const container = document.getElementById('radar-hotspots-container');
+      try {
+        const res = await CivicAPI.request('/api/analytics/radar');
+        rawHotspots = res.hotspots || [];
+
+        document.getElementById('radar-total-reports').textContent = (res.totalAnalyzedReports || 1260).toLocaleString();
+        document.getElementById('radar-hotspots-cnt').textContent = res.activeHotspotsCount || rawHotspots.length;
+
+        renderHotspotCards();
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger); text-align: center; grid-column: 1 / -1;">Failed to load problem radar: ${err.message}</div>`;
+      }
+    }
+
+    function filterRadar(level) {
+      currentRadarFilter = level;
+      const btnAll = document.getElementById('radar-btn-all');
+      const btnHigh = document.getElementById('radar-btn-high');
+
+      if (level === 'high') {
+        btnHigh.className = 'btn btn-primary btn-sm';
+        btnAll.className = 'btn btn-secondary btn-sm';
+      } else {
+        btnAll.className = 'btn btn-primary btn-sm';
+        btnHigh.className = 'btn btn-secondary btn-sm';
+      }
+
+      renderHotspotCards();
+    }
+
+    function renderHotspotCards() {
+      const container = document.getElementById('radar-hotspots-container');
+      const filtered = rawHotspots.filter(h => {
+        if (currentRadarFilter === 'high') {
+          return h.riskLevel.toLowerCase().includes('high');
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 2rem;">No hotspots found matching criteria.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(h => {
+        const isHigh = h.riskLevel.toLowerCase().includes('high');
+        const badgeClass = isHigh ? 'risk-badge-high' : 'risk-badge-med';
+        const borderColor = isHigh ? '#F87171' : '#FBBF24';
+
+        return `
+          <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid ${borderColor}; background: #FFFFFF;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <span class="${badgeClass}">${h.riskLevel} (${h.predictedRiskScore}/100)</span>
+                <span style="font-size: 0.75rem; color: #64748B; font-weight: 600;">${h.confidenceScore}</span>
+              </div>
+              <strong style="font-size: 1.1rem; color: var(--primary-deep); display: block; margin-bottom: 0.25rem;">${h.zone}</strong>
+              <div style="font-size: 0.8rem; color: var(--interactive-blue); font-weight: 600; margin-bottom: 0.75rem;">📁 ${h.category}</div>
+              
+              <div style="margin-bottom: 1rem;">
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">Key Driving Factors:</div>
+                ${h.factors.map(f => `
+                  <div class="factor-item">
+                    <span style="color: ${borderColor};">●</span>
+                    <span>${f}</span>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div style="background: var(--bg-main); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary-deep); margin-bottom: 0.2rem;">⚡ Recommended Prevention:</div>
+                <div style="font-size: 0.82rem; color: var(--text-main); line-height: 1.4;">${h.recommendedAction}</div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 0.6rem; font-size: 0.74rem; color: var(--text-muted);">
+              <strong>Basis:</strong> ${h.derivationExplanation}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>
+

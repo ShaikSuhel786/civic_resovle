@@ -37,6 +37,8 @@ app.use('/uploads', express.static(uploadDir));
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/reports', require('./routes/reports'));
+app.use('/api/reports/public/maintenance', require('./routes/maintenance'));
+app.use('/api/maintenance', require('./routes/maintenance'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/staff', require('./routes/staff'));
 app.use('/api/notifications', require('./routes/notifications'));
@@ -99,18 +101,50 @@ app.get('/staff.html', (req, res) => res.sendFile(path.join(publicDir, staffDash
 app.get('/staff-dashboard', (req, res) => res.sendFile(path.join(publicDir, staffDashboardFile)));
 app.get('/staff-dashboard.html', (req, res) => res.sendFile(path.join(publicDir, staffDashboardFile)));
 
-app.get('/analytics', (req, res) => res.sendFile(path.join(publicDir, 'analytics.html')));
-app.get('/analytics.html', (req, res) => res.sendFile(path.join(publicDir, 'analytics.html')));
+// Feature A: Civic Transparency Scorecard (PRD F8)
+const transparencyFile = fs.existsSync(path.join(publicDir, 'transparency.html')) ? 'transparency.html' : 'analytics.html';
+app.get('/transparency', (req, res) => res.sendFile(path.join(publicDir, transparencyFile)));
+app.get('/transparency.html', (req, res) => res.sendFile(path.join(publicDir, transparencyFile)));
+app.get('/city-impact-transparency', (req, res) => res.sendFile(path.join(publicDir, transparencyFile)));
+app.get('/city-impact-transparency.html', (req, res) => res.sendFile(path.join(publicDir, transparencyFile)));
+app.get('/analytics', (req, res) => res.sendFile(path.join(publicDir, transparencyFile)));
+app.get('/analytics.html', (req, res) => res.sendFile(path.join(publicDir, transparencyFile)));
+
+// Feature B: Civic Digital Twin Geo Map (PRD F2)
+app.get('/digital-twin', (req, res) => res.sendFile(path.join(publicDir, 'digital-twin.html')));
+app.get('/digital-twin.html', (req, res) => res.sendFile(path.join(publicDir, 'digital-twin.html')));
+
+// Feature C: Civic Maintenance Calendar (PRD F8)
+app.get('/maintenance', (req, res) => res.sendFile(path.join(publicDir, 'maintenance.html')));
+app.get('/maintenance.html', (req, res) => res.sendFile(path.join(publicDir, 'maintenance.html')));
+app.get('/maintenance-calendar', (req, res) => res.sendFile(path.join(publicDir, 'maintenance.html')));
+app.get('/maintenance-calendar.html', (req, res) => res.sendFile(path.join(publicDir, 'maintenance.html')));
+
+// Feature D: AI Civic Knowledge Center (PRD Section 4)
+app.get('/knowledge', (req, res) => res.sendFile(path.join(publicDir, 'knowledge.html')));
+app.get('/knowledge.html', (req, res) => res.sendFile(path.join(publicDir, 'knowledge.html')));
+app.get('/knowledge-center', (req, res) => res.sendFile(path.join(publicDir, 'knowledge.html')));
+app.get('/knowledge-center.html', (req, res) => res.sendFile(path.join(publicDir, 'knowledge.html')));
+
+// Feature E: Predictive Problem Radar (PRD F3)
+app.get('/radar', (req, res) => res.sendFile(path.join(publicDir, 'radar.html')));
+app.get('/radar.html', (req, res) => res.sendFile(path.join(publicDir, 'radar.html')));
+app.get('/problem-radar', (req, res) => res.sendFile(path.join(publicDir, 'radar.html')));
+app.get('/problem-radar.html', (req, res) => res.sendFile(path.join(publicDir, 'radar.html')));
 
 app.get('/login', (req, res) => res.sendFile(path.join(publicDir, 'login.html')));
 app.get('/login.html', (req, res) => res.sendFile(path.join(publicDir, 'login.html')));
 
-// Fallback to index.html for client-side navigation
+// Unknown route handler - returns 404 status and dedicated 404 page (never silently serves index.html)
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found.' });
   }
-  res.sendFile(path.join(publicDir, 'index.html'));
+  const notFoundFile = path.join(publicDir, '404.html');
+  if (fs.existsSync(notFoundFile)) {
+    return res.status(404).sendFile(notFoundFile);
+  }
+  res.status(404).send('<h1>404 Not Found</h1><p>The requested civic page does not exist.</p>');
 });
 
 // Centralized error handler

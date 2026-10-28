@@ -58,6 +58,105 @@ if (Database) {
     // Ensure production user profile columns exist
     try { db.exec('ALTER TABLE profiles ADD COLUMN phone TEXT;'); } catch (_) {}
 
+    // Ensure maintenance_schedules table exists and is seeded with initial confirmed works
+    try {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS maintenance_schedules (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            department_id TEXT REFERENCES departments(id) ON DELETE SET NULL,
+            department_name TEXT NOT NULL,
+            area TEXT NOT NULL,
+            start_date TEXT NOT NULL,
+            end_date TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Scheduled' CHECK(status IN ('Scheduled', 'In Progress', 'Completed', 'Delayed', 'Overdue')),
+            official_source TEXT,
+            description TEXT NOT NULL,
+            created_by TEXT REFERENCES profiles(id) ON DELETE SET NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+
+      const mCount = db.prepare('SELECT count(*) as count FROM maintenance_schedules').get()?.count || 0;
+      if (mCount === 0) {
+        const initialMaintenance = [
+          {
+            id: 'maint-01',
+            title: 'Main Water Pipeline Replacement & Pressure Valve Overhaul',
+            department_id: 'dept-water',
+            department_name: 'Water & Drainage',
+            area: 'Banjara Hills, Road No. 12 to 14',
+            start_date: '2026-10-24',
+            end_date: '2026-11-04',
+            status: 'In Progress',
+            official_source: 'MW-2026-WTR-402',
+            description: 'Upgrading 600mm feeder pipeline with modern ductile iron pipes. Potential low pressure during night hours (11 PM - 4 AM).'
+          },
+          {
+            id: 'maint-02',
+            title: 'Arterial Road Milling & Asphalt Resurfacing',
+            department_id: 'dept-roads',
+            department_name: 'Roads & Transport',
+            area: 'Jubilee Hills Checkpost to Road 36',
+            start_date: '2026-11-02',
+            end_date: '2026-11-12',
+            status: 'Scheduled',
+            official_source: 'MW-2026-RDS-108',
+            description: 'Full depth asphalt resurfacing and stormwater catch-pit leveling. Evening lane diversions between 10 PM and 6 AM.'
+          },
+          {
+            id: 'maint-03',
+            title: 'High-Tension Substation & Streetlight Feeder Maintenance',
+            department_id: 'dept-electrical',
+            department_name: 'Electrical Services',
+            area: 'Madhapur Commercial Belt, Sector 2',
+            start_date: '2026-10-15',
+            end_date: '2026-10-22',
+            status: 'Delayed',
+            official_source: 'MW-2026-ELE-890',
+            description: 'Feeder cable replacement and automated LED timer switch installation. Work delayed due to specialized circuit breaker delivery.'
+          },
+          {
+            id: 'maint-04',
+            title: 'Primary Storm Drain Desilting & Culvert Clearing',
+            department_id: 'dept-sanitation',
+            department_name: 'Sanitation',
+            area: 'Ameerpet Metro Station Catchment',
+            start_date: '2026-10-01',
+            end_date: '2026-10-18',
+            status: 'Completed',
+            official_source: 'MW-2026-SAN-315',
+            description: 'Pre-monsoon deep silt removal from main outflow canal. Completed ahead of schedule.'
+          },
+          {
+            id: 'maint-05',
+            title: 'Heritage Walkway Curb Realignment & Tree Trimming',
+            department_id: 'dept-publicworks',
+            department_name: 'Public Works',
+            area: 'Old City Charminar Buffer Zone',
+            start_date: '2026-11-15',
+            end_date: '2026-11-25',
+            status: 'Scheduled',
+            official_source: 'MW-2026-PW-512',
+            description: 'Pedestrian paving repairs and structural pruning of overgrown boughs near overhead utility lines.'
+          }
+        ];
+
+        const insMaint = db.prepare(`
+          INSERT INTO maintenance_schedules (
+            id, title, department_id, department_name, area, start_date, end_date, status, official_source, description
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const m of initialMaintenance) {
+          insMaint.run(m.id, m.title, m.department_id, m.department_name, m.area, m.start_date, m.end_date, m.status, m.official_source, m.description);
+        }
+      }
+    } catch (mErr) {
+      console.warn('[DB] Maintenance table init warning:', mErr.message);
+    }
+
     // Auto-seed if profiles table is empty (e.g. freshly created in /tmp on Vercel)
     try {
       const pCount = db.prepare('SELECT count(*) as count FROM profiles').get()?.count || 0;

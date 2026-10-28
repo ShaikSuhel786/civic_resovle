@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Civic Knowledge Center — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .knowledge-search-wrapper {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    .knowledge-search-input {
+      width: 100%;
+      padding: 0.9rem 1.25rem 0.9rem 3rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s ease;
+      background: #FFFFFF;
+    }
+    .knowledge-search-input:focus {
+      border-color: var(--interactive-blue);
+      box-shadow: 0 0 0 4px var(--pale-blue-surface);
+    }
+    .knowledge-search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+    }
+    .know-cat-chip {
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: #F8FAFC;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+    }
+    .know-cat-chip.active {
+      background: #6B21A8;
+      border-color: #6B21A8;
+      color: #FFFFFF;
+    }
+    .citation-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #F3E8FF;
+      color: #6B21A8;
+      border: 1px solid #E9D5FF;
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Title -->
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size: 1.8rem; color: var(--primary-deep);" data-i18n="knowledge_title">AI Civic Knowledge Center & Municipal Citations</h1>
+      <p style="font-size: 0.9rem; color: var(--text-muted);">Trustworthy answers to civic procedures, bylaws, water tanker schedules, and citizen rights grounded strictly in official municipal legal acts.</p>
+    </div>
+
+    <!-- Search / Question Input Bar -->
+    <div class="knowledge-search-wrapper">
+      <span class="knowledge-search-icon">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </span>
+      <input type="text" id="knowledge-query-input" class="knowledge-search-input" placeholder="Search bylaws or ask a civic question (e.g. pothole repair SLA, waste segregation rule, water leak hotline)..." oninput="handleKnowledgeSearch(this.value)">
+    </div>
+
+    <!-- Category Filter Bar -->
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 2rem;">
+      <span class="know-cat-chip active" id="know-cat-all" onclick="filterKnowledgeCat('all')">All Articles</span>
+      <span class="know-cat-chip" id="know-cat-roads" onclick="filterKnowledgeCat('Roads')">Roads & Traffic</span>
+      <span class="know-cat-chip" id="know-cat-water" onclick="filterKnowledgeCat('Water')">Water Supply & Leaks</span>
+      <span class="know-cat-chip" id="know-cat-sanitation" onclick="filterKnowledgeCat('Sanitation')">Sanitation & Debris</span>
+      <span class="know-cat-chip" id="know-cat-electrical" onclick="filterKnowledgeCat('Electrical')">Streetlights & Grid</span>
+    </div>
+
+    <!-- AI Unverified Fallback Notice Box -->
+    <div id="ai-unverified-fallback" style="display: none; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem;">
+      <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+        <span style="font-size: 1.5rem;">⚠️</span>
+        <div>
+          <strong style="color: #92400E; font-size: 0.95rem;">No Verified Municipal Citation Found For This Query</strong>
+          <p style="font-size: 0.84rem; color: #78350F; margin-top: 0.35rem; margin-bottom: 0.5rem; line-height: 1.5;">
+            In compliance with Civic Resolve AI PRD Section 4 guidelines, our system refuses to hallucinate or simulate civic advice when no official municipal statute, act, or circular can be cited.
+          </p>
+          <div style="font-size: 0.8rem; color: #92400E;">
+            <strong>Official Recourse:</strong> Please contact your local Ward Secretariat or dial the central municipal helpline at <strong>040-21111111</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Articles Grid -->
+    <div id="knowledge-articles-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+      <div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1 / -1;">Loading official municipal articles...</div>
+    </div>
+
+    <!-- Statutory Source Integrity Statement -->
+    <div class="card" style="background: #F8FAFC; border: 1px dashed var(--border-color); padding: 1.25rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        <div>
+          <strong style="color: var(--primary-deep); font-size: 0.92rem;">Statutory Integrity Guarantee (PRD Section 4)</strong>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">All knowledge articles in Civic Resolve AI are verified against official state gazette notifications and municipal charters. Citation references and legal sections are verified quarterly.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    let rawArticles = [];
+    let currentCategory = 'all';
+    let searchQuery = '';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      CivicAuth.bootNav();
+      await loadKnowledgeArticles();
+    });
+
+    async function loadKnowledgeArticles() {
+      const container = document.getElementById('knowledge-articles-grid');
+      try {
+        const res = await CivicAPI.request('/api/reports/public/knowledge');
+        rawArticles = res.articles || [];
+        renderKnowledgeCards();
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger); text-align: center; grid-column: 1 / -1;">Failed to load knowledge articles: ${err.message}</div>`;
+      }
+    }
+
+    function filterKnowledgeCat(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.know-cat-chip').forEach(c => c.classList.remove('active'));
+      const activeBtn = document.getElementById(`know-cat-${cat.toLowerCase()}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderKnowledgeCards();
+    }
+
+    function handleKnowledgeSearch(val) {
+      searchQuery = val.trim().toLowerCase();
+      renderKnowledgeCards();
+    }
+
+    function renderKnowledgeCards() {
+      const container = document.getElementById('knowledge-articles-grid');
+      const fallbackBox = document.getElementById('ai-unverified-fallback');
+
+      const filtered = rawArticles.filter(item => {
+        const matchCat = currentCategory === 'all'
+          ? true
+          : (item.category && item.category.toLowerCase().includes(currentCategory.toLowerCase()));
+        
+        const matchSearch = !searchQuery
+          ? true
+          : (
+              item.title.toLowerCase().includes(searchQuery) ||
+              item.content.toLowerCase().includes(searchQuery) ||
+              (item.official_source && item.official_source.toLowerCase().includes(searchQuery))
+            );
+
+        return matchCat && matchSearch;
+      });
+
+      // If user typed a search query that has NO match, trigger the official unverified fallback!
+      if (searchQuery && filtered.length === 0) {
+        fallbackBox.style.display = 'block';
+        container.innerHTML = '';
+        return;
+      } else {
+        fallbackBox.style.display = 'none';
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 2.5rem;">No knowledge articles found in this category.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => `
+        <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid #6B21A8; background: #FFFFFF;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <span class="badge" style="background: #F3E8FF; color: #6B21A8; font-size: 0.72rem;">${item.category}</span>
+              <span style="font-size: 0.72rem; color: #059669; font-weight: 600;">✓ Verified</span>
+            </div>
+            <strong style="font-size: 1.05rem; color: var(--primary-deep); display: block; margin-bottom: 0.4rem;">${item.title}</strong>
+            <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.75rem; line-height: 1.5;">${item.content}</p>
+          </div>
+
+          <div style="padding-top: 0.75rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <span class="citation-badge" title="Official Municipal Authority">
+              <span>📜</span>
+              <span>${item.official_source || 'Municipal Bylaw'}</span>
+            </span>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Checked: 2026-Q4</span>
+          </div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
+

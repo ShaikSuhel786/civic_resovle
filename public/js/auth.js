@@ -111,31 +111,35 @@ const CivicAuth = {
     let links = [];
 
     if (!user) {
-      // Public pages
+      // Public / Guest
       links = [
         { href: '/', label: 'Home', i18n: 'nav_home' },
-        { href: '/report', label: 'Report Issue', i18n: 'nav_report' },
-        { href: '/analytics', label: 'Impact', i18n: 'nav_impact' },
+        { href: '/#how-it-works', label: 'How It Works', i18n: 'nav_how_it_works' },
+        { href: '/transparency', label: 'City Impact & Transparency', i18n: 'nav_transparency' },
+        { href: '/maintenance', label: 'Maintenance Calendar', i18n: 'nav_maintenance' },
       ];
     } else if (user.role === 'admin') {
+      // Administrator: Command Center, Maintenance Ops, Public Transparency
       links = [
         { href: '/', label: 'Home', i18n: 'nav_home' },
-        { href: '/admin', label: 'Admin Operations', i18n: 'nav_admin' },
-        { href: '/analytics', label: 'Aggregate Analytics', i18n: 'nav_impact' },
+        { href: '/admin', label: 'Command Center', i18n: 'nav_admin_ops' },
+        { href: '/maintenance', label: 'Maintenance Ops', i18n: 'nav_maintenance' },
+        { href: '/transparency', label: 'Public Transparency', i18n: 'nav_transparency' },
       ];
     } else if (user.role === 'staff') {
+      // Field Worker: My Field Queue & Field Incident Reporting
       links = [
         { href: '/', label: 'Home', i18n: 'nav_home' },
-        { href: '/staff', label: 'My Tasks', i18n: 'nav_staff' },
-        { href: '/analytics', label: 'Impact', i18n: 'nav_impact' },
+        { href: '/staff', label: 'My Field Queue', i18n: 'nav_staff_tasks' },
+        { href: '/report', label: 'Report Incident', i18n: 'nav_report' },
       ];
     } else {
-      // Citizen
+      // Citizen: My Reports, Report Issue, City Transparency
       links = [
         { href: '/', label: 'Home', i18n: 'nav_home' },
         { href: '/dashboard', label: 'My Reports', i18n: 'nav_dashboard' },
-        { href: '/report', label: 'Report Issue', i18n: 'nav_report' },
-        { href: '/analytics', label: 'Impact', i18n: 'nav_impact' },
+        { href: '/report', label: 'Report an Issue', i18n: 'nav_report' },
+        { href: '/transparency', label: 'City Impact & Transparency', i18n: 'nav_transparency' },
       ];
     }
 
@@ -230,11 +234,84 @@ const CivicAuth = {
   },
 
   /**
-   * Full nav bootstrap: renders both nav links and user actions, then reveals body.
+   * Sets up accessible mobile responsive hamburger drawer menu
+   */
+  setupMobileNav() {
+    const navContainer = document.querySelector('.nav-container');
+    if (!navContainer) return;
+
+    let toggleBtn = document.getElementById('nav-mobile-toggle-btn');
+    if (!toggleBtn) {
+      toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.id = 'nav-mobile-toggle-btn';
+      toggleBtn.className = 'nav-mobile-toggle';
+      toggleBtn.setAttribute('aria-label', 'Toggle navigation menu');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      toggleBtn.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hamburger-icon"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="close-icon" style="display: none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      `;
+
+      const navUl = document.getElementById('nav-links-dynamic');
+      if (navUl) {
+        navContainer.insertBefore(toggleBtn, navUl);
+      } else {
+        navContainer.appendChild(toggleBtn);
+      }
+    }
+
+    const navUl = document.getElementById('nav-links-dynamic');
+    if (navUl && toggleBtn) {
+      toggleBtn.onclick = (e) => {
+        e.stopPropagation();
+        const isOpen = navUl.classList.toggle('is-mobile-open');
+        toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        const iconHam = toggleBtn.querySelector('.hamburger-icon');
+        const iconClose = toggleBtn.querySelector('.close-icon');
+        if (iconHam && iconClose) {
+          iconHam.style.display = isOpen ? 'none' : 'block';
+          iconClose.style.display = isOpen ? 'block' : 'none';
+        }
+      };
+
+      // Close when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!navContainer.contains(e.target) && navUl.classList.contains('is-mobile-open')) {
+          navUl.classList.remove('is-mobile-open');
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          const iconHam = toggleBtn.querySelector('.hamburger-icon');
+          const iconClose = toggleBtn.querySelector('.close-icon');
+          if (iconHam && iconClose) {
+            iconHam.style.display = 'block';
+            iconClose.style.display = 'none';
+          }
+        }
+      });
+
+      // Close when clicking any nav link
+      navUl.querySelectorAll('li > a').forEach(a => {
+        a.addEventListener('click', () => {
+          navUl.classList.remove('is-mobile-open');
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          const iconHam = toggleBtn.querySelector('.hamburger-icon');
+          const iconClose = toggleBtn.querySelector('.close-icon');
+          if (iconHam && iconClose) {
+            iconHam.style.display = 'block';
+            iconClose.style.display = 'none';
+          }
+        });
+      });
+    }
+  },
+
+  /**
+   * Full nav bootstrap: renders both nav links and user actions, sets up mobile menu, then reveals body.
    * Call this from DOMContentLoaded AFTER requireAuth() passes.
    */
   bootNav() {
     this.renderNavLinks();
     this.renderUserNav();
+    this.setupMobileNav();
   }
 };

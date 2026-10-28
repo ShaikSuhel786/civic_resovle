@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmed Civic Maintenance Calendar — Civic Resolve AI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Maintenance Calendar Design System Tokens & Layout */
+    .maint-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .maint-ctrl-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .filter-pills-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .maint-filter-pill {
+      padding: 0.38rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .maint-filter-pill:hover {
+      border-color: var(--interactive-blue);
+      color: var(--interactive-blue);
+    }
+    .maint-filter-pill.active {
+      background: var(--interactive-blue);
+      color: #FFFFFF;
+      border-color: var(--interactive-blue);
+    }
+    .dept-filter-chip {
+      padding: 0.32rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: #F8FAFC;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+    .dept-filter-chip:hover {
+      background: #EFF6FF;
+      color: var(--interactive-blue);
+    }
+    .dept-filter-chip.active {
+      background: #EFF6FF;
+      border-color: var(--interactive-blue);
+      color: var(--interactive-blue);
+    }
+    .maint-search-box {
+      position: relative;
+      min-width: 260px;
+      flex: 1;
+      max-width: 380px;
+    }
+    .maint-search-input {
+      width: 100%;
+      padding: 0.45rem 0.85rem 0.45rem 2.2rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      outline: none;
+      background: #FFFFFF;
+    }
+    .maint-search-input:focus {
+      border-color: var(--interactive-blue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    .maint-search-icon {
+      position: absolute;
+      left: 0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+    }
+
+    /* Dynamic Month Grid */
+    .cal-nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0.5rem 0;
+    }
+    .cal-grid-month {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .cal-day-header {
+      background: #F1F5F9;
+      padding: 0.65rem 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .cal-cell {
+      background: #FFFFFF;
+      min-height: 105px;
+      padding: 0.4rem;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      transition: background 0.15s ease;
+    }
+    .cal-cell:hover {
+      background: #F8FAFC;
+    }
+    .cal-cell.other-month {
+      background: #FAFAFA;
+      color: #CBD5E1;
+      opacity: 0.6;
+    }
+    .cal-cell.today {
+      background: #EFF6FF;
+    }
+    .cal-cell.today .cal-cell-day-num {
+      background: var(--interactive-blue);
+      color: #FFFFFF;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cal-cell-day-num {
+      font-weight: 700;
+      font-size: 0.8rem;
+      margin-bottom: 0.2rem;
+      color: var(--text-main);
+    }
+    .cal-event-pill {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .cal-event-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .pill-scheduled { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
+    .pill-progress { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
+    .pill-delayed { background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; }
+    .pill-completed { background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; }
+
+    /* Work Order Card */
+    .maint-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .maint-card:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: #CBD5E1;
+    }
+    .maint-card.status-in-progress { border-left: 4px solid #EA580C; }
+    .maint-card.status-scheduled { border-left: 4px solid var(--interactive-blue); }
+    .maint-card.status-delayed { border-left: 4px solid #DC2626; }
+    .maint-card.status-completed { border-left: 4px solid #10B981; }
+
+    /* Glass Calendar Component (PRD Feature 3) */
+    .glass-calendar-container {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.95) 100%);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-size: cover;
+      background-position: center;
+    }
+    .glass-calendar-card {
+      width: 100%;
+      max-width: 440px;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.38);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+    }
+    .glass-tab-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      border-radius: 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.25rem;
+    }
+    .glass-tab-btn {
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.85rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .glass-tab-btn.active {
+      background: #FFFFFF;
+      color: #000000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .glass-tab-btn:not(.active) {
+      background: transparent;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .glass-tab-btn:not(.active):hover {
+      color: #FFFFFF;
+    }
+    .glass-month-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin: 0;
+      color: #FFFFFF;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .glass-nav-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 0.35rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .glass-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+    }
+    .glass-track {
+      display: flex;
+      gap: 0.85rem;
+      overflow-x: auto;
+      padding: 0.5rem 0.25rem;
+      margin: 0 -0.5rem;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .glass-track::-webkit-scrollbar {
+      display: none;
+    }
+    .glass-day-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .glass-weekday-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+    }
+    .glass-day-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      color: #FFFFFF;
+      background: transparent;
+    }
+    .glass-day-btn.selected {
+      background: linear-gradient(135deg, #EC4899 0%, #F97316 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.45);
+    }
+    .glass-day-btn:not(.selected):hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .glass-today-dot {
+      position: absolute;
+      bottom: 2px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #F472B6;
+    }
+    .glass-has-events-dot {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #38BDF8;
+    }
+
+    @media (max-width: 900px) {
+      .maint-kpi-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .maint-kpi-grid { grid-template-columns: 1fr; }
+      .cal-cell { min-height: 60px; font-size: 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-logo-wrapper">
+          <img src="/images/logo.png" alt="Civic Resolve AI" class="brand-logo-img">
+          <span class="brand-logo-sheen" aria-hidden="true"></span>
+        </span>
+        <span data-i18n="brand">CIVIC RESOLVE AI</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links-dynamic"></ul>
+
+      <div class="nav-actions" id="nav-user-actions"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Page Header & Action -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 1.8rem; color: var(--primary-deep); margin-bottom: 0.25rem;" data-i18n="nav_maintenance">Confirmed Civic Maintenance Calendar</h1>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">Official scheduled civil works, pipeline overhauls, road resurfacing, and municipal maintenance tracking.</p>
+      </div>
+
+      <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+        <!-- View Mode Switcher -->
+        <div style="background: #F1F5F9; border-radius: var(--radius-sm); padding: 2px; display: inline-flex;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-mode-list" onclick="setCalendarMode('list')" style="border: none; background: transparent;">
+            📋 Work Orders
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-mode-grid" onclick="setCalendarMode('grid')">
+            📅 Month Grid
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-mode-glass" onclick="setCalendarMode('glass')" style="border: none; background: transparent;">
+            ✨ Glass Calendar
+          </button>
+        </div>
+
+        <!-- Schedule New Maintenance Activity Action -->
+        <button type="button" class="btn btn-primary btn-sm" onclick="openScheduleModal()" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Schedule Activity</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. Dedicated Maintenance KPI Metric Cards -->
+    <div class="maint-kpi-grid">
+      <div class="card" style="padding: 1.15rem; text-align: center; background: #FFFFFF; cursor: pointer;" onclick="filterByStatus('all')">
+        <div style="font-size: 1.7rem; font-weight: 700; color: var(--primary-deep);" id="kpi-total-tasks">0</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-top: 0.2rem;">Total Scheduled Works</div>
+      </div>
+      <div class="card" style="padding: 1.15rem; text-align: center; background: #FFFBEB; border-color: #FDE68A; cursor: pointer;" onclick="filterByStatus('in_progress')">
+        <div style="font-size: 1.7rem; font-weight: 700; color: #D97706;" id="kpi-in-progress">0</div>
+        <div style="font-size: 0.8rem; color: #92400E; font-weight: 600; margin-top: 0.2rem;">Active In Progress</div>
+      </div>
+      <div class="card" style="padding: 1.15rem; text-align: center; background: #EFF6FF; border-color: #BFDBFE; cursor: pointer;" onclick="filterByStatus('upcoming')">
+        <div style="font-size: 1.7rem; font-weight: 700; color: var(--interactive-blue);" id="kpi-upcoming">0</div>
+        <div style="font-size: 0.8rem; color: #1E40AF; font-weight: 600; margin-top: 0.2rem;">Upcoming Confirmed</div>
+      </div>
+      <div class="card" style="padding: 1.15rem; text-align: center; background: #FEF2F2; border-color: #FECACA; cursor: pointer;" onclick="filterByStatus('overdue')">
+        <div style="font-size: 1.7rem; font-weight: 700; color: #DC2626;" id="kpi-overdue">0</div>
+        <div style="font-size: 0.8rem; color: #991B1B; font-weight: 600; margin-top: 0.2rem;">Overdue / Delayed</div>
+      </div>
+    </div>
+
+    <!-- 2. Interactive Control Bar: Status Tabs, Search, and Department Filters -->
+    <div class="card" style="margin-bottom: 1.5rem; padding: 1.15rem;">
+      
+      <!-- Top Row: Status Tabs & Search -->
+      <div class="maint-ctrl-bar">
+        <div class="filter-pills-row">
+          <span class="maint-filter-pill active" id="tab-status-all" onclick="filterByStatus('all')">
+            All Works (<span id="count-tab-all">0</span>)
+          </span>
+          <span class="maint-filter-pill" id="tab-status-in_progress" onclick="filterByStatus('in_progress')">
+            ⚡ Active (<span id="count-tab-progress">0</span>)
+          </span>
+          <span class="maint-filter-pill" id="tab-status-upcoming" onclick="filterByStatus('upcoming')">
+            📅 Upcoming (<span id="count-tab-upcoming">0</span>)
+          </span>
+          <span class="maint-filter-pill" id="tab-status-overdue" onclick="filterByStatus('overdue')">
+            ⚠️ Overdue (<span id="count-tab-overdue">0</span>)
+          </span>
+          <span class="maint-filter-pill" id="tab-status-completed" onclick="filterByStatus('completed')">
+            ✓ Completed (<span id="count-tab-completed">0</span>)
+          </span>
+        </div>
+
+        <!-- Real-Time Search Input -->
+        <div class="maint-search-box">
+          <svg class="maint-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="maint-search-input" class="maint-search-input" placeholder="Search by title, area, or official ref #..." oninput="handleSearch(this.value)">
+        </div>
+      </div>
+
+      <!-- Bottom Row: Department Filter Chips -->
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+        <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Department:</span>
+        <span class="dept-filter-chip active" id="dept-all" onclick="filterByDept('all')">All Departments</span>
+        <span class="dept-filter-chip" id="dept-roads" onclick="filterByDept('Roads & Transport')">Roads & Transport</span>
+        <span class="dept-filter-chip" id="dept-water" onclick="filterByDept('Water & Drainage')">Water & Drainage</span>
+        <span class="dept-filter-chip" id="dept-electrical" onclick="filterByDept('Electrical Services')">Electrical Services</span>
+        <span class="dept-filter-chip" id="dept-sanitation" onclick="filterByDept('Sanitation')">Sanitation</span>
+        <span class="dept-filter-chip" id="dept-publicworks" onclick="filterByDept('Public Works')">Public Works</span>
+      </div>
+    </div>
+
+    <!-- 3. VIEW MODE A: DYNAMIC MONTH CALENDAR GRID -->
+    <div id="maint-grid-view" style="display: block;">
+      <div class="card" style="padding: 1.25rem; margin-bottom: 2rem;">
+        
+        <!-- Month Navigator -->
+        <div class="cal-nav-bar">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="changeMonth(-1)" title="Previous Month">
+              ◀
+            </button>
+            <strong style="color: var(--primary-deep); font-size: 1.2rem; min-width: 180px; text-align: center;" id="cal-month-display">
+              Loading Month...
+            </strong>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="changeMonth(1)" title="Next Month">
+              ▶
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="goToToday()" style="font-size: 0.78rem; padding: 0.25rem 0.6rem;">
+              Today
+            </button>
+          </div>
+
+          <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; align-items: center;">
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #0284C7;"></span> Scheduled</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #D97706;"></span> In Progress</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #DC2626;"></span> Overdue / Delayed</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A;"></span> Completed</span>
+          </div>
+        </div>
+
+        <!-- 7-Column Month Day Grid -->
+        <div class="cal-grid-month" id="cal-month-container">
+          <div class="cal-day-header">Sun</div>
+          <div class="cal-day-header">Mon</div>
+          <div class="cal-day-header">Tue</div>
+          <div class="cal-day-header">Wed</div>
+          <div class="cal-day-header">Thu</div>
+          <div class="cal-day-header">Fri</div>
+          <div class="cal-day-header">Sat</div>
+          <!-- Dynamically populated by renderDynamicMonthGrid() -->
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; text-align: right;">
+          💡 <em>Tip: Click any event pill in the calendar to view full work scope, authority ref, and update status.</em>
+        </p>
+      </div>
+    </div>
+
+    <!-- 4. VIEW MODE B: DETAILED WORK ORDERS LIST VIEW -->
+    <div id="maint-list-view" style="display: none; margin-bottom: 2rem;">
+      <div id="maint-cards-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+        <div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1 / -1;">Loading maintenance activities...</div>
+      </div>
+    </div>
+
+    <!-- 5. VIEW MODE C: FEATURE 3 (PRD SECTION 4) — CIVIC GLASS CALENDAR -->
+    <div id="maint-glass-view" style="display: none; margin-bottom: 2rem;">
+      <div class="glass-calendar-container" style="background-image: linear-gradient(rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.90)), url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1920&q=80');">
+        
+        <div class="glass-calendar-card">
+          <!-- Header: Tabs and Settings -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+            <div class="glass-tab-group">
+              <button type="button" class="glass-tab-btn" id="glass-tab-weekly" onclick="setGlassTab('weekly')">Weekly</button>
+              <button type="button" class="glass-tab-btn active" id="glass-tab-monthly" onclick="setGlassTab('monthly')">Monthly</button>
+            </div>
+            <button type="button" class="glass-nav-btn" onclick="openGlassSettings()" title="Calendar Settings" aria-label="Calendar Settings">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+          </div>
+
+          <!-- Date Display & Navigation -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+            <p class="glass-month-title" id="glass-month-display">October</p>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <button type="button" class="glass-nav-btn" onclick="changeGlassMonth(-1)" title="Previous Month" aria-label="Previous Month">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+              <button type="button" class="glass-nav-btn" onclick="changeGlassMonth(1)" title="Next Month" aria-label="Next Month">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scrollable Calendar Track -->
+          <div class="glass-track" id="glass-day-track">
+            <!-- Populated dynamically with monthDays -->
+          </div>
+
+          <!-- Divider -->
+          <div style="margin-top: 1.5rem; height: 1px; background: rgba(255, 255, 255, 0.2);"></div>
+
+          <!-- Footer Actions -->
+          <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+            <button type="button" onclick="openGlassNoteModal()" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; font-weight: 500; color: rgba(255, 255, 255, 0.7); background: none; border: none; cursor: pointer;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              <span>Add a note...</span>
+            </button>
+            <button type="button" onclick="openScheduleModal()" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 0.5rem; background: rgba(0, 0, 0, 0.3); padding: 0.5rem 0.85rem; font-size: 0.78rem; font-weight: 700; color: #FFFFFF; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>New Event</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Glass Selected Date Maintenance Agenda Banner -->
+        <div style="width: 100%; max-width: 680px; margin-top: 1.5rem; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 1rem; padding: 1.25rem; color: #FFFFFF;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <strong id="glass-selected-date-label" style="font-size: 1rem;">Maintenance Agenda for Selected Date</strong>
+            <span class="badge" id="glass-day-tasks-badge" style="background: rgba(255,255,255,0.15); color: #FFFFFF;">0 Scheduled</span>
+          </div>
+          <div id="glass-selected-date-tasks">
+            <!-- Filtered day tasks listed here -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty State Container -->
+    <div id="maint-empty-state" class="card" style="display: none; text-align: center; padding: 3rem; margin-bottom: 2rem;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
+      <h3 style="color: var(--primary-deep); margin-bottom: 0.35rem;">No Maintenance Activities Match Your Filters</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 450px; margin: 0 auto 1.25rem auto;">Try clearing your search term, changing the department filter, or schedule a new maintenance work order.</p>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="resetAllFilters()">Reset All Filters</button>
+    </div>
+
+  </main>
+
+  <!-- MODAL 1: Schedule Maintenance Activity Form -->
+  <div class="modal-overlay" id="modal-schedule">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <strong style="color: var(--primary-deep); font-size: 1.1rem;">Schedule Maintenance Activity</strong>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">Publish planned civil works, utility overhauls, and ward road repairs</div>
+        </div>
+        <button type="button" onclick="closeScheduleModal()" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.5rem; border-radius: var(--radius-full);">✕</button>
+      </div>
+      <form id="form-create-maintenance" onsubmit="handleCreateMaintenance(event)">
+        <div class="modal-body">
+          <div style="margin-bottom: 1rem;">
+            <label class="form-label">Project Title *</label>
+            <input type="text" id="input-title" class="form-input" placeholder="e.g. Main Feeder Pipeline Replacement Phase 2" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label class="form-label">Responsible Department *</label>
+              <select id="input-dept" class="form-select" required>
+                <option value="dept-roads|Roads & Transport">Roads & Transport</option>
+                <option value="dept-water|Water & Drainage">Water & Drainage</option>
+                <option value="dept-electrical|Electrical Services">Electrical Services</option>
+                <option value="dept-sanitation|Sanitation">Sanitation</option>
+                <option value="dept-publicworks|Public Works">Public Works</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Target Area / Ward *</label>
+              <input type="text" id="input-area" class="form-input" placeholder="e.g. Ward 18, Banjara Hills" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label class="form-label">Start Date *</label>
+              <input type="date" id="input-start-date" class="form-input" required>
+            </div>
+            <div>
+              <label class="form-label">End Date *</label>
+              <input type="date" id="input-end-date" class="form-input" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label class="form-label">Initial Status</label>
+              <select id="input-status" class="form-select">
+                <option value="Scheduled">Scheduled</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Delayed">Delayed</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Official Reference #</label>
+              <input type="text" id="input-ref" class="form-input" placeholder="e.g. MW-2026-WTR-402">
+            </div>
+          </div>
+
+          <div style="margin-bottom: 0.5rem;">
+            <label class="form-label">Work Scope & Disruption Advisory *</label>
+            <textarea id="input-desc" class="form-textarea" placeholder="Detail the planned work, anticipated lane closures, expected disruption hours, or detour instructions..." style="min-height: 85px;" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeScheduleModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-maint">Publish Scheduled Activity</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Task Inspection & Management Modal -->
+  <div class="modal-overlay" id="modal-task-detail">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span id="detail-status-badge" class="badge badge-assigned">Status</span>
+          <strong style="color: var(--primary-deep); font-size: 1.05rem;" id="detail-title">Task Details</strong>
+        </div>
+        <button type="button" onclick="closeDetailModal()" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.5rem; border-radius: var(--radius-full);">✕</button>
+      </div>
+      <div class="modal-body" id="detail-body-content">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer" id="detail-footer-actions">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/glass-nav.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    // State
+    let allSchedules = [];
+    let currentStatusFilter = 'all';
+    let currentDeptFilter = 'all';
+    let currentSearchTerm = '';
+    let currentMode = 'grid'; // 'grid' or 'list'
+    let currentMonthDate = new Date(); // Active viewing month
+    let selectedTaskId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      CivicAuth.bootNav();
+
+      // Pre-fill default dates for schedule form
+      const todayStr = new Date().toISOString().split('T')[0];
+      const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+      document.getElementById('input-start-date').value = todayStr;
+      document.getElementById('input-end-date').value = nextWeek;
+
+      await loadMaintenanceData();
+    });
+
+    /**
+     * Load maintenance activities from backend API
+     */
+    async function loadMaintenanceData() {
+      try {
+        const res = await CivicAPI.request('/api/maintenance');
+        if (res && res.schedules) {
+          allSchedules = res.schedules;
+          updateKpis(res.stats);
+          renderViews();
+        }
+      } catch (err) {
+        console.error('Failed to load maintenance schedules:', err);
+        document.getElementById('maint-cards-container').innerHTML = `
+          <div style="color: var(--danger); text-align: center; grid-column: 1 / -1; padding: 2rem;">
+            Failed to load maintenance calendar: ${escapeHtml(err.message)}
+          </div>
+        `;
+      }
+    }
+
+    /**
+     * Update top KPI summary numbers
+     */
+    function updateKpis(stats) {
+      if (!stats) return;
+      document.getElementById('kpi-total-tasks').textContent = stats.total || 0;
+      document.getElementById('kpi-in-progress').textContent = stats.inProgress || 0;
+      document.getElementById('kpi-upcoming').textContent = stats.upcoming || 0;
+      document.getElementById('kpi-overdue').textContent = stats.overdue || 0;
+
+      // Update tab count badges
+      document.getElementById('count-tab-all').textContent = stats.total || 0;
+      document.getElementById('count-tab-progress').textContent = stats.inProgress || 0;
+      document.getElementById('count-tab-upcoming').textContent = stats.upcoming || 0;
+      document.getElementById('count-tab-overdue').textContent = stats.overdue || 0;
+      document.getElementById('count-tab-completed').textContent = stats.completed || 0;
+    }
+
+    /**
+     * Filter handlers
+     */
+    function filterByStatus(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.maint-filter-pill').forEach(p => p.classList.remove('active'));
+      const activePill = document.getElementById(`tab-status-${status}`);
+      if (activePill) activePill.classList.add('active');
+      renderViews();
+    }
+
+    function filterByDept(dept) {
+      currentDeptFilter = dept;
+      document.querySelectorAll('.dept-filter-chip').forEach(c => c.classList.remove('active'));
+      const idMap = {
+        'all': 'dept-all',
+        'Roads & Transport': 'dept-roads',
+        'Water & Drainage': 'dept-water',
+        'Electrical Services': 'dept-electrical',
+        'Sanitation': 'dept-sanitation',
+        'Public Works': 'dept-publicworks'
+      };
+      const activeChip = document.getElementById(idMap[dept] || 'dept-all');
+      if (activeChip) activeChip.classList.add('active');
+      renderViews();
+    }
+
+    function handleSearch(term) {
+      currentSearchTerm = term.trim().toLowerCase();
+      renderViews();
+    }
+
+    function resetAllFilters() {
+      currentStatusFilter = 'all';
+      currentDeptFilter = 'all';
+      currentSearchTerm = '';
+      document.getElementById('maint-search-input').value = '';
+      document.querySelectorAll('.maint-filter-pill').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-status-all').classList.add('active');
+      document.querySelectorAll('.dept-filter-chip').forEach(c => c.classList.remove('active'));
+      document.getElementById('dept-all').classList.add('active');
+      renderViews();
+    }
+
+    /**
+     * Switch view between dynamic month grid, detailed work orders list, and glass calendar
+     */
+    function setCalendarMode(mode) {
+      currentMode = mode;
+      const btnList = document.getElementById('btn-mode-list');
+      const btnGrid = document.getElementById('btn-mode-grid');
+      const btnGlass = document.getElementById('btn-mode-glass');
+      const viewList = document.getElementById('maint-list-view');
+      const viewGrid = document.getElementById('maint-grid-view');
+      const viewGlass = document.getElementById('maint-glass-view');
+
+      if (btnList) btnList.className = (mode === 'list') ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      if (btnGrid) btnGrid.className = (mode === 'grid') ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      if (btnGlass) btnGlass.className = (mode === 'glass') ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+
+      if (viewGrid) viewGrid.style.display = (mode === 'grid') ? 'block' : 'none';
+      if (viewList) viewList.style.display = (mode === 'list') ? 'block' : 'none';
+      if (viewGlass) viewGlass.style.display = (mode === 'glass') ? 'block' : 'none';
+
+      renderViews();
+    }
+
+    /**
+     * Month Navigation
+     */
+    function changeMonth(delta) {
+      currentMonthDate.setMonth(currentMonthDate.getMonth() + delta);
+      renderDynamicMonthGrid();
+    }
+
+    function goToToday() {
+      currentMonthDate = new Date();
+      renderDynamicMonthGrid();
+    }
+
+    /**
+     * Filter all schedules according to active criteria
+     */
+    function getFilteredSchedules() {
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      return allSchedules.filter(item => {
+        // Department filter
+        if (currentDeptFilter !== 'all') {
+          if (!item.department_name || !item.department_name.toLowerCase().includes(currentDeptFilter.toLowerCase())) {
+            return false;
+          }
+        }
+
+        // Status filter
+        if (currentStatusFilter !== 'all') {
+          if (currentStatusFilter === 'in_progress') {
+            if (item.status !== 'In Progress') return false;
+          } else if (currentStatusFilter === 'upcoming') {
+            if (item.status !== 'Scheduled') return false;
+          } else if (currentStatusFilter === 'overdue') {
+            const isOverdue = (item.status === 'Delayed' || item.status === 'Overdue' || (item.end_date < todayStr && item.status !== 'Completed'));
+            if (!isOverdue) return false;
+          } else if (currentStatusFilter === 'completed') {
+            if (item.status !== 'Completed') return false;
+          }
+        }
+
+        // Search term filter
+        if (currentSearchTerm) {
+          const haystack = `${item.title} ${item.area} ${item.official_source || ''} ${item.description || ''}`.toLowerCase();
+          if (!haystack.includes(currentSearchTerm)) return false;
+        }
+
+        return true;
+      });
+    }
+
+    /**
+     * Master render router
+     */
+    function renderViews() {
+      const filtered = getFilteredSchedules();
+      const emptyState = document.getElementById('maint-empty-state');
+      const viewList = document.getElementById('maint-list-view');
+      const viewGrid = document.getElementById('maint-grid-view');
+      const viewGlass = document.getElementById('maint-glass-view');
+
+      if (filtered.length === 0 && currentMode !== 'glass') {
+        emptyState.style.display = 'block';
+        if (viewGrid) viewGrid.style.display = 'none';
+        if (viewList) viewList.style.display = 'none';
+        if (viewGlass) viewGlass.style.display = 'none';
+      } else {
+        emptyState.style.display = 'none';
+        if (currentMode === 'grid') {
+          if (viewGrid) viewGrid.style.display = 'block';
+          if (viewList) viewList.style.display = 'none';
+          if (viewGlass) viewGlass.style.display = 'none';
+          renderDynamicMonthGrid(filtered);
+        } else if (currentMode === 'glass') {
+          if (viewGrid) viewGrid.style.display = 'none';
+          if (viewList) viewList.style.display = 'none';
+          if (viewGlass) viewGlass.style.display = 'block';
+          renderGlassCalendar(filtered);
+        } else {
+          if (viewGrid) viewGrid.style.display = 'none';
+          if (viewList) viewList.style.display = 'block';
+          if (viewGlass) viewGlass.style.display = 'none';
+          renderWorkOrdersList(filtered);
+        }
+      }
+    }
+
+    // Glass Calendar State (Feature 3 - PRD Section 4)
+    let glassSelectedDate = new Date();
+    let currentGlassMonthDate = new Date();
+    let glassActiveTab = 'monthly';
+
+    function setGlassTab(tab) {
+      glassActiveTab = tab;
+      const btnWeekly = document.getElementById('glass-tab-weekly');
+      const btnMonthly = document.getElementById('glass-tab-monthly');
+      if (btnWeekly && btnMonthly) {
+        if (tab === 'weekly') {
+          btnWeekly.classList.add('active');
+          btnMonthly.classList.remove('active');
+        } else {
+          btnMonthly.classList.add('active');
+          btnWeekly.classList.remove('active');
+        }
+      }
+      renderGlassCalendar();
+    }
+
+    function changeGlassMonth(delta) {
+      currentGlassMonthDate.setMonth(currentGlassMonthDate.getMonth() + delta);
+      renderGlassCalendar();
+    }
+
+    function selectGlassDate(dateStr) {
+      glassSelectedDate = new Date(dateStr);
+      renderGlassCalendar();
+    }
+
+    function renderGlassCalendar(filteredList) {
+      const list = filteredList || getFilteredSchedules();
+      const monthDisplay = document.getElementById('glass-month-display');
+      const dayTrack = document.getElementById('glass-day-track');
+      if (!monthDisplay || !dayTrack) return;
+
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const year = currentGlassMonthDate.getFullYear();
+      const month = currentGlassMonthDate.getMonth();
+      monthDisplay.textContent = `${monthNames[month]}`;
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+      const todayDateNum = today.getDate();
+
+      let daysToRender = [];
+      const weekdayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(year, month, day);
+        const dayOfWeek = weekdayNames[d.getDay()];
+        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = isCurrentMonth && day === todayDateNum;
+        const isSelected = glassSelectedDate &&
+          glassSelectedDate.getFullYear() === year &&
+          glassSelectedDate.getMonth() === month &&
+          glassSelectedDate.getDate() === day;
+
+        const hasTasks = list.some(item => (item.start_date <= dStr && item.end_date >= dStr));
+
+        daysToRender.push({
+          day,
+          dateStr: dStr,
+          dayOfWeek,
+          isToday,
+          isSelected,
+          hasTasks
+        });
+      }
+
+      if (glassActiveTab === 'weekly') {
+        const selDayNum = (glassSelectedDate && glassSelectedDate.getMonth() === month) ? glassSelectedDate.getDate() : (isCurrentMonth ? todayDateNum : 1);
+        const startDayIndex = Math.max(0, selDayNum - 4);
+        daysToRender = daysToRender.slice(startDayIndex, startDayIndex + 7);
+      }
+
+      dayTrack.innerHTML = daysToRender.map(d => `
+        <div class="glass-day-item">
+          <span class="glass-weekday-label">${d.dayOfWeek}</span>
+          <button type="button" class="glass-day-btn ${d.isSelected ? 'selected' : ''}" onclick="selectGlassDate('${d.dateStr}')" title="${d.dateStr}">
+            ${d.hasTasks && !d.isSelected ? '<span class="glass-has-events-dot"></span>' : ''}
+            ${d.isToday && !d.isSelected ? '<span class="glass-today-dot"></span>' : ''}
+            ${d.day}
+          </button>
+        </div>
+      `).join('');
+
+      // Update Selected Date Agenda section below
+      const selStr = `${glassSelectedDate.getFullYear()}-${String(glassSelectedDate.getMonth() + 1).padStart(2, '0')}-${String(glassSelectedDate.getDate()).padStart(2, '0')}`;
+      const selLabel = document.getElementById('glass-selected-date-label');
+      const countBadge = document.getElementById('glass-day-tasks-badge');
+      const tasksContainer = document.getElementById('glass-selected-date-tasks');
+
+      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      if (selLabel) selLabel.textContent = `Scheduled Maintenance for ${glassSelectedDate.toLocaleDateString('en-US', dateOptions)}`;
+
+      const dayTasks = list.filter(item => item.start_date <= selStr && item.end_date >= selStr);
+      if (countBadge) countBadge.textContent = `${dayTasks.length} Scheduled`;
+
+      if (tasksContainer) {
+        if (dayTasks.length === 0) {
+          tasksContainer.innerHTML = `
+            <div style="padding: 1.5rem; text-align: center; color: rgba(255, 255, 255, 0.65); font-size: 0.88rem;">
+              No municipal civil works scheduled for this date.
+              <div style="margin-top: 0.5rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openScheduleModal()" style="color: #FFFFFF; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.12);">
+                  + Schedule Maintenance on this date
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          tasksContainer.innerHTML = dayTasks.map(t => `
+            <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 0.5rem; padding: 0.85rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <strong style="color: #FFFFFF; font-size: 0.95rem;">${escapeHtml(t.title)}</strong>
+                <div style="font-size: 0.78rem; color: rgba(255,255,255,0.7); margin-top: 0.2rem;">
+                  📍 ${escapeHtml(t.area)} • 🏢 ${escapeHtml(t.department_name)}
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.4rem; align-items: center;">
+                <span class="badge ${t.status === 'In Progress' ? 'badge-progress' : (t.status === 'Delayed' ? 'badge-blocked' : 'badge-assigned')}">${t.status}</span>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="openTaskDetail('${t.id}')" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF;">
+                  Inspect
+                </button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    function openGlassNoteModal() {
+      openInspectionModal();
+    }
+
+    function openGlassSettings() {
+      alert("Civic Maintenance Calendar: Glass UI synchronized with real-time municipal database.");
+    }
+
+    /**
+     * Render Month Calendar Grid dynamically based on active month
+     */
+    function renderDynamicMonthGrid(filteredList) {
+      const schedules = filteredList || getFilteredSchedules();
+      const container = document.getElementById('cal-month-container');
+      const monthTitle = document.getElementById('cal-month-display');
+
+      const year = currentMonthDate.getFullYear();
+      const month = currentMonthDate.getMonth(); // 0-indexed
+
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      monthTitle.textContent = `${monthNames[month]} ${year}`;
+
+      // Calculate days in month & starting day of week
+      const firstDayIndex = new Date(year, month, 1).getDay(); // 0 = Sun
+      const daysInCurrentMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+
+      let cellsHtml = `
+        <div class="cal-day-header">Sun</div>
+        <div class="cal-day-header">Mon</div>
+        <div class="cal-day-header">Tue</div>
+        <div class="cal-day-header">Wed</div>
+        <div class="cal-day-header">Thu</div>
+        <div class="cal-day-header">Fri</div>
+        <div class="cal-day-header">Sat</div>
+      `;
+
+      // 1. Prev month tail cells
+      for (let i = firstDayIndex - 1; i >= 0; i--) {
+        const dNum = daysInPrevMonth - i;
+        cellsHtml += `<div class="cal-cell other-month"><span class="cal-cell-day-num">${dNum}</span></div>`;
+      }
+
+      // 2. Current month cells
+      for (let day = 1; day <= daysInCurrentMonth; day++) {
+        const monthPad = String(month + 1).padStart(2, '0');
+        const dayPad = String(day).padStart(2, '0');
+        const cellDateStr = `${year}-${monthPad}-${dayPad}`;
+
+        const isToday = (cellDateStr === todayStr);
+
+        // Find active tasks for this day (where start_date <= cellDateStr <= end_date)
+        const dayTasks = schedules.filter(item => {
+          return (item.start_date <= cellDateStr && item.end_date >= cellDateStr);
+        });
+
+        let pillsHtml = '';
+        dayTasks.forEach(t => {
+          let pillClass = 'pill-scheduled';
+          let icon = '📅';
+
+          if (t.status === 'In Progress') {
+            pillClass = 'pill-progress';
+            icon = '⚡';
+          } else if (t.status === 'Delayed' || t.status === 'Overdue' || (t.end_date < todayStr && t.status !== 'Completed')) {
+            pillClass = 'pill-delayed';
+            icon = '⚠️';
+          } else if (t.status === 'Completed') {
+            pillClass = 'pill-completed';
+            icon = '✓';
+          }
+
+          pillsHtml += `
+            <div class="cal-event-pill ${pillClass}" onclick="openTaskDetail('${t.id}')" title="${escapeHtml(t.title)} (${t.department_name})">
+              <span>${icon}</span>
+              <span style="overflow: hidden; text-overflow: ellipsis;">${escapeHtml(t.title)}</span>
+            </div>
+          `;
+        });
+
+        cellsHtml += `
+          <div class="cal-cell ${isToday ? 'today' : ''}">
+            <span class="cal-cell-day-num">${day}</span>
+            ${pillsHtml}
+          </div>
+        `;
+      }
+
+      // 3. Next month head cells to balance grid (42 cells total)
+      const totalCellsRendered = firstDayIndex + daysInCurrentMonth;
+      const remainingCells = (totalCellsRendered % 7 === 0) ? 0 : 7 - (totalCellsRendered % 7);
+      for (let nextDay = 1; nextDay <= remainingCells; nextDay++) {
+        cellsHtml += `<div class="cal-cell other-month"><span class="cal-cell-day-num">${nextDay}</span></div>`;
+      }
+
+      container.innerHTML = cellsHtml;
+    }
+
+    /**
+     * Render Detailed Work Orders List View
+     */
+    function renderWorkOrdersList(filteredList) {
+      const container = document.getElementById('maint-cards-container');
+      const schedules = filteredList || getFilteredSchedules();
+      const todayStr = new Date().toISOString().split('T')[0];
+      const subscribedIds = JSON.parse(localStorage.getItem('civic_subscribed_maint_ids') || '[]');
+
+      container.innerHTML = schedules.map(item => {
+        const isSubscribed = subscribedIds.includes(item.id);
+        const isOverdue = (item.status === 'Delayed' || item.status === 'Overdue' || (item.end_date < todayStr && item.status !== 'Completed'));
+
+        let cardStatusClass = 'status-scheduled';
+        let statusBadgeClass = 'badge-assigned';
+        if (item.status === 'In Progress') {
+          cardStatusClass = 'status-in-progress';
+          statusBadgeClass = 'badge-progress';
+        } else if (isOverdue) {
+          cardStatusClass = 'status-delayed';
+          statusBadgeClass = 'badge-urgent';
+        } else if (item.status === 'Completed') {
+          cardStatusClass = 'status-completed';
+          statusBadgeClass = 'badge-resolved';
+        }
+
+        // Timing badge calculation
+        let timingBadge = '';
+        if (isOverdue) {
+          const daysOver = Math.max(1, Math.floor((new Date(todayStr) - new Date(item.end_date)) / 86400000));
+          timingBadge = `<span class="badge badge-urgent" style="font-size: 0.72rem;">⚠️ Overdue by ${daysOver} day${daysOver > 1 ? 's' : ''}</span>`;
+        } else if (item.status === 'In Progress') {
+          const daysLeft = Math.max(0, Math.floor((new Date(item.end_date) - new Date(todayStr)) / 86400000));
+          timingBadge = `<span class="badge badge-progress" style="font-size: 0.72rem;">⚡ In Progress (${daysLeft} day${daysLeft !== 1 ? 's' : ''} left)</span>`;
+        } else if (item.status === 'Completed') {
+          timingBadge = `<span class="badge badge-resolved" style="font-size: 0.72rem;">✓ Completed</span>`;
+        } else {
+          const daysTill = Math.max(0, Math.floor((new Date(item.start_date) - new Date(todayStr)) / 86400000));
+          timingBadge = `<span class="badge badge-assigned" style="font-size: 0.72rem;">📅 Starts in ${daysTill} day${daysTill !== 1 ? 's' : ''}</span>`;
+        }
+
+        return `
+          <div class="maint-card ${cardStatusClass}">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.35rem;">
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                  <span class="badge ${statusBadgeClass}" style="font-size: 0.72rem;">${item.status}</span>
+                  ${timingBadge}
+                </div>
+                <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700;">${escapeHtml(item.department_name)}</span>
+              </div>
+
+              <strong style="font-size: 1.05rem; color: var(--primary-deep); display: block; margin-bottom: 0.4rem; line-height: 1.35;">
+                ${escapeHtml(item.title)}
+              </strong>
+
+              <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.85rem; line-height: 1.45;">
+                ${escapeHtml(item.description)}
+              </p>
+
+              <div style="background: var(--bg-main); border-radius: var(--radius-sm); padding: 0.65rem 0.75rem; font-size: 0.78rem; display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem;">
+                <div>📍 <strong>Location / Ward:</strong> ${escapeHtml(item.area)}</div>
+                <div>📅 <strong>Schedule:</strong> ${item.start_date} → ${item.end_date}</div>
+                ${item.official_source ? `<div>📜 <strong>Authority Ref:</strong> ${escapeHtml(item.official_source)}</div>` : ''}
+              </div>
+            </div>
+
+            <!-- Task Action Controls -->
+            <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Status:</label>
+                <select class="form-select" style="font-size: 0.78rem; padding: 0.25rem 0.5rem; width: auto;" onchange="updateTaskStatus('${item.id}', this.value)">
+                  <option value="Scheduled" ${item.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+                  <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                  <option value="Delayed" ${item.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
+                  <option value="Completed" ${item.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                </select>
+              </div>
+
+              <div style="display: flex; gap: 0.4rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openTaskDetail('${item.id}')" style="flex: 1; font-size: 0.76rem;">
+                  Details
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSubscribe('${item.id}', '${item.title.replace(/'/g, "\\'")}')" style="flex: 1; font-size: 0.76rem; ${isSubscribed ? 'color: #065F46; border-color: #A7F3D0; background: #ECFDF5;' : ''}">
+                  ${isSubscribed ? '✓ Alert On' : '🔔 Alert Me'}
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="deleteTask('${item.id}', '${item.title.replace(/'/g, "\\'")}')" style="color: var(--danger); font-size: 0.76rem; padding: 0.25rem 0.5rem;" title="Cancel Maintenance">
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Modal Operations
+     */
+    function openScheduleModal() {
+      document.getElementById('modal-schedule').classList.add('active');
+    }
+
+    function closeScheduleModal() {
+      document.getElementById('modal-schedule').classList.remove('active');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('modal-task-detail').classList.remove('active');
+    }
+
+    /**
+     * Inspect task in detailed modal
+     */
+    function openTaskDetail(id) {
+      const item = allSchedules.find(s => s.id === id);
+      if (!item) return;
+
+      selectedTaskId = id;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isOverdue = (item.status === 'Delayed' || item.status === 'Overdue' || (item.end_date < todayStr && item.status !== 'Completed'));
+
+      document.getElementById('detail-title').textContent = item.title;
+      const statusBadge = document.getElementById('detail-status-badge');
+      statusBadge.textContent = item.status;
+      statusBadge.className = `badge ${item.status === 'In Progress' ? 'badge-progress' : item.status === 'Completed' ? 'badge-resolved' : isOverdue ? 'badge-urgent' : 'badge-assigned'}`;
+
+      const body = document.getElementById('detail-body-content');
+      body.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+          <h4 style="color: var(--primary-deep); font-size: 1.15rem; margin-bottom: 0.35rem;">${escapeHtml(item.title)}</h4>
+          <span style="font-size: 0.82rem; font-weight: 700; color: var(--interactive-blue);">${escapeHtml(item.department_name)}</span>
+        </div>
+
+        <div style="background: var(--bg-main); border-radius: var(--radius-md); padding: 1rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem;">
+          <div>📍 <strong>Target Location:</strong> ${escapeHtml(item.area)}</div>
+          <div>📅 <strong>Planned Schedule:</strong> ${item.start_date} to ${item.end_date}</div>
+          <div>📜 <strong>Authority Reference:</strong> ${escapeHtml(item.official_source || 'Municipal Works Notice')}</div>
+          <div>⚡ <strong>Current Operational State:</strong> <span style="font-weight: 700;">${item.status}</span></div>
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+          <strong style="color: var(--primary-deep); font-size: 0.9rem; display: block; margin-bottom: 0.35rem;">Work Scope & Advisory</strong>
+          <p style="font-size: 0.86rem; color: var(--text-main); line-height: 1.5; margin: 0;">${escapeHtml(item.description)}</p>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--primary-deep);">Update Execution Status:</label>
+          <select id="detail-status-select" class="form-select" style="width: auto; font-size: 0.85rem;" onchange="updateTaskStatus('${item.id}', this.value)">
+            <option value="Scheduled" ${item.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+            <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+            <option value="Delayed" ${item.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
+            <option value="Completed" ${item.status === 'Completed' ? 'selected' : ''}>Completed</option>
+          </select>
+        </div>
+      `;
+
+      const footer = document.getElementById('detail-footer-actions');
+      const subscribedIds = JSON.parse(localStorage.getItem('civic_subscribed_maint_ids') || '[]');
+      const isSub = subscribedIds.includes(item.id);
+
+      footer.innerHTML = `
+        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSubscribe('${item.id}', '${item.title.replace(/'/g, "\\'")}')">
+          ${isSub ? '✓ Subscribed to Alerts' : '🔔 Subscribe Alerts'}
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="deleteTask('${item.id}', '${item.title.replace(/'/g, "\\'")}')">
+          Cancel Work Order
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="closeDetailModal()">
+          Done
+        </button>
+      `;
+
+      document.getElementById('modal-task-detail').classList.add('active');
+    }
+
+    /**
+     * Create new maintenance activity via API
+     */
+    async function handleCreateMaintenance(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit-maint');
+      btn.disabled = true;
+      btn.textContent = 'Publishing...';
+
+      const deptParts = document.getElementById('input-dept').value.split('|');
+
+      const payload = {
+        title: document.getElementById('input-title').value.trim(),
+        departmentId: deptParts[0],
+        departmentName: deptParts[1],
+        area: document.getElementById('input-area').value.trim(),
+        startDate: document.getElementById('input-start-date').value,
+        endDate: document.getElementById('input-end-date').value,
+        status: document.getElementById('input-status').value,
+        officialSource: document.getElementById('input-ref').value.trim(),
+        description: document.getElementById('input-desc').value.trim()
+      };
+
+      try {
+        const res = await CivicAPI.request('/api/maintenance', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        alert(`✓ Maintenance work order scheduled successfully! Reference: ${res.schedule.official_source}`);
+        closeScheduleModal();
+        document.getElementById('form-create-maintenance').reset();
+        await loadMaintenanceData();
+      } catch (err) {
+        alert('Error scheduling maintenance: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Publish Scheduled Activity';
+      }
+    }
+
+    /**
+     * Update Task Status
+     */
+    async function updateTaskStatus(id, newStatus) {
+      try {
+        await CivicAPI.request(`/api/maintenance/${id}/status`, {
+          method: 'POST',
+          body: JSON.stringify({ status: newStatus })
+        });
+        await loadMaintenanceData();
+        if (selectedTaskId === id) {
+          openTaskDetail(id);
+        }
+      } catch (err) {
+        alert('Failed to update status: ' + err.message);
+      }
+    }
+
+    /**
+     * Delete Task
+     */
+    async function deleteTask(id, title) {
+      if (!confirm(`Are you sure you want to cancel and remove scheduled activity:\n"${title}"?`)) {
+        return;
+      }
+      try {
+        await CivicAPI.request(`/api/maintenance/${id}`, {
+          method: 'DELETE'
+        });
+        closeDetailModal();
+        await loadMaintenanceData();
+      } catch (err) {
+        alert('Failed to cancel maintenance: ' + err.message);
+      }
+    }
+
+    /**
+     * Citizen Alert Subscription
+     */
+    function toggleSubscribe(id, title) {
+      let list = JSON.parse(localStorage.getItem('civic_subscribed_maint_ids') || '[]');
+      if (list.includes(id)) {
+        list = list.filter(x => x !== id);
+        alert(`Unsubscribed from alerts for: ${title}`);
+      } else {
+        list.push(id);
+        alert(`🔔 Alert Subscribed! You will receive municipal notifications for work on:\n${title}`);
+      }
+      localStorage.setItem('civic_subscribed_maint_ids', JSON.stringify(list));
+      renderViews();
+      if (selectedTaskId === id) openTaskDetail(id);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
