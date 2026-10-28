@@ -25,7 +25,65 @@ let Database = null;
 try {
   Database = require('better-sqlite3');
 } catch (e) {
-  console.warn('[DB Warning] better-sqlite3 native binary not available in this environment:', e.message);
+  // If better-sqlite3 is not available (e.g. Node 24 without C++ compiler or serverless),
+  // try Node's built-in synchronous SQLite engine (available in Node.js 22.5+)
+  try {
+    const { DatabaseSync } = require('node:sqlite');
+    if (DatabaseSync) {
+      Database = class BuiltinSqliteAdapter {
+        constructor(dbFilePath) {
+          this._db = new DatabaseSync(dbFilePath);
+        }
+        pragma(pragmaStr) {
+          try {
+            this._db.exec(`PRAGMA ${pragmaStr}`);
+          } catch (_) {}
+        }
+        exec(sql) {
+          return this._db.exec(sql);
+        }
+        transaction(fn) {
+          return (...args) => {
+            this._db.exec('BEGIN TRANSACTION');
+            try {
+              const res = fn(...args);
+              this._db.exec('COMMIT');
+              return res;
+            } catch (err) {
+              this._db.exec('ROLLBACK');
+              throw err;
+            }
+          };
+        }
+        prepare(sql) {
+          const stmt = this._db.prepare(sql);
+          const normalize = (p) => {
+            if (p === undefined || p === null) return [];
+            if (Array.isArray(p)) return p;
+            return [p];
+          };
+          return {
+            all(params = []) {
+              return stmt.all(...normalize(params));
+            },
+            get(params = []) {
+              return stmt.get(...normalize(params));
+            },
+            run(params = []) {
+              const res = stmt.run(...normalize(params));
+              return {
+                changes: res.changes,
+                lastInsertRowid: res.lastInsertRowid
+              };
+            }
+          };
+        }
+      };
+      console.log('[DB] Using Node.js built-in node:sqlite engine.');
+    }
+  } catch (syncErr) {
+    console.warn('[DB Warning] better-sqlite3 native binary not available:', e.message);
+  }
 }
 
 const seedDataPath = path.join(__dirname, 'seed-data.json');
