@@ -102,7 +102,7 @@
         <div class="stat-label">Verified Resolution Rate</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val" style="color: #7C3AED;" id="an-avg-days">12</div>
+        <div class="stat-val" style="color: var(--primary-deep);" id="an-avg-days">12</div>
         <div class="stat-label">Average Resolution Days</div>
       </div>
       <div class="stat-card">
@@ -166,29 +166,32 @@
     </div>
 
     <!-- Community Impact Callout Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-      <div class="card" style="padding: 1.5rem; text-align: center; background: #F0FDF4; border-color: #BBF7D0;">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: #DCFCE7; color: #166534; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+    <div style="margin-bottom: 2rem;">
+      <h2 style="font-size: 1.25rem; color: var(--primary-deep); margin-bottom: 1rem;">Community Impact & Municipal Benchmarks</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+        <div class="card" style="padding: 1.5rem; text-align: center; background: #F0FDF4; border-color: #BBF7D0;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: #DCFCE7; color: #166534; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+          </div>
+          <h3 style="font-size: 1.05rem; color: #166534; margin-bottom: 0.35rem;">Cleaner Streets</h3>
+          <p style="font-size: 0.85rem; color: #15803D;">89% of sanitation and garbage overflow reports resolved within 48 hours.</p>
         </div>
-        <h4 style="color: #166534; margin-bottom: 0.35rem;">Cleaner Streets</h4>
-        <p style="font-size: 0.85rem; color: #15803D;">89% of sanitation and garbage overflow reports resolved within 48 hours.</p>
-      </div>
 
-      <div class="card" style="padding: 1.5rem; text-align: center; background: #EFF6FF; border-color: #BFDBFE;">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: #DBEAFE; color: #1E40AF; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <div class="card" style="padding: 1.5rem; text-align: center; background: #EFF6FF; border-color: #BFDBFE;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: #DBEAFE; color: #1E40AF; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <h3 style="font-size: 1.05rem; color: #1E40AF; margin-bottom: 0.35rem;">Safer Commutes</h3>
+          <p style="font-size: 0.85rem; color: #1E3A8A;">Average pothole repair turnaround reduced from 18 days to 9 days.</p>
         </div>
-        <h4 style="color: #1E40AF; margin-bottom: 0.35rem;">Safer Commutes</h4>
-        <p style="font-size: 0.85rem; color: #1E3A8A;">Average pothole repair turnaround reduced from 18 days to 9 days.</p>
-      </div>
 
-      <div class="card" style="padding: 1.5rem; text-align: center; background: #FAF5FF; border-color: #E9D5FF;">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: #F3E8FF; color: #6B21A8; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+        <div class="card" style="padding: 1.5rem; text-align: center; background: #F0F9FF; border-color: #BAE6FD;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: #E0F2FE; color: #0369A1; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+          </div>
+          <h3 style="font-size: 1.05rem; color: #0369A1; margin-bottom: 0.35rem;">Water Security</h3>
+          <p style="font-size: 0.85rem; color: #075985;">94% of reported main pipeline leaks stopped within 24 hours of triage.</p>
         </div>
-        <h4 style="color: #6B21A8; margin-bottom: 0.35rem;">Water Security</h4>
-        <p style="font-size: 0.85rem; color: #581C87;">94% of reported main pipeline leaks stopped within 24 hours of triage.</p>
       </div>
     </div>
 
@@ -217,66 +220,84 @@
     }
 
     async function loadScorecardData(period = 'q4') {
+      const catBox = document.getElementById('category-bars');
+      const deptBox = document.getElementById('department-bars');
+      const trendBox = document.getElementById('monthly-trend-rows');
+
+      catBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading category metrics...</div>';
+      deptBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading department metrics...</div>';
+      trendBox.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">Loading trends...</td></tr>';
+
       try {
-        const res = await CivicAPI.request('/api/analytics/summary');
-        
-        let multiplier = period === '30d' ? 0.35 : (period === 'all' ? 2.4 : 1.0);
-        let kpis = res.kpis;
+        const res = await CivicAPI.request('/api/analytics/scorecard?period=' + encodeURIComponent(period));
+        const kpis = res.kpis || {};
 
-        document.getElementById('an-res-rate').textContent = kpis.resolutionRate;
-        document.getElementById('an-avg-days').textContent = period === '30d' ? '8' : kpis.avgResolutionDays;
-        document.getElementById('an-improvement').textContent = kpis.improvementRate;
-        document.getElementById('an-total').textContent = Math.round(kpis.totalIssues * multiplier).toLocaleString();
+        document.getElementById('an-res-rate').textContent = kpis.resolutionRate || '0%';
+        document.getElementById('an-avg-days').textContent = kpis.avgResolutionDays !== undefined ? kpis.avgResolutionDays : '0';
+        document.getElementById('an-improvement').textContent = kpis.slaAdherenceRate || '0%';
+        document.getElementById('an-total').textContent = (kpis.totalIssues || 0).toLocaleString();
 
-        // 1. Render Category Bars
-        const catBox = document.getElementById('category-bars');
+        // 1. Render Category Bars (Real Data)
         const categories = res.categoryDistribution || [];
-        const maxCatCount = Math.max(...categories.map(c => c.count), 1);
-        catBox.innerHTML = categories.map(c => `
-          <div class="bar-row">
-            <span class="bar-label" title="${c.name}">${c.name}</span>
-            <div class="bar-track">
-              <div class="bar-fill" style="width: ${(c.count / maxCatCount) * 100}%;"></div>
-            </div>
-            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); width: 35px; text-align: right;">${Math.round(c.count * multiplier)}</span>
-          </div>
-        `).join('');
-
-        // 2. Render Department Workload
-        const deptBox = document.getElementById('department-bars');
-        const depts = res.departmentWorkload || [];
-        deptBox.innerHTML = depts.map(d => {
-          const rate = d.total_assigned > 0 ? Math.round((d.resolved_count / d.total_assigned) * 100) : 0;
-          return `
+        if (categories.length === 0) {
+          catBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No category data recorded for this period.</div>';
+        } else {
+          const maxCatCount = Math.max(...categories.map(c => c.count), 1);
+          catBox.innerHTML = categories.map(c => `
             <div class="bar-row">
-              <span class="bar-label" title="${d.name}">${d.name}</span>
+              <span class="bar-label" title="${c.name}">${c.name}</span>
               <div class="bar-track">
-                <div class="bar-fill" style="width: ${rate}%; background: ${rate >= 70 ? 'var(--success)' : '#F59E0B'};"></div>
+                <div class="bar-fill" style="width: ${(c.count / maxCatCount) * 100}%;"></div>
               </div>
-              <span style="font-size: 0.82rem; font-weight: 700; color: ${rate >= 70 ? 'var(--success)' : '#D97706'}; width: 45px; text-align: right;">${rate}%</span>
+              <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); width: 35px; text-align: right;">${c.count}</span>
             </div>
-          `;
-        }).join('');
+          `).join('');
+        }
 
-        // 3. Render Monthly Trends
-        const trendBox = document.getElementById('monthly-trend-rows');
+        // 2. Render Department Workload & Resolution (Real Data)
+        const depts = res.departmentWorkload || [];
+        if (depts.length === 0) {
+          deptBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No department workload recorded for this period.</div>';
+        } else {
+          deptBox.innerHTML = depts.map(d => {
+            const rate = d.total_assigned > 0 ? Math.round((d.resolved_count / d.total_assigned) * 100) : 0;
+            return `
+              <div class="bar-row">
+                <span class="bar-label" title="${d.name}">${d.name}</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: ${rate}%; background: ${rate >= 70 ? 'var(--success)' : (rate >= 40 ? '#F59E0B' : '#EF4444')};"></div>
+                </div>
+                <span style="font-size: 0.82rem; font-weight: 700; color: ${rate >= 70 ? 'var(--success)' : (rate >= 40 ? '#D97706' : '#DC2626')}; width: 45px; text-align: right;">${rate}%</span>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // 3. Render Monthly Trends (Real Data)
         const trends = res.monthlyTrend || [];
-        trendBox.innerHTML = trends.map(t => {
-          const eff = Math.round((t.resolved / t.reported) * 100);
-          return `
-            <tr style="border-bottom: 1px solid var(--border-color);">
-              <td style="padding: 0.75rem 1rem; font-weight: 600; color: var(--primary-deep);">${t.month}</td>
-              <td style="padding: 0.75rem 1rem; color: var(--text-main);">${Math.round(t.reported * multiplier)}</td>
-              <td style="padding: 0.75rem 1rem; color: var(--success); font-weight: 600;">${Math.round(t.resolved * multiplier)}</td>
-              <td style="padding: 0.75rem 1rem;">
-                <span class="badge ${eff >= 75 ? 'badge-resolved' : 'badge-progress'}" style="font-size: 0.78rem;">${eff}% Clearance</span>
-              </td>
-            </tr>
-          `;
-        }).join('');
+        if (trends.length === 0) {
+          trendBox.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">No monthly trend data recorded yet.</td></tr>';
+        } else {
+          trendBox.innerHTML = trends.map(t => {
+            const eff = t.reported > 0 ? Math.round((t.resolved / t.reported) * 100) : 0;
+            return `
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.75rem 1rem; font-weight: 600; color: var(--primary-deep);">${t.month}</td>
+                <td style="padding: 0.75rem 1rem; color: var(--text-main);">${t.reported}</td>
+                <td style="padding: 0.75rem 1rem; color: var(--success); font-weight: 600;">${t.resolved}</td>
+                <td style="padding: 0.75rem 1rem;">
+                  <span class="badge ${eff >= 75 ? 'badge-resolved' : (eff >= 40 ? 'badge-progress' : 'badge-blocked')}" style="font-size: 0.78rem;">${eff}% Clearance</span>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
 
       } catch (err) {
         console.error('Failed to load scorecard:', err);
+        catBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--danger);">Unable to load category metrics.</div>';
+        deptBox.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--danger);">Unable to load department metrics.</div>';
+        trendBox.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 1.5rem; color: var(--danger);">Failed to load municipal resolution trends.</td></tr>';
       }
     }
   </script>

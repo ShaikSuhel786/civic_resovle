@@ -9,6 +9,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { inspectImage } = require('../services/vision');
 
 // Upload directory for local demo storage
 const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -77,28 +78,70 @@ router.post('/reports/:id/photos', requireAuth, (req, res) => {
     const relativePath = `/uploads/${req.file.filename}`;
     const isResolutionPhoto = req.body.isResolutionPhoto === 'true' || req.body.isResolutionPhoto === true ? 1 : 0;
 
-    db.run(`
-      INSERT INTO photo_metadata (id, report_id, uploader_id, storage_path, file_name, content_type, size_bytes, is_resolution_photo, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-    `, [
-      photoId,
-      reportId,
-      req.user.id,
-      relativePath,
-      req.file.originalname,
-      req.file.mimetype,
-      req.file.size,
-      isResolutionPhoto
-    ]);
+    // Run AI vision inspection on the uploaded image
+    const filePath = path.join(uploadDir, req.file.filename);
+    inspectImage({
+      filePath,
+      fileName: req.file.originalname,
+      mimeType: req.file.mimetype
+    }).then(vRes => {
+      const visionCluesJson = vRes && vRes.detectedDefects ? JSON.stringify(vRes.detectedDefects) : null;
+      const confidenceScore = vRes && vRes.overallConfidence ? vRes.overallConfidence : null;
 
-    res.status(201).json({
-      success: true,
-      photo: {
-        id: photoId,
-        storagePath: relativePath,
-        fileName: req.file.originalname,
-        sizeBytes: req.file.size
-      }
+      db.run(`
+        INSERT INTO photo_metadata (id, report_id, uploader_id, storage_path, file_name, content_type, size_bytes, is_resolution_photo, vision_clues_json, confidence_score, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `, [
+        photoId,
+        reportId,
+        req.user.id,
+        relativePath,
+        req.file.originalname,
+        req.file.mimetype,
+        req.file.size,
+        isResolutionPhoto,
+        visionCluesJson,
+        confidenceScore
+      ]);
+
+      res.status(201).json({
+        success: true,
+        photo: {
+          id: photoId,
+          storagePath: relativePath,
+          fileName: req.file.originalname,
+          sizeBytes: req.file.size,
+          isResolutionPhoto: Boolean(isResolutionPhoto),
+          visionClues: vRes ? vRes.detectedDefects : [],
+          confidenceScore: confidenceScore,
+          suggestedCategory: vRes?.suggestedCategoryName || null
+        }
+      });
+    }).catch(vErr => {
+      console.warn('[Photo Upload] Vision inspection warning:', vErr.message);
+      db.run(`
+        INSERT INTO photo_metadata (id, report_id, uploader_id, storage_path, file_name, content_type, size_bytes, is_resolution_photo, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `, [
+        photoId,
+        reportId,
+        req.user.id,
+        relativePath,
+        req.file.originalname,
+        req.file.mimetype,
+        req.file.size,
+        isResolutionPhoto
+      ]);
+
+      res.status(201).json({
+        success: true,
+        photo: {
+          id: photoId,
+          storagePath: relativePath,
+          fileName: req.file.originalname,
+          sizeBytes: req.file.size
+        }
+      });
     });
   });
 });

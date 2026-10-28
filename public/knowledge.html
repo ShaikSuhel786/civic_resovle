@@ -88,13 +88,26 @@
       <p style="font-size: 0.9rem; color: var(--text-muted);">Trustworthy answers to civic procedures, bylaws, water tanker schedules, and citizen rights grounded strictly in official municipal legal acts.</p>
     </div>
 
-    <!-- Search / Question Input Bar -->
-    <div class="knowledge-search-wrapper">
-      <span class="knowledge-search-icon">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      </span>
-      <input type="text" id="knowledge-query-input" class="knowledge-search-input" placeholder="Search bylaws or ask a civic question (e.g. pothole repair SLA, waste segregation rule, water leak hotline)..." oninput="handleKnowledgeSearch(this.value)">
+    <!-- Search / Question Input Bar with Voice Support (PRD F6) -->
+    <div class="knowledge-search-wrapper" style="display: flex; gap: 0.5rem; align-items: center;">
+      <div style="position: relative; flex: 1;">
+        <span class="knowledge-search-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+        <input type="text" id="knowledge-query-input" class="knowledge-search-input" placeholder="Search bylaws or ask a civic question (e.g. pothole repair SLA, waste segregation rule, water leak hotline)..." oninput="handleKnowledgeSearch(this.value)">
+      </div>
+
+      <div style="display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0;">
+        <select id="voice-know-lang" style="font-size: 0.82rem; padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 2px solid var(--border-color); background: #FFFFFF; cursor: pointer;">
+          <option value="en-IN">EN (India)</option>
+          <option value="te-IN">తెలుగు (TE)</option>
+        </select>
+        <button type="button" class="btn btn-secondary" id="btn-voice-know" title="Voice Search Civic Knowledge" style="padding: 0.75rem 1rem;">
+          <span>🎙️ Voice Ask</span>
+        </button>
+      </div>
     </div>
+    <div id="voice-know-status" style="display: none; margin-top: -1rem; margin-bottom: 1.25rem; font-size: 0.82rem; font-weight: 600; color: #DC2626;"></div>
 
     <!-- Category Filter Bar -->
     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 2rem;">
@@ -143,20 +156,54 @@
   <script src="/js/i18n.js"></script>
   <script src="/js/glass-nav.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/voice-assistant.js"></script>
   <script>
     let rawArticles = [];
     let currentCategory = 'all';
     let searchQuery = '';
+    let searchDebounceTimer = null;
+    let currentSpeakingId = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       CivicAuth.bootNav();
       await loadKnowledgeArticles();
+
+      const input = document.getElementById('knowledge-query-input');
+      if (input) {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            askCivicAssistant(input.value);
+          }
+        });
+      }
+
+      // Wire up Voice Search (PRD F6)
+      const btnVoice = document.getElementById('btn-voice-know');
+      const voiceLang = document.getElementById('voice-know-lang');
+      if (btnVoice && window.CivicVoice) {
+        btnVoice.addEventListener('click', () => {
+          const selectedLang = voiceLang ? voiceLang.value : 'en-IN';
+          CivicVoice.toggleDictation({
+            targetInput: 'knowledge-query-input',
+            button: 'btn-voice-know',
+            lang: selectedLang,
+            statusElement: 'voice-know-status',
+            onResult: (transcript, isFinal) => {
+              if (isFinal && transcript && transcript.length >= 3) {
+                askCivicAssistant(transcript);
+              }
+            }
+          });
+        });
+      }
     });
 
     async function loadKnowledgeArticles() {
       const container = document.getElementById('knowledge-articles-grid');
+      container.innerHTML = '<div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1 / -1;">Loading verified municipal articles...</div>';
       try {
-        const res = await CivicAPI.request('/api/reports/public/knowledge');
+        const res = await CivicAPI.request('/api/knowledge');
         rawArticles = res.articles || [];
         renderKnowledgeCards();
       } catch (err) {
@@ -174,12 +221,124 @@
 
     function handleKnowledgeSearch(val) {
       searchQuery = val.trim().toLowerCase();
-      renderKnowledgeCards();
+      clearTimeout(searchDebounceTimer);
+      if (searchQuery.length >= 4) {
+        searchDebounceTimer = setTimeout(() => {
+          askCivicAssistant(searchQuery);
+        }, 500);
+      } else {
+        document.getElementById('ai-unverified-fallback').style.display = 'none';
+        renderKnowledgeCards();
+      }
+    }
+
+    async function askCivicAssistant(query) {
+      if (!query || query.trim().length < 3) {
+        renderKnowledgeCards();
+        return;
+      }
+
+      try {
+        const res = await CivicAPI.request('/api/knowledge/ask', {
+          method: 'POST',
+          body: JSON.stringify({ query: query.trim() })
+        });
+
+        const fallbackBox = document.getElementById('ai-unverified-fallback');
+        const container = document.getElementById('knowledge-articles-grid');
+
+        if (res.answered === false) {
+          // Explicit statutory fallback: Never hallucinate!
+          fallbackBox.style.display = 'block';
+          container.innerHTML = '';
+        } else if (res.answered === true) {
+          fallbackBox.style.display = 'none';
+          // Filter articles or present matched answer prominently
+          const matches = res.matchedArticles || [];
+          const matchIds = new Set(matches.map(m => m.id));
+          const sorted = [...rawArticles].sort((a, b) => {
+            const aHas = matchIds.has(a.id) ? 1 : 0;
+            const bHas = matchIds.has(b.id) ? 1 : 0;
+            return bHas - aHas;
+          });
+          renderCustomArticleList(sorted, matchIds);
+        }
+      } catch (err) {
+        console.error('Ask error:', err);
+        renderKnowledgeCards();
+      }
+    }
+
+    function renderCustomArticleList(list, highlightIds = new Set()) {
+      const container = document.getElementById('knowledge-articles-grid');
+      if (list.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 2.5rem;">No matching articles found.</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        const isFeatured = highlightIds.has(item.id);
+        const cardBorder = isFeatured ? '4px solid #059669' : '4px solid #6B21A8';
+        const cardBg = isFeatured ? '#F0FDF4' : '#FFFFFF';
+
+        return `
+          <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; border-left: ${cardBorder}; background: ${cardBg};">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <span class="badge" style="background: #F3E8FF; color: #6B21A8; font-size: 0.72rem;">${item.category}</span>
+                <span style="font-size: 0.72rem; color: #059669; font-weight: 600;">✓ Verified Statutory Source</span>
+              </div>
+              <strong style="font-size: 1.05rem; color: var(--primary-deep); display: block; margin-bottom: 0.4rem;">${item.title}</strong>
+              <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.75rem; line-height: 1.5;">${item.content}</p>
+            </div>
+
+            <div style="padding-top: 0.75rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <span class="citation-badge" title="Official Municipal Authority">
+                <span>📜</span>
+                <span>${item.official_source || 'Municipal Bylaw'}</span>
+              </span>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button type="button" class="btn btn-secondary btn-sm" id="tts-btn-${item.id}" onclick="readArticleAloud('${item.id}', ${JSON.stringify(item.title + '. ' + item.content).replace(/"/g, '&quot;')})" style="padding: 0.2rem 0.55rem; font-size: 0.74rem;">
+                  <span>🔊 Listen</span>
+                </button>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Verified: ${item.last_verified ? item.last_verified.slice(0, 10) : '2026-Q4'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function readArticleAloud(id, text) {
+      if (!window.CivicVoice) return;
+      const btn = document.getElementById(`tts-btn-${id}`);
+      const langSelect = document.getElementById('voice-know-lang');
+      const lang = langSelect ? langSelect.value : 'en-IN';
+
+      if (currentSpeakingId === id && CivicVoice.isSpeaking()) {
+        CivicVoice.stopSpeaking();
+        if (btn) btn.innerHTML = '<span>🔊 Listen</span>';
+        currentSpeakingId = null;
+        return;
+      }
+
+      if (currentSpeakingId) {
+        const prevBtn = document.getElementById(`tts-btn-${currentSpeakingId}`);
+        if (prevBtn) prevBtn.innerHTML = '<span>🔊 Listen</span>';
+      }
+
+      currentSpeakingId = id;
+      if (btn) btn.innerHTML = '<span>⏹️ Stop</span>';
+
+      CivicVoice.speakText(text, lang, null, () => {
+        if (btn) btn.innerHTML = '<span>🔊 Listen</span>';
+        if (currentSpeakingId === id) currentSpeakingId = null;
+      });
     }
 
     function renderKnowledgeCards() {
-      const container = document.getElementById('knowledge-articles-grid');
       const fallbackBox = document.getElementById('ai-unverified-fallback');
+      if (fallbackBox) fallbackBox.style.display = 'none';
 
       const filtered = rawArticles.filter(item => {
         const matchCat = currentCategory === 'all'
@@ -197,40 +356,7 @@
         return matchCat && matchSearch;
       });
 
-      // If user typed a search query that has NO match, trigger the official unverified fallback!
-      if (searchQuery && filtered.length === 0) {
-        fallbackBox.style.display = 'block';
-        container.innerHTML = '';
-        return;
-      } else {
-        fallbackBox.style.display = 'none';
-      }
-
-      if (filtered.length === 0) {
-        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 2.5rem;">No knowledge articles found in this category.</div>';
-        return;
-      }
-
-      container.innerHTML = filtered.map(item => `
-        <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid #6B21A8; background: #FFFFFF;">
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-              <span class="badge" style="background: #F3E8FF; color: #6B21A8; font-size: 0.72rem;">${item.category}</span>
-              <span style="font-size: 0.72rem; color: #059669; font-weight: 600;">✓ Verified</span>
-            </div>
-            <strong style="font-size: 1.05rem; color: var(--primary-deep); display: block; margin-bottom: 0.4rem;">${item.title}</strong>
-            <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.75rem; line-height: 1.5;">${item.content}</p>
-          </div>
-
-          <div style="padding-top: 0.75rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-            <span class="citation-badge" title="Official Municipal Authority">
-              <span>📜</span>
-              <span>${item.official_source || 'Municipal Bylaw'}</span>
-            </span>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">Checked: 2026-Q4</span>
-          </div>
-        </div>
-      `).join('');
+      renderCustomArticleList(filtered);
     }
   </script>
 </body>

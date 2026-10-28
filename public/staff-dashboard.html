@@ -129,10 +129,18 @@
           <label class="form-label" for="resolve-summary-input">Comprehensive Resolution Summary <span style="color: var(--danger);">*</span></label>
           <textarea id="resolve-summary-input" class="form-textarea" placeholder="Describe the physical repair, parts replaced, or clearance actions completed (minimum 15 characters)..." rows="4" required></textarea>
         </div>
+
+        <div class="form-group">
+          <label class="form-label" for="resolve-photo-input">Proof of Resolution: After-Repair Photo <span style="color: var(--danger);">* (Mandatory PRD F4)</span></label>
+          <input type="file" id="resolve-photo-input" accept="image/jpeg,image/png,image/webp" class="form-input" style="padding: 0.4rem;">
+          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Upload photographic proof of completed work (JPG, PNG, WebP up to 5MB).
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeResolveModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="submitResolution()" style="background: var(--success); border-color: var(--success);">Complete Resolution</button>
+        <button class="btn btn-primary" id="btn-confirm-resolve" onclick="submitResolution()" style="background: var(--success); border-color: var(--success);">Complete Resolution</button>
       </div>
     </div>
   </div>
@@ -226,6 +234,12 @@
               <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
                 <span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <strong>Location:</strong> ${r.location_text}</span>
                 <span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <strong>Citizen:</strong> ${r.citizen_name || 'Resident'}</span>
+                ${r.sla_deadline ? `
+                  <span style="display:inline-flex;align-items:center;gap:0.3rem; color: ${r.escalation_level >= 2 ? '#DC2626' : (r.escalation_level >= 1 ? '#D97706' : 'var(--text-muted)')}; font-weight: 600;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <strong>SLA:</strong> ${new Date(r.sla_deadline).toLocaleDateString()} ${r.escalation_level >= 2 ? '(OVERDUE)' : (r.escalation_level >= 1 ? '(WARNING)' : '')}
+                  </span>
+                ` : ''}
               </div>
 
               ${isBlocked ? `
@@ -330,6 +344,8 @@
       activeActionReportId = reportId;
       document.getElementById('resolve-modal-error').style.display = 'none';
       document.getElementById('resolve-summary-input').value = '';
+      const photoInput = document.getElementById('resolve-photo-input');
+      if (photoInput) photoInput.value = '';
       document.getElementById('resolve-modal').classList.add('active');
     }
     function closeResolveModal() {
@@ -337,23 +353,63 @@
     }
     async function submitResolution() {
       const summary = document.getElementById('resolve-summary-input').value.trim();
+      const photoInput = document.getElementById('resolve-photo-input');
       const errBox = document.getElementById('resolve-modal-error');
+      const submitBtn = document.getElementById('btn-confirm-resolve');
+
       if (summary.length < 15) {
         errBox.textContent = 'Please provide a comprehensive summary (minimum 15 characters).';
         errBox.style.display = 'block';
         return;
       }
+
+      const file = photoInput ? photoInput.files[0] : null;
+      if (!file) {
+        errBox.textContent = 'Proof of Resolution Required (PRD F4): You must upload an after-repair photo before marking this report resolved.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Uploading & Resolving...';
+      }
+
       try {
+        // Step 1: Upload after-repair photo with isResolutionPhoto flag
+        const formData = new FormData();
+        formData.append('photo', file);
+        formData.append('isResolutionPhoto', 'true');
+
+        const token = CivicAuth.getToken();
+        const uploadRes = await fetch(`/api/reports/${activeActionReportId}/photos`, {
+          method: 'POST',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+          body: formData
+        });
+
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to upload after-repair proof photo.');
+        }
+
+        // Step 2: Mark report resolved
         await CivicAPI.request(`/api/staff/reports/${activeActionReportId}/status`, {
           method: 'POST',
           body: JSON.stringify({ newStatus: 'Resolved', resolutionSummary: summary })
         });
+
         closeResolveModal();
-        alert('Report resolved and published to citizen timeline.');
+        alert('Complaint successfully resolved with verified proof of resolution.');
         await loadAssignedReports();
       } catch (err) {
         errBox.textContent = err.message || 'Action failed.';
         errBox.style.display = 'block';
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Complete Resolution';
+        }
       }
     }
 

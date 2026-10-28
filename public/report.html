@@ -55,17 +55,34 @@
           <form id="report-issue-form">
             
             <div class="form-group">
-              <label class="form-label" for="report-title">
-                Issue Title <span style="color: var(--text-light); font-weight: 400;">(Auto-generated if left blank)</span>
-              </label>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">
+                <label class="form-label" for="report-title" style="margin-bottom: 0;">
+                  Issue Title <span style="color: var(--text-light); font-weight: 400;">(Auto-generated if left blank)</span>
+                </label>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-voice-title" title="Voice Type Title (English / తెలుగు)" style="padding: 0.2rem 0.55rem; font-size: 0.76rem;">
+                  <span>🎙️ Dictate</span>
+                </button>
+              </div>
               <input type="text" id="report-title" class="form-input" placeholder="e.g. Large pothole on main road causing hazard">
             </div>
 
             <div class="form-group">
-              <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <label class="form-label" for="report-desc">Description <span style="color: var(--danger);">*</span></label>
-                <span id="char-counter" style="font-size: 0.78rem; color: var(--text-light);">0 / 2000 chars (min 20)</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.35rem;">
+                <label class="form-label" for="report-desc" style="margin-bottom: 0;">Description <span style="color: var(--danger);">*</span></label>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  <span id="char-counter" style="font-size: 0.78rem; color: var(--text-light);">0 / 2000 chars (min 20)</span>
+                  <div style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                    <select id="voice-lang-select" style="font-size: 0.76rem; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: #FFFFFF; cursor: pointer;">
+                      <option value="en-IN">English (India)</option>
+                      <option value="te-IN">తెలుగు (Telugu)</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-voice-desc" title="Dictate Description with Voice" style="padding: 0.2rem 0.55rem; font-size: 0.76rem;">
+                      <span>🎙️ Speak</span>
+                    </button>
+                  </div>
+                </div>
               </div>
+              <div id="voice-status-indicator" style="display: none; margin-bottom: 0.35rem; font-size: 0.78rem; color: #DC2626; font-weight: 600;"></div>
               <textarea id="report-desc" class="form-textarea" placeholder="Describe the civic issue in detail (location landmarks, safety risk, vehicle or pedestrian impact)..." required minlength="20" maxlength="2000"></textarea>
             </div>
 
@@ -101,7 +118,7 @@
               <div id="location-status-msg" style="display: none; font-size: 0.78rem; padding: 0.35rem 0.6rem; border-radius: var(--radius-sm); margin-top: 0.4rem;"></div>
             </div>
 
-            <!-- Optional Photo Upload Dropzone (FR-11) -->
+            <!-- Optional Photo Upload Dropzone (FR-11) & AI Vision Inspector (PRD F1) -->
             <div class="form-group">
               <label class="form-label">Upload Photo <span style="color: var(--text-light); font-weight: 400;">(Optional, Max 5MB, JPG/PNG/WebP)</span></label>
               <div class="photo-dropzone" id="photo-dropzone-box" onclick="document.getElementById('report-photo-input').click()">
@@ -112,12 +129,55 @@
               <input type="file" id="report-photo-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
               
               <div id="photo-preview-container" style="display: none; align-items: center; gap: 0.75rem; margin-top: 0.75rem; padding: 0.5rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-                <img id="photo-preview-img" style="width: 54px; height: 54px; object-fit: cover; border-radius: var(--radius-sm);">
+                <img id="photo-preview-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='54' height='54' viewBox='0 0 54 54'%3E%3Crect width='54' height='54' fill='%23F1F5F9'/%3E%3C/svg%3E" alt="Uploaded photo preview" style="width: 54px; height: 54px; object-fit: cover; border-radius: var(--radius-sm);">
                 <div style="flex: 1; overflow: hidden;">
                   <div id="photo-preview-name" style="font-size: 0.82rem; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"></div>
                   <div id="photo-preview-size" style="font-size: 0.75rem; color: var(--text-muted);"></div>
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="clearPhoto()" aria-label="Remove photo" style="color: var(--danger); display: inline-flex; align-items: center; justify-content: center; padding: 0.35rem 0.55rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+              </div>
+
+              <!-- AI Vision Inspector Container (PRD F1) -->
+              <div id="vision-inspector-container" style="display: none;" class="vision-inspector-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="font-size: 0.95rem;">👁️</span>
+                    <strong style="font-size: 0.88rem; color: var(--primary-deep);">AI Vision Inspector</strong>
+                  </div>
+                  <span id="vision-provider-pill" class="vision-provider-pill">Heuristic Fallback</span>
+                </div>
+
+                <div id="vision-loading" style="display: none; padding: 0.75rem 0; text-align: center; font-size: 0.82rem; color: var(--text-muted);">
+                  <div style="display: inline-block; width: 14px; height: 14px; border: 2px solid #CBD5E1; border-top-color: var(--interactive-blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; vertical-align: -2px;"></div>
+                  Analyzing photo for civic defects & hazard markers...
+                </div>
+
+                <div id="vision-results-content" style="display: none;">
+                  <div style="margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Detected Clues:</span>
+                    <div id="vision-clues-chips" style="display: flex; flex-wrap: wrap; gap: 0.35rem;"></div>
+                  </div>
+
+                  <div id="vision-hazard-banner" style="display: none; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; font-size: 0.78rem; margin-bottom: 0.5rem;">
+                    <strong>⚠️ Critical Hazard Flagged:</strong> <span id="vision-hazard-reason"></span>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; background: #FFFFFF; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <div>
+                      <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">Suggested Category:</span>
+                      <strong id="vision-suggested-category" style="font-size: 0.84rem; color: var(--interactive-blue);">Roads and potholes</strong>
+                      <span id="vision-confidence-tag" style="font-size: 0.72rem; color: var(--text-muted); margin-left: 4px;">(88% confidence)</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-apply-vision-category" style="padding: 0.25rem 0.6rem; font-size: 0.76rem;">
+                      Apply Suggestion
+                    </button>
+                  </div>
+
+                  <div style="margin-top: 0.5rem; font-size: 0.72rem; color: var(--text-light); line-height: 1.4;">
+                    <strong>Citizen Choice:</strong> You may manually override or select any category in the dropdown above.
+                    <span id="vision-disclaimer-text" style="display: block; margin-top: 2px;"></span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -219,6 +279,7 @@
   <script src="/js/api.js"></script>
   <script src="/js/i18n.js"></script>
   <script src="/js/glass-nav.js"></script>
+  <script src="/js/voice-assistant.js"></script>
   <script>
     let map = null;
     let marker = null;
@@ -259,6 +320,38 @@
 
       // Initialize Leaflet Map (Hyderabad Default Center)
       initMap(currentLat, currentLng);
+
+      // Initialize Voice Assistant (PRD F6)
+      const btnVoiceTitle = document.getElementById('btn-voice-title');
+      const btnVoiceDesc = document.getElementById('btn-voice-desc');
+      const voiceLangSelect = document.getElementById('voice-lang-select');
+
+      if (btnVoiceTitle && window.CivicVoice) {
+        btnVoiceTitle.addEventListener('click', () => {
+          const selectedLang = voiceLangSelect ? voiceLangSelect.value : 'en-IN';
+          CivicVoice.toggleDictation({
+            targetInput: 'report-title',
+            button: 'btn-voice-title',
+            lang: selectedLang,
+            statusElement: 'voice-status-indicator'
+          });
+        });
+      }
+
+      if (btnVoiceDesc && window.CivicVoice) {
+        btnVoiceDesc.addEventListener('click', () => {
+          const selectedLang = voiceLangSelect ? voiceLangSelect.value : 'en-IN';
+          CivicVoice.toggleDictation({
+            targetInput: 'report-desc',
+            button: 'btn-voice-desc',
+            lang: selectedLang,
+            statusElement: 'voice-status-indicator',
+            onResult: () => {
+              document.getElementById('report-desc').dispatchEvent(new Event('input'));
+            }
+          });
+        });
+      }
     });
 
     // Privacy Modal handler
@@ -563,7 +656,95 @@
       });
     });
 
-    // Photo input handling
+    // Photo input handling & AI Vision Inspector (PRD F1)
+    let lastVisionResult = null;
+
+    async function triggerVisionInspection(file) {
+      const container = document.getElementById('vision-inspector-container');
+      const loading = document.getElementById('vision-loading');
+      const results = document.getElementById('vision-results-content');
+      if (!container) return;
+
+      container.style.display = 'block';
+      loading.style.display = 'block';
+      results.style.display = 'none';
+
+      try {
+        const formData = new FormData();
+        formData.append('photo', file);
+        formData.append('textHint', document.getElementById('report-desc').value || '');
+
+        const resp = await fetch('/api/ai/vision-inspect', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        lastVisionResult = data;
+
+        loading.style.display = 'none';
+        results.style.display = 'block';
+
+        // Update provider pill
+        const pill = document.getElementById('vision-provider-pill');
+        if (pill) {
+          pill.textContent = data.provider === 'gemini' ? 'Gemini 1.5 Flash' : 'Heuristic Fallback';
+          pill.style.background = data.provider === 'gemini' ? '#ECFDF5' : '#F1F5F9';
+          pill.style.color = data.provider === 'gemini' ? '#065F46' : '#64748B';
+        }
+
+        // Render clues chips
+        const chipsContainer = document.getElementById('vision-clues-chips');
+        if (chipsContainer) {
+          const clues = data.detectedDefects || [];
+          chipsContainer.innerHTML = clues.map(c => `
+            <span class="defect-chip ${data.hazardFlag ? 'hazard' : ''}">
+              ${data.hazardFlag ? '⚠️ ' : '🔍 '} ${c}
+            </span>
+          `).join('');
+        }
+
+        // Hazard Banner
+        const hazardBanner = document.getElementById('vision-hazard-banner');
+        const hazardReason = document.getElementById('vision-hazard-reason');
+        if (hazardBanner && hazardReason) {
+          if (data.hazardFlag) {
+            hazardBanner.style.display = 'block';
+            hazardReason.textContent = data.hazardReason || 'Urgent physical hazard detected in photo.';
+          } else {
+            hazardBanner.style.display = 'none';
+          }
+        }
+
+        // Suggested Category
+        const catName = data.suggestedCategory ? data.suggestedCategory.name : 'General Issue';
+        const conf = data.overallConfidence || 85;
+        document.getElementById('vision-suggested-category').textContent = catName;
+        document.getElementById('vision-confidence-tag').textContent = `(${conf}% confidence)`;
+        document.getElementById('vision-disclaimer-text').textContent = data.disclaimer || '';
+
+        // Auto-select or suggest button
+        const applyBtn = document.getElementById('btn-apply-vision-category');
+        if (applyBtn && data.suggestedCategory?.id) {
+          applyBtn.onclick = () => {
+            const select = document.getElementById('report-category');
+            if (select) {
+              select.value = data.suggestedCategory.id;
+              select.style.borderColor = 'var(--interactive-blue)';
+              applyBtn.innerHTML = '✓ Applied';
+              setTimeout(() => { applyBtn.innerHTML = 'Apply Suggestion'; }, 2000);
+            }
+          };
+        }
+
+      } catch (err) {
+        console.warn('Vision inspection error:', err);
+        loading.style.display = 'none';
+        container.style.display = 'none';
+      }
+    }
+
     document.getElementById('report-photo-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -583,6 +764,7 @@
         document.getElementById('photo-preview-img').src = re.target.result;
         document.getElementById('photo-preview-container').style.display = 'flex';
         document.getElementById('photo-dropzone-box').style.display = 'none';
+        triggerVisionInspection(file);
       };
       reader.readAsDataURL(file);
     });
@@ -592,6 +774,9 @@
       document.getElementById('report-photo-input').value = '';
       document.getElementById('photo-preview-container').style.display = 'none';
       document.getElementById('photo-dropzone-box').style.display = 'block';
+      const vContainer = document.getElementById('vision-inspector-container');
+      if (vContainer) vContainer.style.display = 'none';
+      lastVisionResult = null;
     }
 
     // Submit Report Form

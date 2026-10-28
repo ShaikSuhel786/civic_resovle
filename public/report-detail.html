@@ -52,6 +52,12 @@
           <h1 style="font-size: 1.6rem; color: var(--primary-deep); margin-top: 0.25rem;" id="det-title">Loading Issue Details...</h1>
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <!-- PRD F7: Community Impact Upvote -->
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-upvote-report" onclick="toggleCommunityVote()" title="Upvote this civic issue" style="padding: 0.35rem 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600;">
+            <span id="upvote-icon">👍</span>
+            <span id="upvote-label">Support</span>
+            <span class="badge" id="upvote-count" style="background: #EFF6FF; color: var(--interactive-blue); margin-left: 0.2rem;">0</span>
+          </button>
           <span class="badge" id="det-priority-badge">Priority</span>
           <span class="badge" id="det-status-badge">Status</span>
           <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()" title="Print official receipt" style="padding: 0.35rem 0.75rem;">
@@ -74,7 +80,13 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
           <span>Reported on <span id="det-date">Date</span></span>
         </span>
+        <span style="display: inline-flex; align-items: center; gap: 0.35rem;" id="det-sla-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>SLA Target: <strong id="det-sla-display" class="badge" style="background: #F1F5F9; color: var(--text-main);">Calculating...</strong></span>
+        </span>
       </div>
+      <!-- SLA Escalation Callout if applicable -->
+      <div id="sla-escalation-alert" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem;"></div>
       <!-- Duplicate Notification if applicable -->
       <div id="duplicate-alert" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; background: #F3E8FF; border: 1px solid #D8B4FE; border-radius: var(--radius-md); font-size: 0.85rem; color: #6B21A8;">
         <strong>Duplicate Relationship:</strong> This issue was linked to canonical primary report <a href="#" id="det-primary-link" style="color: #4C1D95; font-weight: 700; text-decoration: underline;">REP-...</a>.
@@ -109,6 +121,69 @@
           </div>
           <div class="card-body">
             <p id="det-desc" style="font-size: 0.92rem; color: var(--text-main); line-height: 1.6;"></p>
+          </div>
+        </div>
+
+        <!-- Citizen Satisfaction Feedback Card (PRD Section 4 #48) -->
+        <div class="card" id="card-feedback" style="display: none; margin-bottom: 1.5rem; border: 1px solid #E0E7FF; background: #FAFAFE;">
+          <div class="card-header" style="background: #EEF2FF; border-bottom: 1px solid #E0E7FF; display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #3730A3; font-size: 0.95rem;">Citizen Satisfaction Rating</strong>
+            <span style="font-size: 0.76rem; color: #4338CA; font-weight: 600;">PRD Section 4 #48</span>
+          </div>
+          <div class="card-body">
+            <!-- Already Rated View -->
+            <div id="feedback-completed-view" style="display: none;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <span id="feedback-stars-display" style="color: #F59E0B; font-size: 1.35rem; letter-spacing: 2px;">★★★★★</span>
+                <span id="feedback-score-display" style="font-weight: 700; color: var(--primary-deep); font-size: 0.92rem;">5/5 Stars</span>
+              </div>
+              <p id="feedback-comment-display" style="font-size: 0.88rem; color: var(--text-muted); font-style: italic; margin-bottom: 0;"></p>
+            </div>
+
+            <!-- Submit Rating Form -->
+            <form id="feedback-submit-form" style="display: none;" onsubmit="submitSatisfactionFeedback(event)">
+              <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                How satisfied are you with the municipal department's resolution of this issue?
+              </p>
+              <div class="rating-stars-input" style="display: flex; gap: 0.4rem; font-size: 1.6rem; cursor: pointer; color: #D1D5DB; margin-bottom: 0.75rem;" id="rating-stars-group">
+                <span class="star-btn" data-rating="1" onclick="setStarRating(1)">★</span>
+                <span class="star-btn" data-rating="2" onclick="setStarRating(2)">★</span>
+                <span class="star-btn" data-rating="3" onclick="setStarRating(3)">★</span>
+                <span class="star-btn" data-rating="4" onclick="setStarRating(4)">★</span>
+                <span class="star-btn" data-rating="5" onclick="setStarRating(5)">★</span>
+              </div>
+              <input type="hidden" id="selected-star-rating" value="5">
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <textarea id="feedback-comment-input" class="form-textarea" placeholder="Optional comments on field responsiveness, workmanship, or timeliness..." rows="2"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm" id="btn-submit-rating" style="background: #4338CA; border-color: #4338CA;">
+                Submit Rating
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Citizen Appeals & Administrative Review Card (PRD Section 4 & 5) -->
+        <div class="card" id="card-appeals" style="display: none; margin-bottom: 1.5rem; border: 1px solid #FED7AA; background: #FFFBF5;">
+          <div class="card-header" style="background: #FFEDD5; border-bottom: 1px solid #FED7AA; display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #9A3412; font-size: 0.95rem;">Administrative Appeal & Review</strong>
+            <span style="font-size: 0.76rem; color: #C2410C; font-weight: 600;">PRD Section 4 & 5</span>
+          </div>
+          <div class="card-body">
+            <div id="appeal-status-view" style="display: none; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <span class="badge" id="appeal-status-badge" style="font-size: 0.76rem;">Pending Review</span>
+                <span style="font-size: 0.75rem; color: var(--text-light);" id="appeal-date-display">Date</span>
+              </div>
+              <p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 0.35rem;" id="appeal-reason-display"></p>
+              <div id="appeal-notes-box" style="display: none; font-size: 0.82rem; background: #FFFFFF; border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); margin-top: 0.5rem;">
+                <strong>Admin Decision:</strong> <span id="appeal-admin-notes"></span>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-open-appeal-modal" onclick="openAppealModal()" style="color: #9A3412; border-color: #FDBA74; display: inline-flex; align-items: center; gap: 0.35rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <span>File Official Appeal / Request Review</span>
+            </button>
           </div>
         </div>
 
@@ -202,6 +277,38 @@
     </div>
   </div>
 
+  <!-- Citizen Appeal Modal (PRD Section 4 & 5) -->
+  <div class="modal-overlay" id="appeal-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <strong>File Official Decision Appeal</strong>
+        <button class="btn btn-secondary btn-sm" onclick="closeAppealModal()" aria-label="Close" style="display:inline-flex;align-items:center;justify-content:center;padding:0.35rem 0.6rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="modal-body">
+        <div id="appeal-modal-error" style="display: none; padding: 0.5rem; background: var(--danger-bg); color: var(--danger); font-size: 0.82rem; margin-bottom: 0.75rem; border-radius: var(--radius-sm);"></div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          If you believe this complaint was improperly resolved or prematurely rejected, you can petition Municipal Administration for formal re-examination.
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="appeal-type-select">Appeal Category</label>
+          <select id="appeal-type-select" class="form-input">
+            <option value="resolution">Challenging Resolution Quality / Incomplete Work</option>
+            <option value="rejection">Challenging Premature Rejection</option>
+            <option value="general">Procedural Review</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="appeal-reason-input">Appeal Grounds & Factual Explanation <span style="color: var(--danger);">*</span></label>
+          <textarea id="appeal-reason-input" class="form-textarea" placeholder="Provide factual details explaining why this decision should be reviewed (minimum 10 characters)..." rows="4" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAppealModal()">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-appeal" onclick="submitAppeal()" style="background: #9A3412; border-color: #9A3412;">Submit Official Appeal</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/auth.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/i18n.js"></script>
@@ -270,10 +377,81 @@
       statusBadge.textContent = r.status;
       statusBadge.className = 'badge badge-' + r.status.toLowerCase().replace(' ', '-');
 
+      // PRD F5: SLA Target & Escalation
+      const slaWrap = document.getElementById('det-sla-wrap');
+      const slaBadge = document.getElementById('det-sla-display');
+      const slaAlert = document.getElementById('sla-escalation-alert');
+
+      if (r.sla) {
+        if (slaWrap) slaWrap.style.display = 'inline-flex';
+        if (slaBadge) {
+          slaBadge.textContent = r.sla.displayText;
+          if (r.sla.isBreached) {
+            slaBadge.style.background = '#FEE2E2';
+            slaBadge.style.color = '#991B1B';
+          } else if (r.sla.isWarning) {
+            slaBadge.style.background = '#FEF3C7';
+            slaBadge.style.color = '#92400E';
+          } else {
+            slaBadge.style.background = '#ECFDF5';
+            slaBadge.style.color = '#065F46';
+          }
+        }
+        if (slaAlert) {
+          if (r.sla.isBreached) {
+            slaAlert.style.display = 'block';
+            slaAlert.style.background = '#FEF2F2';
+            slaAlert.style.border = '1px solid #FECDD3';
+            slaAlert.style.color = '#991B1B';
+            slaAlert.innerHTML = `<strong>⚠️ SLA Breached:</strong> Target resolution date exceeded (${r.sla.displayText}). High-priority escalation triggered to department leadership.`;
+          } else if (r.sla.isWarning) {
+            slaAlert.style.display = 'block';
+            slaAlert.style.background = '#FFFBEB';
+            slaAlert.style.border = '1px solid #FDE68A';
+            slaAlert.style.color = '#B45309';
+            slaAlert.innerHTML = `<strong>⏳ SLA Warning:</strong> Over 80% of targeted resolution timeline has elapsed (${r.sla.displayText}). Automated priority warning dispatched.`;
+          } else {
+            slaAlert.style.display = 'none';
+          }
+        }
+      }
+
       // Priority Badge
       const prioBadge = document.getElementById('det-priority-badge');
       prioBadge.textContent = `${r.priority_level} Priority (${r.priority_score}/100)`;
       prioBadge.className = 'badge badge-' + r.priority_level.toLowerCase();
+
+      // PRD F7: Community Impact Upvote state
+      const user = CivicAuth.getUser();
+      const voteBtn = document.getElementById('btn-upvote-report');
+      const voteCountBadge = document.getElementById('upvote-count');
+      const voteLabel = document.getElementById('upvote-label');
+
+      const votes = r.communityVotes !== undefined ? r.communityVotes : (r.community_votes || 0);
+      if (voteCountBadge) voteCountBadge.textContent = votes;
+
+      if (voteBtn) {
+        if (user && r.citizen_id === user.id) {
+          voteBtn.disabled = true;
+          voteBtn.title = 'You cannot upvote your own civic issue';
+          if (voteLabel) voteLabel.textContent = 'Your Issue';
+        } else {
+          voteBtn.disabled = false;
+          if (r.hasVoted) {
+            voteBtn.style.background = '#EFF6FF';
+            voteBtn.style.borderColor = 'var(--interactive-blue)';
+            voteBtn.style.color = 'var(--interactive-blue)';
+            if (voteLabel) voteLabel.textContent = 'Supported';
+            voteBtn.setAttribute('aria-pressed', 'true');
+          } else {
+            voteBtn.style.background = '';
+            voteBtn.style.borderColor = '';
+            voteBtn.style.color = '';
+            if (voteLabel) voteLabel.textContent = 'Support';
+            voteBtn.setAttribute('aria-pressed', 'false');
+          }
+        }
+      }
 
       // Show reopen request button if Resolved
       if (r.status === 'Resolved') {
@@ -288,15 +466,103 @@
         primaryLink.href = `/reports/${data.primaryReport.id}`;
       }
 
-      // Photos
+      // PRD Section 4 #48: Citizen Satisfaction Rating (Only on Resolved)
+      const feedbackCard = document.getElementById('card-feedback');
+      const feedbackCompleted = document.getElementById('feedback-completed-view');
+      const feedbackForm = document.getElementById('feedback-submit-form');
+
+      if (feedbackCard) {
+        if (r.status === 'Resolved') {
+          feedbackCard.style.display = 'block';
+          if (data.feedback) {
+            feedbackCompleted.style.display = 'block';
+            feedbackForm.style.display = 'none';
+            const stars = '★'.repeat(data.feedback.rating) + '☆'.repeat(5 - data.feedback.rating);
+            document.getElementById('feedback-stars-display').textContent = stars;
+            document.getElementById('feedback-score-display').textContent = `${data.feedback.rating}/5 Stars Verified`;
+            document.getElementById('feedback-comment-display').textContent = data.feedback.comment ? `"${data.feedback.comment}"` : 'No written remarks provided.';
+          } else if (user && r.citizen_id === user.id) {
+            feedbackCompleted.style.display = 'none';
+            feedbackForm.style.display = 'block';
+            setStarRating(5);
+          } else {
+            feedbackCard.style.display = 'none';
+          }
+        } else {
+          feedbackCard.style.display = 'none';
+        }
+      }
+
+      // PRD Section 4 & 5: Official Appeals & Review (Only on Resolved or Rejected)
+      const appealsCard = document.getElementById('card-appeals');
+      const appealStatusView = document.getElementById('appeal-status-view');
+      const appealBtn = document.getElementById('btn-open-appeal-modal');
+
+      if (appealsCard) {
+        if (['Resolved', 'Rejected'].includes(r.status)) {
+          appealsCard.style.display = 'block';
+          const appealsList = data.appeals || [];
+          const activeAppeal = appealsList[0];
+
+          if (activeAppeal) {
+            appealStatusView.style.display = 'block';
+            const stBadge = document.getElementById('appeal-status-badge');
+            stBadge.textContent = `Appeal ${activeAppeal.status}`;
+            if (activeAppeal.status === 'Pending') stBadge.className = 'badge badge-under-review';
+            else if (activeAppeal.status === 'Approved') stBadge.className = 'badge badge-resolved';
+            else stBadge.className = 'badge badge-blocked';
+
+            document.getElementById('appeal-date-display').textContent = new Date(activeAppeal.created_at).toLocaleDateString();
+            document.getElementById('appeal-reason-display').textContent = `Citizen Ground: "${activeAppeal.reason}"`;
+
+            if (activeAppeal.admin_notes) {
+              document.getElementById('appeal-notes-box').style.display = 'block';
+              document.getElementById('appeal-admin-notes').textContent = activeAppeal.admin_notes;
+            } else {
+              document.getElementById('appeal-notes-box').style.display = 'none';
+            }
+
+            if (activeAppeal.status === 'Pending') {
+              appealBtn.style.display = 'none';
+            } else {
+              appealBtn.style.display = (user && r.citizen_id === user.id) ? 'inline-flex' : 'none';
+            }
+          } else {
+            appealStatusView.style.display = 'none';
+            appealBtn.style.display = (user && r.citizen_id === user.id) ? 'inline-flex' : 'none';
+          }
+        } else {
+          appealsCard.style.display = 'none';
+        }
+      }
+
+      // Photos & PRD F4 Proof of Resolution & PRD F1 AI Vision Clues
       if (data.photos && data.photos.length > 0) {
         document.getElementById('no-photo-placeholder').style.display = 'none';
         const gallery = document.getElementById('photo-gallery-box');
-        gallery.innerHTML = data.photos.map(p => `
-          <div style="border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); width: 140px; height: 140px;">
-            <img src="${p.storage_path}" alt="Issue photo" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${p.storage_path}', '_blank')">
-          </div>
-        `).join('');
+        gallery.innerHTML = data.photos.map(p => {
+          const isResolutionProof = p.is_resolution_photo === 1 || p.isResolutionPhoto;
+          let clues = p.visionClues;
+          if (!clues && p.vision_clues_json) {
+            try { clues = JSON.parse(p.vision_clues_json); } catch (_) { clues = []; }
+          }
+          const hasClues = Array.isArray(clues) && clues.length > 0;
+
+          return `
+            <div style="position: relative; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); width: 160px; min-height: 140px; background: #FFFFFF; display: flex; flex-direction: column;">
+              <div style="position: relative; width: 100%; height: 110px;">
+                <img src="${p.storage_path}" alt="Issue photo" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${p.storage_path}', '_blank')">
+                ${isResolutionProof ? `<span style="position: absolute; bottom: 4px; left: 4px; font-size: 0.65rem; background: #059669; color: #FFFFFF; font-weight: 700; padding: 2px 6px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">✓ Resolution Proof</span>` : ''}
+              </div>
+              ${hasClues ? `
+                <div style="padding: 4px 6px; background: #F8FAFC; border-top: 1px solid var(--border-color); font-size: 0.68rem; color: var(--text-muted); line-height: 1.3;">
+                  <span style="font-weight: 600; color: var(--primary-deep);">AI Clues:</span> ${clues.slice(0, 2).join(', ')}
+                  ${p.confidence_score ? `<span style="display: block; font-size: 0.64rem; color: var(--interactive-blue);">${p.confidence_score}% confidence</span>` : ''}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
       }
 
       // Timeline Rendering (Screen 7 Right)
@@ -323,6 +589,49 @@
         document.getElementById('latest-update-title').textContent = `Status: ${r.status}`;
         document.getElementById('latest-update-time').textContent = new Date(lastEvt.created_at).toLocaleString();
         document.getElementById('latest-update-text').textContent = lastEvt.message;
+      }
+    }
+
+    async function toggleCommunityVote() {
+      if (!CivicAuth.isAuthenticated()) {
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+      const user = CivicAuth.getUser();
+      if (user && user.role !== 'citizen') {
+        alert('Only citizen accounts can cast community impact votes.');
+        return;
+      }
+
+      const voteBtn = document.getElementById('btn-upvote-report');
+      const isCurrentlyVoted = voteBtn.getAttribute('aria-pressed') === 'true';
+
+      try {
+        const method = isCurrentlyVoted ? 'DELETE' : 'POST';
+        const res = await CivicAPI.request(`/api/reports/${reportId}/vote`, { method });
+
+        const countBadge = document.getElementById('upvote-count');
+        const voteLabel = document.getElementById('upvote-label');
+
+        if (res.voted) {
+          voteBtn.style.background = '#EFF6FF';
+          voteBtn.style.borderColor = 'var(--interactive-blue)';
+          voteBtn.style.color = 'var(--interactive-blue)';
+          if (voteLabel) voteLabel.textContent = 'Supported';
+          voteBtn.setAttribute('aria-pressed', 'true');
+        } else {
+          voteBtn.style.background = '';
+          voteBtn.style.borderColor = '';
+          voteBtn.style.color = '';
+          if (voteLabel) voteLabel.textContent = 'Support';
+          voteBtn.setAttribute('aria-pressed', 'false');
+        }
+
+        if (res.communityVotes !== undefined) {
+          countBadge.textContent = res.communityVotes;
+        }
+      } catch (err) {
+        alert('Vote action failed: ' + err.message);
       }
     }
 
@@ -389,6 +698,97 @@
         errBox.style.display = 'block';
       }
     });
+
+    // PRD Section 4 #48: Star Rating Handlers
+    function setStarRating(rating) {
+      document.getElementById('selected-star-rating').value = rating;
+      const stars = document.querySelectorAll('#rating-stars-group .star-btn');
+      stars.forEach((s, idx) => {
+        if (idx < rating) {
+          s.style.color = '#F59E0B';
+        } else {
+          s.style.color = '#D1D5DB';
+        }
+      });
+    }
+
+    async function submitSatisfactionFeedback(e) {
+      e.preventDefault();
+      const rating = parseInt(document.getElementById('selected-star-rating').value, 10);
+      const comment = document.getElementById('feedback-comment-input').value.trim();
+      const btn = document.getElementById('btn-submit-rating');
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+      }
+
+      try {
+        await CivicAPI.request(`/api/reports/${reportId}/feedback`, {
+          method: 'POST',
+          body: JSON.stringify({ rating, comment })
+        });
+        alert('Thank you for rating municipal service delivery!');
+        await loadReportDetail();
+      } catch (err) {
+        alert('Failed to submit feedback: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Submit Rating';
+        }
+      }
+    }
+
+    // PRD Section 4 & 5: Appeal Modal Handlers
+    function openAppealModal() {
+      document.getElementById('appeal-modal-error').style.display = 'none';
+      document.getElementById('appeal-reason-input').value = '';
+      if (currentReport) {
+        document.getElementById('appeal-type-select').value = (currentReport.status === 'Rejected') ? 'rejection' : 'resolution';
+      }
+      document.getElementById('appeal-modal').classList.add('active');
+    }
+
+    function closeAppealModal() {
+      document.getElementById('appeal-modal').classList.remove('active');
+    }
+
+    async function submitAppeal() {
+      const appealType = document.getElementById('appeal-type-select').value;
+      const reason = document.getElementById('appeal-reason-input').value.trim();
+      const errBox = document.getElementById('appeal-modal-error');
+      const btn = document.getElementById('btn-submit-appeal');
+
+      if (reason.length < 10) {
+        errBox.textContent = 'Please provide a comprehensive explanation of grounds (minimum 10 characters).';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Submitting Appeal...';
+      }
+
+      try {
+        await CivicAPI.request(`/api/reports/${reportId}/appeal`, {
+          method: 'POST',
+          body: JSON.stringify({ appealType, reason })
+        });
+        closeAppealModal();
+        alert('Your appeal has been formally registered for administrative review.');
+        await loadReportDetail();
+      } catch (err) {
+        errBox.textContent = err.message || 'Appeal filing failed.';
+        errBox.style.display = 'block';
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Submit Official Appeal';
+        }
+      }
+    }
   </script>
 </body>
 </html>

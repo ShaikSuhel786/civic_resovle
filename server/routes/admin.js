@@ -6,6 +6,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const db = require('../db');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const { checkEscalations } = require('../services/escalation');
 
 // All endpoints in this router require 'admin' role
 router.use(requireAuth, requireRole('admin'));
@@ -59,10 +60,37 @@ router.get('/queues', (req, res) => {
     ORDER BY active_workload DESC
   `);
 
+  // 5. Citizen Appeals Queue (Pending arbitration)
+  const appealsQueue = db.all(`
+    SELECT a.*, r.reference_number as report_reference, r.title as report_title, r.status as report_status,
+           c.name as category_name, d.name as department_name, p.display_name as citizen_name, p.email as citizen_email
+    FROM report_appeals a
+    JOIN reports r ON a.report_id = r.id
+    LEFT JOIN categories c ON r.category_id = c.id
+    LEFT JOIN departments d ON r.department_id = d.id
+    JOIN profiles p ON a.citizen_id = p.id
+    WHERE a.status = 'Pending'
+    ORDER BY a.created_at ASC
+  `);
+
+  // 6. SLA Escalations Queue
+  const escalationsQueue = db.all(`
+    SELECT r.*, c.name as category_name, d.name as department_name, staff.display_name as staff_name, p.display_name as citizen_name
+    FROM reports r
+    LEFT JOIN categories c ON r.category_id = c.id
+    LEFT JOIN departments d ON r.department_id = d.id
+    LEFT JOIN profiles staff ON r.assigned_staff_id = staff.id
+    LEFT JOIN profiles p ON r.citizen_id = p.id
+    WHERE r.escalation_level >= 1 AND r.status NOT IN ('Resolved', 'Rejected', 'Withdrawn')
+    ORDER BY r.escalation_level DESC, r.sla_deadline ASC
+  `);
+
   res.json({
     urgentQueue,
     reviewQueue,
     blockedQueue,
+    appealsQueue,
+    escalationsQueue,
     departmentWorkload
   });
 });
@@ -460,6 +488,173 @@ router.get('/audit-logs', (req, res) => {
     LIMIT 100
   `);
   res.json({ auditLogs: logs });
+});
+
+// --------------------------------------------------------------------------
+// PRD Section 4 & 5: Administrative Appeals Queue & Arbitration Endpoints
+// --------------------------------------------------------------------------
+
+// GET /api/admin/appeals - View all citizen appeals
+router.get('/appeals', (req, res) => {
+  const appeals = db.all(`
+    SELECT a.*, r.reference_number as report_reference, r.title as report_title, r.status as report_status,
+           c.name as category_name, d.name as department_name, p.display_name as citizen_name, p.email as citizen_email,
+           decider.display_name as decider_name
+    FROM report_appeals a
+    JOIN reports r ON a.report_id = r.id
+    LEFT JOIN categories c ON r.category_id = c.id
+    LEFT JOIN departments d ON r.department_id = d.id
+    JOIN profiles p ON a.citizen_id = p.id
+    LEFT JOIN profiles decider ON a.decided_by = decider.id
+    ORDER BY CASE a.status WHEN 'Pending' THEN 1 ELSE 2 END, a.created_at DESC
+  `);
+  res.json({ appeals });
+});
+
+// POST /api/admin/appeals/:id/decide - Arbitrate citizen appeal (Approve -> Reopen, Reject -> Uphold)
+router.post('/appeals/:id/decide', (req, res) => {
+  const appealId = req.params.id;
+  const { decision, adminNotes } = req.body;
+
+  if (!['Approved', 'Rejected'].includes(decision)) {
+    return res.status(400).json({ error: "Invalid appeal decision. Must be 'Approved' or 'Rejected'." });
+  }
+
+  const appeal = db.get(`
+    SELECT a.*, r.reference_number as report_reference, r.status as report_status, r.citizen_id
+    FROM report_appeals a
+    JOIN reports r ON a.report_id = r.id
+    WHERE a.id = ?
+  `, [appealId]);
+
+  if (!appeal) return res.status(404).json({ error: 'Appeal not found.' });
+
+  if (appeal.status !== 'Pending') {
+    return res.status(400).json({ error: `Appeal has already been decided (${appeal.status}).` });
+  }
+
+  db.transaction(() => {
+    // 1. Update appeal record
+    db.run(`
+      UPDATE report_appeals
+      SET status = ?,
+          admin_notes = ?,
+          decided_by = ?,
+          decided_at = datetime('now')
+      WHERE id = ?
+    `, [decision, adminNotes ? adminNotes.trim() : null, req.user.id, appealId]);
+
+    // 2. If Approved: Reopen report to Under Review for investigation
+    if (decision === 'Approved') {
+      db.run(`
+        UPDATE reports
+        SET status = 'Under Review',
+            review_required = 0,
+            review_reason = NULL,
+            updated_at = datetime('now')
+        WHERE id = ?
+      `, [appeal.report_id]);
+
+      db.run(`
+        INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
+        VALUES (?, ?, ?, 'appeal_approved', 1, ?, ?, datetime('now'))
+      `, [
+        'evt-' + crypto.randomUUID().slice(0, 8),
+        appeal.report_id,
+        req.user.id,
+        `Citizen Appeal Approved by Municipal Administrator. Report reopened to Under Review. Notes: ${adminNotes ? adminNotes.trim() : 'Approved upon re-examination.'}`,
+        JSON.stringify({ appealId, decision, adminNotes })
+      ]);
+
+      db.run(`
+        INSERT INTO audit_events (id, actor_id, action, entity_type, entity_id, before_state_json, after_state_json, reason, created_at)
+        VALUES (?, ?, 'APPROVE_APPEAL', 'report_appeals', ?, ?, ?, ?, datetime('now'))
+      `, [
+        'aud-' + crypto.randomUUID().slice(0, 8),
+        req.user.id,
+        appealId,
+        JSON.stringify({ appealStatus: 'Pending', reportStatus: appeal.report_status }),
+        JSON.stringify({ appealStatus: 'Approved', reportStatus: 'Under Review' }),
+        adminNotes || 'Appeal approved'
+      ]);
+
+      // Notify citizen
+      db.run(`
+        INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
+        VALUES (?, ?, ?, 'Appeal Approved: Issue Reopened', ?, 0, ?, datetime('now'))
+      `, [
+        'ntf-' + crypto.randomUUID().slice(0, 8),
+        appeal.citizen_id,
+        appeal.report_id,
+        `Your appeal for report #${appeal.report_reference} was approved. The issue has been reopened for priority investigation.`,
+        `notif-app-dec-${appealId}`
+      ]);
+    } else {
+      // If Rejected: Uphold closure/rejection
+      db.run(`
+        UPDATE reports
+        SET review_required = 0,
+            review_reason = NULL,
+            updated_at = datetime('now')
+        WHERE id = ?
+      `, [appeal.report_id]);
+
+      db.run(`
+        INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
+        VALUES (?, ?, ?, 'appeal_rejected', 1, ?, ?, datetime('now'))
+      `, [
+        'evt-' + crypto.randomUUID().slice(0, 8),
+        appeal.report_id,
+        req.user.id,
+        `Citizen Appeal Reviewed & Upheld: Original determination confirmed. Notes: ${adminNotes ? adminNotes.trim() : 'Upheld based on operational review.'}`,
+        JSON.stringify({ appealId, decision, adminNotes })
+      ]);
+
+      db.run(`
+        INSERT INTO audit_events (id, actor_id, action, entity_type, entity_id, before_state_json, after_state_json, reason, created_at)
+        VALUES (?, ?, 'REJECT_APPEAL', 'report_appeals', ?, ?, ?, ?, datetime('now'))
+      `, [
+        'aud-' + crypto.randomUUID().slice(0, 8),
+        req.user.id,
+        appealId,
+        JSON.stringify({ appealStatus: 'Pending' }),
+        JSON.stringify({ appealStatus: 'Rejected' }),
+        adminNotes || 'Appeal rejected'
+      ]);
+
+      // Notify citizen
+      db.run(`
+        INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
+        VALUES (?, ?, ?, 'Appeal Decision', ?, 0, ?, datetime('now'))
+      `, [
+        'ntf-' + crypto.randomUUID().slice(0, 8),
+        appeal.citizen_id,
+        appeal.report_id,
+        `Your appeal for report #${appeal.report_reference} was reviewed. The original determination has been upheld. Reason: ${adminNotes ? adminNotes.trim() : 'Operational review completed.'}`,
+        `notif-app-dec-${appealId}`
+      ]);
+    }
+  });
+
+  const updatedAppeal = db.get('SELECT * FROM report_appeals WHERE id = ?', [appealId]);
+  res.json({
+    success: true,
+    message: `Appeal decision recorded as '${decision}'.`,
+    appeal: updatedAppeal
+  });
+});
+
+// --------------------------------------------------------------------------
+// PRD F5: Smart Escalation Trigger Endpoint
+// --------------------------------------------------------------------------
+
+// POST /api/admin/escalations/check - Run on-demand smart escalation evaluation
+router.post('/escalations/check', (req, res) => {
+  const result = checkEscalations();
+  res.json({
+    success: true,
+    ...result
+  });
 });
 
 module.exports = router;

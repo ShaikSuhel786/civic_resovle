@@ -98,11 +98,11 @@
         <div class="stat-label">Active Hotspots Identified</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val" style="color: #7C3AED;">78%</div>
+        <div class="stat-val" style="color: var(--primary-deep);">78%</div>
         <div class="stat-label">Model Avg Confidence</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val" style="color: #059669;">Pre-Emptive</div>
+        <div class="stat-val" style="color: var(--success);">Pre-Emptive</div>
         <div class="stat-label">Dispatch Readiness Mode</div>
       </div>
     </div>
@@ -147,16 +147,37 @@
 
     async function loadRadarData() {
       const container = document.getElementById('radar-hotspots-container');
+      container.innerHTML = '<div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1 / -1;">Calculating recurrence models and spatial density clusters...</div>';
+
       try {
         const res = await CivicAPI.request('/api/analytics/radar');
+
+        if (res.insufficientData) {
+          document.getElementById('radar-total-reports').textContent = (res.totalAnalyzedReports || 0).toLocaleString();
+          document.getElementById('radar-hotspots-cnt').textContent = '0';
+          container.innerHTML = `
+            <div class="card" style="grid-column: 1 / -1; padding: 2.5rem; text-align: center; background: #FFFBEB; border: 1px solid #FDE68A;">
+              <span style="font-size: 2rem;">📊</span>
+              <strong style="color: #92400E; font-size: 1.1rem; display: block; margin-top: 0.5rem;">Insufficient Historical Data for Predictive Forecasting</strong>
+              <p style="font-size: 0.88rem; color: #78350F; max-width: 600px; margin: 0.5rem auto; line-height: 1.5;">
+                ${res.insufficientDataReason || 'At least 3 geocoded civic reports are required to calculate spatial clustering hotspots.'}
+              </p>
+              <div style="font-size: 0.8rem; color: #92400E; margin-top: 0.5rem;">
+                In compliance with Civic Resolve AI data governance, unvalidated predictions are never fabricated or presented as certainty.
+              </div>
+            </div>
+          `;
+          return;
+        }
+
         rawHotspots = res.hotspots || [];
 
-        document.getElementById('radar-total-reports').textContent = (res.totalAnalyzedReports || 1260).toLocaleString();
-        document.getElementById('radar-hotspots-cnt').textContent = res.activeHotspotsCount || rawHotspots.length;
+        document.getElementById('radar-total-reports').textContent = (res.totalAnalyzedReports || rawHotspots.length).toLocaleString();
+        document.getElementById('radar-hotspots-cnt').textContent = res.activeHotspotsCount !== undefined ? res.activeHotspotsCount : rawHotspots.length;
 
         renderHotspotCards();
       } catch (err) {
-        container.innerHTML = `<div style="color: var(--danger); text-align: center; grid-column: 1 / -1;">Failed to load problem radar: ${err.message}</div>`;
+        container.innerHTML = `<div style="color: var(--danger); text-align: center; grid-column: 1 / -1; padding: 2rem;">Failed to load problem radar: ${err.message}</div>`;
       }
     }
 

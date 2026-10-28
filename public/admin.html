@@ -82,6 +82,14 @@
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>
             Blocked Issues (<span id="badge-blocked-cnt">0</span>)
           </a>
+          <a href="#section-appeals" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem; color: #9A3412;">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            Appeals Queue (<span id="badge-appeals-cnt">0</span>)
+          </a>
+          <a href="#section-escalations" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem; color: #C2410C;">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            SLA Escalations (<span id="badge-escalations-cnt">0</span>)
+          </a>
           <a href="#section-workload" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; margin-bottom: 0.35rem;">
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
             Staff Workloads
@@ -152,6 +160,14 @@
               <a href="#section-blocked" class="status-pill-btn" style="display: inline-flex; align-items: center; gap: 0.35rem;">
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>
                 Blocked (<span id="pill-blocked-cnt">0</span>)
+              </a>
+              <a href="#section-appeals" class="status-pill-btn" style="color: #9A3412; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Appeals (<span id="pill-appeals-cnt">0</span>)
+              </a>
+              <a href="#section-escalations" class="status-pill-btn" style="color: #C2410C; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Escalations (<span id="pill-escalations-cnt">0</span>)
               </a>
             </div>
 
@@ -268,6 +284,71 @@
           </div>
         </div>
 
+        <!-- 5. Citizen Appeals & Administrative Review Queue (PRD Section 4 & 5) -->
+        <div class="card" id="section-appeals" style="margin-bottom: 2rem;">
+          <div class="card-header" style="background: #FFFBF5; border-bottom: 1px solid #FED7AA; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="badge" style="background: #FFEDD5; color: #9A3412; font-weight: 700;">Arbitration</span>
+              <strong style="color: #9A3412; font-size: 1.05rem;">Citizen Appeals Queue (Review & Reopening Requests)</strong>
+            </div>
+            <span style="font-size: 0.82rem; font-weight: 700; color: #9A3412;" id="cnt-appeals-badge">0 Appeals</span>
+          </div>
+
+          <div id="container-appeals-table" style="overflow-x: auto;">
+            <table class="queue-table">
+              <thead>
+                <tr>
+                  <th>Report Ref / Title</th>
+                  <th>Citizen Petitioner</th>
+                  <th>Appeal Category</th>
+                  <th>Grounds & Explanation</th>
+                  <th>Submitted</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-appeals-queue">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading appeals queue...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="container-appeals-grid" class="reports-grid-view" style="display: none; padding: 1.25rem;"></div>
+        </div>
+
+        <!-- 6. Smart SLA Escalations Queue (PRD F5) -->
+        <div class="card" id="section-escalations" style="margin-bottom: 2rem;">
+          <div class="card-header" style="background: #FDF4FF; border-bottom: 1px solid #F5D0FE; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="badge" style="background: #F5D0FE; color: #86198F; font-weight: 700;">PRD F5</span>
+              <strong style="color: #701A75; font-size: 1.05rem;">SLA Escalations & Deadline Warnings</strong>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #701A75;" id="cnt-escalations-badge">0 Escalations</span>
+              <button class="btn btn-secondary btn-sm" onclick="triggerEscalationCheck()" style="padding: 0.25rem 0.6rem; font-size: 0.76rem;">
+                Run SLA Check Now
+              </button>
+            </div>
+          </div>
+
+          <div id="container-escalations-table" style="overflow-x: auto;">
+            <table class="queue-table">
+              <thead>
+                <tr>
+                  <th>Ref ID / Title</th>
+                  <th>Department / Staff</th>
+                  <th>Priority & Score</th>
+                  <th>Escalation Level</th>
+                  <th>SLA Deadline</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-escalations-queue">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading SLA escalations...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="container-escalations-grid" class="reports-grid-view" style="display: none; padding: 1.25rem;"></div>
+        </div>
+
       </div>
 
     </div>
@@ -339,6 +420,45 @@
     </div>
   </div>
 
+  <!-- Appeal Arbitration Decision Modal (PRD Section 4 & 5) -->
+  <div class="modal-overlay" id="appeal-decision-modal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header" style="background: #FFEDD5; border-bottom: 1px solid #FED7AA;">
+        <strong style="color: #9A3412;">Arbitrate Citizen Appeal</strong>
+        <button class="btn btn-secondary btn-sm" onclick="closeAppealDecisionModal()" aria-label="Close" style="display:inline-flex;align-items:center;justify-content:center;padding:0.35rem 0.6rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="modal-body">
+        <div id="appeal-decision-error" style="display: none; padding: 0.5rem; background: var(--danger-bg); color: var(--danger); font-size: 0.82rem; margin-bottom: 0.75rem; border-radius: var(--radius-sm);"></div>
+        
+        <div style="background: var(--bg-main); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.85rem;">
+          <div>Report: <strong id="modal-appeal-report-ref">REP-...</strong></div>
+          <div style="margin-top: 0.2rem;">Petitioner: <span id="modal-appeal-citizen-name">Citizen</span></div>
+          <div style="margin-top: 0.2rem;">Type: <strong id="modal-appeal-type">resolution</strong></div>
+          <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color);">
+            <strong>Citizen Appeal Grounds:</strong>
+            <p id="modal-appeal-grounds" style="margin-top: 0.25rem; color: var(--text-main); font-style: italic;"></p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="appeal-decision-notes">Administrative Findings & Instructions</label>
+          <textarea id="appeal-decision-notes" class="form-textarea" placeholder="Document the arbitration rationale (e.g. 'Field team dispatched for re-grading pavement' or 'Confirmed outside municipal boundary')..." rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; gap: 0.5rem;">
+        <button class="btn btn-secondary" onclick="closeAppealDecisionModal()">Cancel</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-secondary" onclick="submitAppealDecision('Rejected')" style="color: var(--danger); border-color: var(--danger);">
+            Uphold Original Decision
+          </button>
+          <button class="btn btn-primary" onclick="submitAppealDecision('Approved')" style="background: var(--success); border-color: var(--success);">
+            Approve & Reopen Issue
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/auth.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/i18n.js"></script>
@@ -346,10 +466,13 @@
   <script>
     let activeAssignReport = null;
     let activeHazardReportId = null;
+    let activeArbitrateAppealId = null;
     let allAvailableStaff = [];
     let currentUrgentQueue = [];
     let currentReviewQueue = [];
     let currentBlockedQueue = [];
+    let currentAppealsQueue = [];
+    let currentEscalationsQueue = [];
     let adminSearchQuery = '';
     let adminDeptFilter = 'all';
     let adminViewMode = localStorage.getItem('civic_admin_view_mode') || 'table';
@@ -397,6 +520,8 @@
         currentUrgentQueue = res.urgentQueue || [];
         currentReviewQueue = res.reviewQueue || [];
         currentBlockedQueue = res.blockedQueue || [];
+        currentAppealsQueue = res.appealsQueue || [];
+        currentEscalationsQueue = res.escalationsQueue || [];
 
         // Update pill counts
         const pillUrgent = document.getElementById('pill-urgent-cnt');
@@ -405,6 +530,10 @@
         if (pillReview) pillReview.textContent = currentReviewQueue.length;
         const pillBlocked = document.getElementById('pill-blocked-cnt');
         if (pillBlocked) pillBlocked.textContent = currentBlockedQueue.length;
+        const pillAppeals = document.getElementById('pill-appeals-cnt');
+        if (pillAppeals) pillAppeals.textContent = currentAppealsQueue.length;
+        const pillEsc = document.getElementById('pill-escalations-cnt');
+        if (pillEsc) pillEsc.textContent = currentEscalationsQueue.length;
 
         applyAdminFilters();
         renderDepartmentWorkload(res.departmentWorkload || []);
@@ -452,12 +581,14 @@
         }
         if (adminSearchQuery) {
           const q = adminSearchQuery;
-          const matchTitle = r.title && r.title.toLowerCase().includes(q);
-          const matchRef = r.reference_number && r.reference_number.toLowerCase().includes(q);
+          const matchTitle = (r.title || r.report_title) && (r.title || r.report_title).toLowerCase().includes(q);
+          const matchRef = (r.reference_number || r.report_reference) && (r.reference_number || r.report_reference).toLowerCase().includes(q);
           const matchLoc = r.location_text && r.location_text.toLowerCase().includes(q);
           const matchStaff = r.staff_name && r.staff_name.toLowerCase().includes(q);
           const matchDept = r.department_name && r.department_name.toLowerCase().includes(q);
-          if (!matchTitle && !matchRef && !matchLoc && !matchStaff && !matchDept) return false;
+          const matchCitizen = r.citizen_name && r.citizen_name.toLowerCase().includes(q);
+          const matchReason = r.reason && r.reason.toLowerCase().includes(q);
+          if (!matchTitle && !matchRef && !matchLoc && !matchStaff && !matchDept && !matchCitizen && !matchReason) return false;
         }
         return true;
       }
@@ -465,6 +596,8 @@
       renderUrgentQueue(currentUrgentQueue.filter(match));
       renderReviewQueue(currentReviewQueue.filter(match));
       renderBlockedQueue(currentBlockedQueue.filter(match));
+      renderAppealsQueue(currentAppealsQueue.filter(match));
+      renderEscalationsQueue(currentEscalationsQueue.filter(match));
     }
 
     function openAssignModalById(reportId) {
@@ -704,6 +837,203 @@
             </td>
           </tr>
         `).join('');
+      }
+    }
+
+    function renderAppealsQueue(items) {
+      document.getElementById('cnt-appeals-badge').textContent = `${items.length} Appeals`;
+      const badgePill = document.getElementById('badge-appeals-cnt');
+      if (badgePill) badgePill.textContent = items.length;
+
+      const tableContainer = document.getElementById('container-appeals-table');
+      const gridContainer = document.getElementById('container-appeals-grid');
+      const tbody = document.getElementById('table-appeals-queue');
+
+      if (adminViewMode === 'grid') {
+        tableContainer.style.display = 'none';
+        gridContainer.style.display = 'grid';
+
+        if (items.length === 0) {
+          gridContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No citizen appeals pending arbitration.</div>';
+          return;
+        }
+
+        gridContainer.innerHTML = items.map(a => `
+          <div class="report-grid-card" style="border-left: 4px solid #EA580C;">
+            <div class="report-grid-header">
+              <div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: #EA580C; text-transform: uppercase;">
+                  Appeal: ${a.appeal_type}
+                </span>
+                <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">#${a.report_reference}</div>
+              </div>
+              <span class="badge badge-under-review">Pending</span>
+            </div>
+            <div class="report-grid-body">
+              <a href="/reports/${a.report_id}" class="report-grid-title">${a.report_title}</a>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.35rem;">Petitioner: <strong>${a.citizen_name}</strong></div>
+              <p style="font-size: 0.84rem; color: var(--text-main); font-style: italic;">"${a.reason}"</p>
+            </div>
+            <div class="report-grid-footer">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(a.created_at).toLocaleDateString()}</span>
+              <button class="btn btn-primary btn-sm" onclick="openAppealDecisionModal('${a.id}')" style="background: #9A3412; border-color: #9A3412;">Arbitrate</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        gridContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No citizen appeals pending administrative arbitration.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map(a => `
+          <tr>
+            <td>
+              <a href="/reports/${a.report_id}" style="font-weight: 700; color: var(--primary-deep);">${a.report_reference}</a>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">${a.report_title}</div>
+            </td>
+            <td>
+              <strong>${a.citizen_name}</strong>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${a.citizen_email || ''}</div>
+            </td>
+            <td><span class="badge" style="background: #FFEDD5; color: #9A3412; font-size: 0.76rem;">${a.appeal_type}</span></td>
+            <td style="font-size: 0.84rem; color: var(--text-main); max-width: 280px;">"${a.reason}"</td>
+            <td style="font-size: 0.78rem; color: var(--text-light); white-space: nowrap;">${new Date(a.created_at).toLocaleDateString()}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn btn-primary btn-sm" onclick="openAppealDecisionModal('${a.id}')" style="background: #9A3412; border-color: #9A3412;">Arbitrate</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function renderEscalationsQueue(items) {
+      document.getElementById('cnt-escalations-badge').textContent = `${items.length} Escalated`;
+      const badgePill = document.getElementById('badge-escalations-cnt');
+      if (badgePill) badgePill.textContent = items.length;
+
+      const tableContainer = document.getElementById('container-escalations-table');
+      const gridContainer = document.getElementById('container-escalations-grid');
+      const tbody = document.getElementById('table-escalations-queue');
+
+      if (adminViewMode === 'grid') {
+        tableContainer.style.display = 'none';
+        gridContainer.style.display = 'grid';
+
+        if (items.length === 0) {
+          gridContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No SLA deadline breaches or warnings active.</div>';
+          return;
+        }
+
+        gridContainer.innerHTML = items.map(r => `
+          <div class="report-grid-card" style="border-left: 4px solid ${r.escalation_level >= 2 ? '#EF4444' : '#F59E0B'};">
+            <div class="report-grid-header">
+              <div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: ${r.escalation_level >= 2 ? '#EF4444' : '#B45309'}; text-transform: uppercase;">
+                  ${r.escalation_level >= 2 ? '⚠️ SLA Breached' : '⏳ SLA Warning'}
+                </span>
+                <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">#${r.reference_number}</div>
+              </div>
+              <span class="badge ${r.escalation_level >= 2 ? 'badge-urgent' : 'badge-high'}">Level ${r.escalation_level}</span>
+            </div>
+            <div class="report-grid-body">
+              <a href="/reports/${r.id}" class="report-grid-title">${r.title}</a>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.35rem;">Dept: <strong>${r.department_name || 'Unassigned'}</strong></div>
+              <div style="font-size: 0.78rem; color: ${r.escalation_level >= 2 ? '#DC2626' : '#D97706'}; font-weight: 600;">
+                Target: ${r.sla_deadline ? new Date(r.sla_deadline).toLocaleString() : 'Past Target'}
+              </div>
+            </div>
+            <div class="report-grid-footer">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">${r.staff_name || 'Unassigned'}</span>
+              <a href="/reports/${r.id}" class="btn btn-secondary btn-sm">Inspect</a>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        gridContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">All active issues are within standard SLA thresholds.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map(r => `
+          <tr>
+            <td>
+              <a href="/reports/${r.id}" style="font-weight: 700; color: var(--primary-deep);">${r.reference_number}</a>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">${r.title}</div>
+            </td>
+            <td>
+              <div><strong>${r.department_name || 'Unmapped'}</strong></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${r.staff_name || 'Unassigned'}</div>
+            </td>
+            <td><span class="badge badge-${r.priority_level.toLowerCase()}">${r.priority_level} (${r.priority_score})</span></td>
+            <td>
+              <span class="badge" style="background: ${r.escalation_level >= 2 ? '#FEE2E2' : '#FEF3C7'}; color: ${r.escalation_level >= 2 ? '#991B1B' : '#92400E'}; font-weight: 700;">
+                ${r.escalation_level >= 2 ? 'Level 2 (Breached)' : 'Level 1 (Warning)'}
+              </span>
+            </td>
+            <td style="font-size: 0.82rem; color: ${r.escalation_level >= 2 ? '#DC2626' : '#D97706'}; font-weight: 600;">
+              ${r.sla_deadline ? new Date(r.sla_deadline).toLocaleString() : 'Past Target'}
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <a href="/reports/${r.id}" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.78rem;">Inspect</a>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function openAppealDecisionModal(appealId) {
+      activeArbitrateAppealId = appealId;
+      const appeal = currentAppealsQueue.find(a => a.id === appealId);
+      if (!appeal) return;
+
+      document.getElementById('modal-appeal-report-ref').textContent = appeal.report_reference;
+      document.getElementById('modal-appeal-citizen-name').textContent = appeal.citizen_name;
+      document.getElementById('modal-appeal-type').textContent = appeal.appeal_type;
+      document.getElementById('modal-appeal-grounds').textContent = appeal.reason;
+      document.getElementById('appeal-decision-notes').value = '';
+      document.getElementById('appeal-decision-error').style.display = 'none';
+
+      document.getElementById('appeal-decision-modal').classList.add('active');
+    }
+
+    function closeAppealDecisionModal() {
+      document.getElementById('appeal-decision-modal').classList.remove('active');
+      activeArbitrateAppealId = null;
+    }
+
+    async function submitAppealDecision(decision) {
+      if (!activeArbitrateAppealId) return;
+      const adminNotes = document.getElementById('appeal-decision-notes').value.trim();
+      const errBox = document.getElementById('appeal-decision-error');
+
+      try {
+        await CivicAPI.request(`/api/admin/appeals/${activeArbitrateAppealId}/decide`, {
+          method: 'POST',
+          body: JSON.stringify({ decision, adminNotes })
+        });
+        closeAppealDecisionModal();
+        alert(`Citizen appeal successfully arbitrated: ${decision}.`);
+        await loadQueues();
+      } catch (err) {
+        errBox.textContent = err.message || 'Arbitration action failed.';
+        errBox.style.display = 'block';
+      }
+    }
+
+    async function triggerEscalationCheck() {
+      try {
+        const res = await CivicAPI.request('/api/admin/escalations/check', { method: 'POST' });
+        alert(`SLA Escalation Check Complete: Evaluated ${res.checkedCount} active reports. Dispatched ${res.warningsTriggered} pre-deadline warnings and ${res.breachesTriggered} SLA breach alerts.`);
+        await loadQueues();
+      } catch (err) {
+        alert('Escalation check error: ' + err.message);
       }
     }
 

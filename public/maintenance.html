@@ -202,25 +202,18 @@
       border-color: #CBD5E1;
     }
     .maint-card.status-in-progress { border-left: 4px solid #EA580C; }
-    .maint-card.status-scheduled { border-left: 4px solid var(--interactive-blue); }
-    .maint-card.status-delayed { border-left: 4px solid #DC2626; }
-    .maint-card.status-completed { border-left: 4px solid #10B981; }
+    .maint-card.status-scheduled { border-color: var(--border-color); }
+    .maint-card.status-delayed { border-color: #FECACA; }
+    .maint-card.status-completed { border-color: #A7F3D0; }
 
     /* Glass Calendar Component (PRD Feature 3) */
     .glass-calendar-container {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.95) 100%);
-      border-radius: var(--radius-lg);
-      padding: 2.5rem 1.5rem;
+      padding: 1.5rem 0;
       position: relative;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
       margin-bottom: 2rem;
-      border: 1px solid rgba(255, 255, 255, 0.12);
       display: flex;
       flex-direction: column;
       align-items: center;
-      background-size: cover;
-      background-position: center;
     }
     .glass-calendar-card {
       width: 100%;
@@ -329,9 +322,9 @@
       background: transparent;
     }
     .glass-day-btn.selected {
-      background: linear-gradient(135deg, #EC4899 0%, #F97316 100%);
+      background: var(--interactive-blue);
       color: #FFFFFF;
-      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.45);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
     }
     .glass-day-btn:not(.selected):hover {
       background: rgba(255, 255, 255, 0.2);
@@ -596,7 +589,7 @@
     <!-- Empty State Container -->
     <div id="maint-empty-state" class="card" style="display: none; text-align: center; padding: 3rem; margin-bottom: 2rem;">
       <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
-      <h3 style="color: var(--primary-deep); margin-bottom: 0.35rem;">No Maintenance Activities Match Your Filters</h3>
+      <h2 style="font-size: 1.25rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Maintenance Activities Match Your Filters</h2>
       <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 450px; margin: 0 auto 1.25rem auto;">Try clearing your search term, changing the department filter, or schedule a new maintenance work order.</p>
       <button type="button" class="btn btn-secondary btn-sm" onclick="resetAllFilters()">Reset All Filters</button>
     </div>

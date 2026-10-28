@@ -5,8 +5,9 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const db = require('../db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, JWT_SECRET } = require('../middleware/auth');
 const { analyzeReport } = require('../ai/analyzer');
+const { calculateSlaDeadline, getSlaStatus } = require('../services/escalation');
 
 // Bounding box for demo municipality (Hyderabad Demo Area)
 const BOUNDS = {
@@ -26,6 +27,92 @@ router.get('/categories', (req, res) => {
     ORDER BY c.name ASC
   `);
   res.json({ categories });
+});
+
+// GET /api/reports/public/digital-twin - Privacy-safe public telemetry for Civic Digital Twin (PRD F2)
+router.get('/public/digital-twin', (req, res) => {
+  try {
+    const { department, status } = req.query;
+
+    let query = `
+      SELECT r.id, r.reference_number, r.title, r.status,
+             r.latitude, r.longitude, r.location_text,
+             r.priority_level, r.created_at, r.updated_at,
+             c.name as category_name, d.name as department_name,
+             COALESCE(r.community_votes, 0) as community_votes
+      FROM reports r
+      LEFT JOIN categories c ON r.category_id = c.id
+      LEFT JOIN departments d ON r.department_id = d.id
+      WHERE r.latitude IS NOT NULL AND r.longitude IS NOT NULL
+        AND r.status NOT IN ('Rejected', 'Withdrawn')
+    `;
+    const params = [];
+
+    if (department && department !== 'all') {
+      query += ` AND d.name = ? `;
+      params.push(department);
+    }
+
+    if (status && status !== 'all') {
+      if (status === 'active') {
+        query += ` AND r.status IN ('Submitted', 'Under Review', 'Assigned', 'In Progress', 'Blocked') `;
+      } else if (status === 'resolved') {
+        query += ` AND r.status = 'Resolved' `;
+      } else {
+        query += ` AND r.status = ? `;
+        params.push(status);
+      }
+    }
+
+    query += ` ORDER BY r.updated_at DESC LIMIT 200 `;
+
+    const rawRows = db.all(query, params);
+
+    // Apply privacy protection:
+    // 1. Coordinates: Round to 4 decimal places (~11m), with deterministic micro-offset to prevent exact residential door identification.
+    // 2. Location Text: Strip exact flat/house numbers, preserve landmark/ward.
+    // 3. Exclude citizen profile and private notes.
+    const sanitizedReports = rawRows.map(r => {
+      let hash = 0;
+      for (let i = 0; i < r.id.length; i++) hash = ((hash << 5) - hash) + r.id.charCodeAt(i);
+      const jitterLat = ((hash % 100) / 100000) * 0.3;
+      const jitterLng = (((hash >> 2) % 100) / 100000) * 0.3;
+
+      const roundedLat = parseFloat((r.latitude + jitterLat).toFixed(4));
+      const roundedLng = parseFloat((r.longitude + jitterLng).toFixed(4));
+
+      const locationTokens = (r.location_text || 'Metropolitan Ward Area')
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => !/^(flat|plot|h\.?no|door|house|apt|room)\b/i.test(t));
+      const sanitizedLocation = locationTokens.length > 0 ? locationTokens.join(', ') : r.location_text;
+
+      return {
+        id: r.id,
+        referenceNumber: r.reference_number,
+        title: r.title,
+        category: r.category_name || 'General Civic Issue',
+        department: r.department_name || 'Municipal Administration',
+        status: r.status,
+        priorityLevel: r.priority_level || 'Medium',
+        latitude: roundedLat,
+        longitude: roundedLng,
+        locationText: sanitizedLocation,
+        communityVotes: r.community_votes || 0,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at
+      };
+    });
+
+    res.json({
+      governance: 'PRD F2 Privacy-Safe Civic Telemetry — Jittered Coordinates, Zero Citizen PII',
+      total: sanitizedReports.length,
+      reports: sanitizedReports
+    });
+  } catch (err) {
+    console.error('[Digital Twin Error]', err);
+    res.status(500).json({ error: 'Failed to retrieve digital twin telemetry.' });
+  }
 });
 
 // POST /api/reports - Submit a new civic issue report
@@ -114,6 +201,7 @@ router.post('/', requireAuth, (req, res) => {
 
   const finalCategoryId = categoryId || analysis.suggestedCategoryId || 'cat-other';
   const finalDepartmentId = analysis.suggestedDepartmentId || null;
+  const slaDeadline = calculateSlaDeadline(new Date().toISOString(), analysis.priorityLevel, finalCategoryId, analysis.safetyFlag);
 
   // 9. Atomic Persistence
   db.transaction(() => {
@@ -125,14 +213,14 @@ router.post('/', requireAuth, (req, res) => {
         status, priority_score, priority_level, severity_factor, safety_factor, people_factor, duration_factor,
         safety_flag, safety_flag_reason, review_required, review_reason, analysis_state,
         suggested_category_id, suggested_department_id, confidence_score, analysis_reasoning,
-        idempotency_key, privacy_acknowledged_at, privacy_notice_version, created_at, updated_at
+        idempotency_key, privacy_acknowledged_at, privacy_notice_version, sla_deadline, created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         'Submitted', ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
-        ?, datetime('now'), ?, datetime('now'), datetime('now')
+        ?, datetime('now'), ?, ?, datetime('now'), datetime('now')
       )
     `, [
       reportId, refNumber, req.user.id, reportTitle, description.trim(), finalCategoryId, finalDepartmentId,
@@ -140,7 +228,7 @@ router.post('/', requireAuth, (req, res) => {
       analysis.priorityScore, analysis.priorityLevel, analysis.severityFactor, analysis.safetyFactor, analysis.peopleFactor, analysis.durationFactor,
       analysis.safetyFlag, analysis.safetyFlagReason, analysis.reviewRequired, analysis.reviewReason, analysis.analysisState,
       analysis.suggestedCategoryId, analysis.suggestedDepartmentId, analysis.confidenceScore, analysis.analysisReasoning,
-      idempotencyKey || ('key-' + reportId), privacyNoticeVersion
+      idempotencyKey || ('key-' + reportId), privacyNoticeVersion, slaDeadline
     ]);
 
     // Insert Report Event: Submitted
@@ -333,12 +421,23 @@ router.get('/:id', requireAuth, (req, res) => {
   const timeline = db.all(eventsQuery, eventsParams);
 
   // Get photos
-  const photos = db.all(`
-    SELECT id, storage_path, file_name, content_type, size_bytes, is_resolution_photo, created_at
+  const rawPhotos = db.all(`
+    SELECT id, storage_path, file_name, content_type, size_bytes, is_resolution_photo, vision_clues_json, confidence_score, created_at
     FROM photo_metadata
     WHERE report_id = ?
     ORDER BY created_at ASC
   `, [report.id]);
+
+  const photos = rawPhotos.map(p => {
+    let clues = [];
+    if (p.vision_clues_json) {
+      try { clues = JSON.parse(p.vision_clues_json); } catch (_) {}
+    }
+    return {
+      ...p,
+      visionClues: clues
+    };
+  });
 
   // If duplicate, get primary summary
   let primaryReport = null;
@@ -349,11 +448,38 @@ router.get('/:id', requireAuth, (req, res) => {
     `, [report.primary_report_id]);
   }
 
+  // PRD F7: Check if requesting citizen has upvoted this report
+  let hasVoted = false;
+  if (req.user && req.user.role === 'citizen') {
+    const v = db.get('SELECT id FROM community_votes WHERE report_id = ? AND citizen_id = ?', [report.id, req.user.id]);
+    hasVoted = Boolean(v);
+  }
+
+  // PRD F5: Compute SLA metrics
+  const sla = getSlaStatus(report);
+
+  // PRD Section 4 & 5: Appeals and Feedback
+  const appeals = db.all(`
+    SELECT a.*, p.display_name as decider_name
+    FROM report_appeals a
+    LEFT JOIN profiles p ON a.decided_by = p.id
+    WHERE a.report_id = ?
+    ORDER BY a.created_at DESC
+  `, [report.id]);
+  const feedback = db.get('SELECT * FROM report_feedback WHERE report_id = ?', [report.id]);
+
   res.json({
-    report,
+    report: {
+      ...report,
+      hasVoted,
+      communityVotes: report.community_votes || 0,
+      sla
+    },
     timeline,
     photos,
-    primaryReport
+    primaryReport,
+    appeals,
+    feedback: feedback || null
   });
 });
 
@@ -425,6 +551,327 @@ router.post('/:id/request-action', requireAuth, (req, res) => {
     success: true,
     message: `Your ${actionType} request has been submitted for administrative review.`
   });
+});
+
+// --------------------------------------------------------------------------
+// PRD F7: Community Impact Voting Endpoints
+// --------------------------------------------------------------------------
+
+// POST /api/reports/:id/vote - Citizen casts Community Impact Upvote
+router.post('/:id/vote', requireAuth, (req, res) => {
+  // 1. Role enforcement: Only citizens can vote
+  if (req.user.role !== 'citizen') {
+    return res.status(403).json({ error: 'Access denied: Only citizens can cast community impact votes.' });
+  }
+
+  const reportId = req.params.id;
+  const report = db.get('SELECT * FROM reports WHERE id = ?', [reportId]);
+  if (!report) return res.status(404).json({ error: 'Report not found.' });
+
+  // 2. Cannot vote on inactive or duplicate reports
+  if (['Withdrawn', 'Duplicate'].includes(report.status)) {
+    return res.status(400).json({ error: `Cannot upvote report in '${report.status}' status.` });
+  }
+
+  // 3. Citizen cannot upvote their own report
+  if (report.citizen_id === req.user.id) {
+    return res.status(400).json({ error: 'You cannot upvote your own reported civic issue.' });
+  }
+
+  // 4. Duplicate vote check
+  const existingVote = db.get('SELECT id FROM community_votes WHERE report_id = ? AND citizen_id = ?', [reportId, req.user.id]);
+  if (existingVote) {
+    return res.status(409).json({ error: 'You have already upvoted this civic issue.' });
+  }
+
+  // 5. Atomic vote insertion and count update
+  let newVoteCount = 0;
+  const voteId = 'vot-' + crypto.randomUUID().slice(0, 8);
+
+  db.transaction(() => {
+    db.run(`
+      INSERT INTO community_votes (id, report_id, citizen_id, created_at)
+      VALUES (?, ?, ?, datetime('now'))
+    `, [voteId, reportId, req.user.id]);
+
+    db.run(`
+      UPDATE reports
+      SET community_votes = (SELECT COUNT(*) FROM community_votes WHERE report_id = ?),
+          updated_at = datetime('now')
+      WHERE id = ?
+    `, [reportId, reportId]);
+
+    newVoteCount = db.get('SELECT community_votes FROM reports WHERE id = ?', [reportId])?.community_votes || 0;
+  });
+
+  res.status(201).json({
+    success: true,
+    voted: true,
+    communityVotes: newVoteCount,
+    message: 'Community impact vote recorded successfully.'
+  });
+});
+
+// DELETE /api/reports/:id/vote - Citizen removes previously cast upvote
+router.delete('/:id/vote', requireAuth, (req, res) => {
+  if (req.user.role !== 'citizen') {
+    return res.status(403).json({ error: 'Access denied: Only citizens can manage votes.' });
+  }
+
+  const reportId = req.params.id;
+  const report = db.get('SELECT * FROM reports WHERE id = ?', [reportId]);
+  if (!report) return res.status(404).json({ error: 'Report not found.' });
+
+  const existingVote = db.get('SELECT id FROM community_votes WHERE report_id = ? AND citizen_id = ?', [reportId, req.user.id]);
+  if (!existingVote) {
+    return res.status(404).json({ error: 'You have not upvoted this civic issue.' });
+  }
+
+  let newVoteCount = 0;
+  db.transaction(() => {
+    db.run('DELETE FROM community_votes WHERE report_id = ? AND citizen_id = ?', [reportId, req.user.id]);
+
+    db.run(`
+      UPDATE reports
+      SET community_votes = (SELECT COUNT(*) FROM community_votes WHERE report_id = ?),
+          updated_at = datetime('now')
+      WHERE id = ?
+    `, [reportId, reportId]);
+
+    newVoteCount = db.get('SELECT community_votes FROM reports WHERE id = ?', [reportId])?.community_votes || 0;
+  });
+
+  res.json({
+    success: true,
+    voted: false,
+    communityVotes: newVoteCount,
+    message: 'Community impact vote removed successfully.'
+  });
+});
+
+// GET /api/reports/:id/vote-status - Check current user's voting status
+router.get('/:id/vote-status', (req, res) => {
+  const reportId = req.params.id;
+  const report = db.get('SELECT community_votes FROM reports WHERE id = ?', [reportId]);
+  if (!report) return res.status(404).json({ error: 'Report not found.' });
+
+  let hasVoted = false;
+  let uid = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const jwt = require('jsonwebtoken');
+      const token = authHeader.split(' ')[1];
+      const decoded = jwt.verify(token, JWT_SECRET);
+      uid = decoded.userId || decoded.id;
+    } catch (_) {}
+  } else if (req.headers['x-demo-user-id']) {
+    uid = req.headers['x-demo-user-id'];
+  }
+
+  if (uid) {
+    const v = db.get('SELECT id FROM community_votes WHERE report_id = ? AND citizen_id = ?', [reportId, uid]);
+    hasVoted = Boolean(v);
+  }
+
+  res.json({
+    reportId,
+    hasVoted,
+    communityVotes: report.community_votes || 0
+  });
+});
+
+// --------------------------------------------------------------------------
+// PRD F5: SLA Status Endpoint
+// --------------------------------------------------------------------------
+
+// GET /api/reports/:id/sla - Get live SLA deadline, countdown, and escalation state
+router.get('/:id/sla', (req, res) => {
+  const report = db.get('SELECT * FROM reports WHERE id = ?', [req.params.id]);
+  if (!report) return res.status(404).json({ error: 'Report not found.' });
+
+  const sla = getSlaStatus(report);
+  res.json({
+    reportId: report.id,
+    sla
+  });
+});
+
+// --------------------------------------------------------------------------
+// PRD Section 4 & 5: Citizen Appeals & Review
+// --------------------------------------------------------------------------
+
+const handleAppealSubmission = (req, res) => {
+  if (req.user.role !== 'citizen') {
+    return res.status(403).json({ error: 'Access denied: Only citizens can submit appeals on their civic reports.' });
+  }
+
+  const report = db.get('SELECT * FROM reports WHERE id = ?', [req.params.id]);
+  if (!report) return res.status(404).json({ error: 'Report not found.' });
+
+  if (report.citizen_id !== req.user.id) {
+    return res.status(403).json({ error: 'Access denied: You can only appeal decisions on your own reports.' });
+  }
+
+  if (!['Resolved', 'Rejected'].includes(report.status)) {
+    return res.status(400).json({
+      error: `Cannot submit appeal for report in '${report.status}' status. Appeals are only permitted for Resolved or Rejected reports.`
+    });
+  }
+
+  const { reason, appealType } = req.body;
+  if (!reason || reason.trim().length < 10) {
+    return res.status(400).json({ error: 'Please provide a clear and detailed appeal reason (minimum 10 characters).' });
+  }
+
+  // Prevent multiple simultaneous pending appeals
+  const pendingAppeal = db.get("SELECT id FROM report_appeals WHERE report_id = ? AND status = 'Pending'", [report.id]);
+  if (pendingAppeal) {
+    return res.status(409).json({ error: 'An appeal is already pending administrative review for this report.' });
+  }
+
+  const appealId = 'app-' + crypto.randomUUID().slice(0, 8);
+  const type = ['rejection', 'resolution', 'general'].includes(appealType)
+    ? appealType
+    : (report.status === 'Rejected' ? 'rejection' : 'resolution');
+
+  db.transaction(() => {
+    db.run(`
+      INSERT INTO report_appeals (id, report_id, citizen_id, reason, appeal_type, status, created_at)
+      VALUES (?, ?, ?, ?, ?, 'Pending', datetime('now'))
+    `, [appealId, report.id, req.user.id, reason.trim(), type]);
+
+    db.run(`
+      INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
+      VALUES (?, ?, ?, 'appeal_submitted', 1, ?, ?, datetime('now'))
+    `, [
+      'evt-' + crypto.randomUUID().slice(0, 8),
+      report.id,
+      req.user.id,
+      `Citizen Appeal Submitted (${type.toUpperCase()}): ${reason.trim().slice(0, 75)}`,
+      JSON.stringify({ appealId, appealType: type })
+    ]);
+
+    db.run(`
+      UPDATE reports
+      SET review_required = 1,
+          review_reason = ?,
+          updated_at = datetime('now')
+      WHERE id = ?
+    `, [`Citizen Appeal (${type.toUpperCase()}): ${reason.trim().slice(0, 50)}`, report.id]);
+
+    // Send notifications to admins
+    const admins = db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = 1");
+    for (const adm of admins) {
+      db.run(`
+        INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
+        VALUES (?, ?, ?, 'New Citizen Appeal', ?, 0, ?, datetime('now'))
+      `, [
+        'ntf-' + crypto.randomUUID().slice(0, 8),
+        adm.id,
+        report.id,
+        `Citizen submitted an appeal for report #${report.reference_number}.`,
+        `notif-app-${appealId}-${adm.id}`
+      ]);
+    }
+  });
+
+  const savedAppeal = db.get('SELECT * FROM report_appeals WHERE id = ?', [appealId]);
+  res.status(201).json({
+    success: true,
+    message: 'Your appeal has been submitted for administrative arbitration.',
+    appeal: savedAppeal
+  });
+};
+
+router.post('/:id/appeal', requireAuth, handleAppealSubmission);
+router.post('/:id/appeals', requireAuth, handleAppealSubmission);
+
+// GET /api/reports/:id/appeals - Get appeal history for report
+router.get('/:id/appeals', requireAuth, (req, res) => {
+  const report = db.get('SELECT * FROM reports WHERE id = ?', [req.params.id]);
+  if (!report) return res.status(404).json({ error: 'Report not found.' });
+
+  if (req.user.role === 'citizen' && report.citizen_id !== req.user.id) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+
+  const appeals = db.all(`
+    SELECT a.*, p.display_name as decider_name
+    FROM report_appeals a
+    LEFT JOIN profiles p ON a.decided_by = p.id
+    WHERE a.report_id = ?
+    ORDER BY a.created_at DESC
+  `, [report.id]);
+
+  res.json({ appeals });
+});
+
+// --------------------------------------------------------------------------
+// PRD Section 4 #48: Citizen Satisfaction Rating & Feedback
+// --------------------------------------------------------------------------
+
+// POST /api/reports/:id/feedback - Submit 1-5 star rating & feedback on resolved report
+router.post('/:id/feedback', requireAuth, (req, res) => {
+  if (req.user.role !== 'citizen') {
+    return res.status(403).json({ error: 'Access denied: Only citizens can submit satisfaction ratings.' });
+  }
+
+  const report = db.get('SELECT * FROM reports WHERE id = ?', [req.params.id]);
+  if (!report) return res.status(404).json({ error: 'Report not found.' });
+
+  if (report.citizen_id !== req.user.id) {
+    return res.status(403).json({ error: 'Access denied: You can only rate your own reports.' });
+  }
+
+  if (report.status !== 'Resolved') {
+    return res.status(400).json({ error: 'Satisfaction feedback can only be submitted for Resolved reports.' });
+  }
+
+  const { rating, comment } = req.body;
+  const numRating = parseInt(rating, 10);
+  if (isNaN(numRating) || numRating < 1 || numRating > 5) {
+    return res.status(400).json({ error: 'Rating must be an integer between 1 and 5 stars.' });
+  }
+
+  // Prevent duplicate feedback
+  const existing = db.get('SELECT id FROM report_feedback WHERE report_id = ?', [report.id]);
+  if (existing) {
+    return res.status(409).json({ error: 'You have already submitted satisfaction feedback for this resolved report.' });
+  }
+
+  const feedbackId = 'fdb-' + crypto.randomUUID().slice(0, 8);
+  db.transaction(() => {
+    db.run(`
+      INSERT INTO report_feedback (id, report_id, citizen_id, rating, comment, created_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'))
+    `, [feedbackId, report.id, req.user.id, numRating, comment ? comment.trim() : null]);
+
+    const stars = '★'.repeat(numRating) + '☆'.repeat(5 - numRating);
+    db.run(`
+      INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
+      VALUES (?, ?, ?, 'feedback_submitted', 1, ?, ?, datetime('now'))
+    `, [
+      'evt-' + crypto.randomUUID().slice(0, 8),
+      report.id,
+      req.user.id,
+      `Citizen Satisfaction Rating: ${stars} (${numRating}/5 stars).`,
+      JSON.stringify({ rating: numRating, comment: comment ? comment.trim() : null })
+    ]);
+  });
+
+  const saved = db.get('SELECT * FROM report_feedback WHERE id = ?', [feedbackId]);
+  res.status(201).json({
+    success: true,
+    message: 'Thank you for your feedback! Your rating has been recorded.',
+    feedback: saved
+  });
+});
+
+// GET /api/reports/:id/feedback - Get feedback for report
+router.get('/:id/feedback', (req, res) => {
+  const feedback = db.get('SELECT * FROM report_feedback WHERE report_id = ?', [req.params.id]);
+  res.json({ feedback: feedback || null });
 });
 
 module.exports = router;

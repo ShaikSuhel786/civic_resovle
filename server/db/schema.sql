@@ -67,6 +67,10 @@ CREATE TABLE IF NOT EXISTS reports (
     rejected_reason TEXT,
     resolution_summary TEXT,
     idempotency_key TEXT UNIQUE,
+    community_votes INTEGER NOT NULL DEFAULT 0,
+    sla_deadline TEXT,
+    escalation_level INTEGER NOT NULL DEFAULT 0,
+    last_escalated_at TEXT,
     privacy_acknowledged_at TEXT,
     privacy_notice_version TEXT DEFAULT '1.0',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -145,6 +149,8 @@ CREATE TABLE IF NOT EXISTS photo_metadata (
     content_type TEXT NOT NULL,
     size_bytes INTEGER NOT NULL CHECK(size_bytes > 0 AND size_bytes <= 5242880),
     is_resolution_photo INTEGER NOT NULL DEFAULT 0,
+    vision_clues_json TEXT,
+    confidence_score INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -195,6 +201,50 @@ CREATE TABLE IF NOT EXISTS maintenance_schedules (
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- 14. Official Civic Knowledge Base (PRD Section 4: Verified Statutory Articles)
+CREATE TABLE IF NOT EXISTS knowledge_articles (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    content TEXT NOT NULL,
+    official_source TEXT NOT NULL,
+    last_verified TEXT NOT NULL DEFAULT (datetime('now')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- 15. Community Impact Voting Table (PRD F7)
+CREATE TABLE IF NOT EXISTS community_votes (
+    id TEXT PRIMARY KEY,
+    report_id TEXT NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+    citizen_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    CONSTRAINT uq_report_citizen_vote UNIQUE (report_id, citizen_id)
+);
+
+-- 16. Citizen Appeals & Administrative Review Table (PRD Section 4 & 5)
+CREATE TABLE IF NOT EXISTS report_appeals (
+    id TEXT PRIMARY KEY,
+    report_id TEXT NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+    citizen_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    reason TEXT NOT NULL,
+    appeal_type TEXT NOT NULL DEFAULT 'resolution' CHECK (appeal_type IN ('rejection', 'resolution', 'general')),
+    status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
+    admin_notes TEXT,
+    decided_by TEXT REFERENCES profiles(id) ON DELETE SET NULL,
+    decided_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- 17. Citizen Satisfaction Feedback Table (PRD Section 4 #48)
+CREATE TABLE IF NOT EXISTS report_feedback (
+    id TEXT PRIMARY KEY,
+    report_id TEXT NOT NULL UNIQUE REFERENCES reports(id) ON DELETE CASCADE,
+    citizen_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_reports_citizen ON reports(citizen_id);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
@@ -202,9 +252,17 @@ CREATE INDEX IF NOT EXISTS idx_reports_assigned_staff ON reports(assigned_staff_
 CREATE INDEX IF NOT EXISTS idx_reports_department ON reports(department_id);
 CREATE INDEX IF NOT EXISTS idx_reports_category ON reports(category_id);
 CREATE INDEX IF NOT EXISTS idx_reports_priority ON reports(priority_score DESC);
+CREATE INDEX IF NOT EXISTS idx_reports_sla ON reports(sla_deadline);
+CREATE INDEX IF NOT EXISTS idx_reports_escalation ON reports(escalation_level);
 CREATE INDEX IF NOT EXISTS idx_assignments_active ON assignments(report_id, staff_id, active);
 CREATE INDEX IF NOT EXISTS idx_report_events_report ON report_events(report_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id, read);
 CREATE INDEX IF NOT EXISTS idx_maint_dates ON maintenance_schedules(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_maint_status ON maintenance_schedules(status);
 CREATE INDEX IF NOT EXISTS idx_maint_dept ON maintenance_schedules(department_id);
+CREATE INDEX IF NOT EXISTS idx_community_votes_report ON community_votes(report_id);
+CREATE INDEX IF NOT EXISTS idx_community_votes_citizen ON community_votes(citizen_id);
+CREATE INDEX IF NOT EXISTS idx_appeals_report ON report_appeals(report_id);
+CREATE INDEX IF NOT EXISTS idx_appeals_citizen ON report_appeals(citizen_id);
+CREATE INDEX IF NOT EXISTS idx_appeals_status ON report_appeals(status);
+CREATE INDEX IF NOT EXISTS idx_feedback_report ON report_feedback(report_id);

@@ -7,7 +7,7 @@
     "start": "node server/index.js",
     "dev": "node server/index.js",
     "seed": "node scripts/seed.js",
-    "test": "node tests/workflow.test.js && node tests/routing.test.js && node tests/maintenance.test.js"
+    "test": "node tests/workflow.test.js && node tests/routing.test.js && node tests/maintenance.test.js && node tests/phase1_public_endpoints.test.js && node tests/phase2_voting_and_resolution.test.js && node tests/phase3_escalation_and_appeals.test.js && node tests/phase4_vision_and_voice.test.js"
   },
   "repository": {
     "type": "git",

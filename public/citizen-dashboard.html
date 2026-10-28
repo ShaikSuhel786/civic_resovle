@@ -637,6 +637,7 @@
                   <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">#${r.reference_number}</div>
                 </div>
                 <div style="display: flex; gap: 0.35rem; align-items: center;">
+                  <span style="font-size: 0.72rem; color: #7C3AED; font-weight: 700; background: #F5F3FF; padding: 0.15rem 0.45rem; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 3px;" title="Community impact upvotes">👍 ${r.community_votes || 0}</span>
                   ${r.safety_flag ? '<span class="badge badge-urgent" style="font-size: 0.68rem; padding: 0.15rem 0.4rem; display: inline-flex; align-items: center; gap: 0.25rem;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>Hazard</span>' : ''}
                   <span class="badge ${getStatusBadge(r.status)}" style="font-size: 0.72rem;">${r.status}</span>
                 </div>
@@ -710,6 +711,7 @@
               </div>
 
               <div class="report-list-actions">
+                <span style="font-size: 0.76rem; color: #7C3AED; font-weight: 700; background: #F5F3FF; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 3px;" title="Community impact upvotes">👍 ${r.community_votes || 0}</span>
                 <span class="badge badge-${(r.priority_level || 'medium').toLowerCase()}">${r.priority_level || 'Medium'}</span>
                 <span class="badge ${getStatusBadge(r.status)}">${r.status}</span>
                 <a href="/reports/${r.id}" class="btn btn-secondary btn-sm" style="padding: 0.45rem 0.85rem;">View</a>
@@ -747,7 +749,10 @@
                     <td><strong style="font-family: monospace; color: var(--interactive-blue);">${r.reference_number}</strong></td>
                     <td>
                       <a href="/reports/${r.id}" style="font-weight: 600; color: var(--primary-deep);">${escapeHtml(r.title)}</a>
-                      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem; display: inline-flex; align-items: center;">${catIcon} ${r.category_name || 'Civic Issue'}</div>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <span>${catIcon} ${r.category_name || 'Civic Issue'}</span>
+                        <span style="color: #7C3AED; font-weight: 600;">👍 ${r.community_votes || 0}</span>
+                      </div>
                     </td>
                     <td><span style="font-size: 0.82rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.3rem;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--interactive-blue); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>${escapeHtml(r.location_text)}</span></td>
                     <td><span class="badge badge-${(r.priority_level || 'medium').toLowerCase()}" style="font-size: 0.72rem;">${r.priority_level || 'Medium'} (${r.priority_score || 50})</span></td>

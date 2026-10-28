@@ -128,7 +128,7 @@
           <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #EA580C; display: inline-block;"></span> <strong>In Progress:</strong> Crews Dispatched</span>
           <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #10B981; display: inline-block;"></span> <strong>Resolved:</strong> Post-Repair Photo Verified</span>
         </div>
-        <span style="font-size: 0.78rem; color: #059669; font-weight: 600;">🔒 Privacy Protection: Citizen identifiers removed</span>
+        <span style="font-size: 0.78rem; color: #15803D; font-weight: 600;">🔒 Privacy Protection: Citizen identifiers removed</span>
       </div>
     </div>
 
@@ -207,6 +207,10 @@
     }
 
     async function loadDigitalTwinSignals() {
+      const tbody = document.getElementById('accessible-signals-tbody');
+      const badge = document.getElementById('list-count-badge');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading live infrastructure telemetry...</td></tr>';
+
       try {
         const res = await CivicAPI.request('/api/reports/public/digital-twin');
         rawSignals = res.reports || [];
@@ -214,6 +218,8 @@
         renderFilteredSignals();
       } catch (err) {
         console.error('Failed to load digital twin signals:', err);
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--danger);">Failed to load infrastructure telemetry: ${err.message || 'Server error'}</td></tr>`;
+        if (badge) badge.textContent = 'Telemetry offline';
       }
     }
 
@@ -249,9 +255,10 @@
           ? true 
           : (currentFilter === 'resolved' ? s.status === 'Resolved' : s.status !== 'Resolved');
         
+        const deptVal = s.department || s.department_name || '';
         const matchDept = currentDept === 'all' 
           ? true 
-          : (s.department_name && s.department_name.toLowerCase().includes(currentDept.toLowerCase()));
+          : deptVal.toLowerCase().includes(currentDept.toLowerCase());
 
         return matchStatus && matchDept;
       });
@@ -269,16 +276,21 @@
           iconAnchor: [7, 7]
         });
 
+        const refNo = s.referenceNumber || s.reference_number || 'REF';
+        const deptName = s.department || s.department_name || 'Municipal Works';
+        const votes = s.communityVotes !== undefined ? s.communityVotes : (s.community_votes || 0);
+
         const marker = L.marker([s.latitude, s.longitude], { icon: customIcon });
         marker.bindPopup(`
           <div style="font-family: inherit; font-size: 0.85rem; max-width: 240px; padding: 0.25rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
               <span class="badge ${s.status === 'Resolved' ? 'badge-resolved' : 'badge-progress'}" style="font-size: 0.72rem;">${s.status}</span>
-              <span style="font-size: 0.75rem; color: #64748B;">#${s.reference_number || 'REF'}</span>
+              <span style="font-size: 0.75rem; color: #64748B;">#${refNo}</span>
             </div>
             <strong style="color: #0B1E36; display: block; margin-bottom: 0.35rem; font-size: 0.92rem;">${s.title}</strong>
-            <div style="font-size: 0.76rem; color: #64748B; margin-bottom: 0.25rem;">🏛️ ${s.department_name || 'Municipal Works'}</div>
-            <div style="font-size: 0.76rem; color: #7C3AED; font-weight: 600;">👍 ${s.community_votes || 0} Citizens Affected</div>
+            <div style="font-size: 0.76rem; color: #64748B; margin-bottom: 0.25rem;">🏛️ ${deptName}</div>
+            <div style="font-size: 0.76rem; color: #7C3AED; font-weight: 600; margin-bottom: 0.4rem;">👍 ${votes} Community Impact Votes</div>
+            <a href="/reports/${s.id}" style="display: block; text-align: center; background: var(--interactive-blue); color: #FFFFFF; padding: 0.3rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.78rem; font-weight: 600;">View & Upvote Issue →</a>
           </div>
         `);
         markersLayer.addLayer(marker);
@@ -294,13 +306,19 @@
         return;
       }
 
-      tbody.innerHTML = filtered.map(s => `
+      tbody.innerHTML = filtered.map(s => {
+        const refNo = s.referenceNumber || s.reference_number || 'REF';
+        const catName = s.category || s.category_name || 'General';
+        const deptName = s.department || s.department_name || 'Municipal Department';
+        const votes = s.communityVotes !== undefined ? s.communityVotes : (s.community_votes || 0);
+
+        return `
         <tr style="border-bottom: 1px solid var(--border-color);">
           <td style="padding: 0.75rem 1rem;">
             <strong style="color: var(--primary-deep); font-size: 0.9rem;">${s.title}</strong>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">#${s.reference_number || 'REF'} • ${s.category_name || 'General'}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">#${refNo} • ${catName}</div>
           </td>
-          <td style="padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.82rem;">${s.department_name || 'Municipal Department'}</td>
+          <td style="padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.82rem;">${deptName}</td>
           <td style="padding: 0.75rem 1rem; font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">
             ${Number(s.latitude).toFixed(4)}°N, ${Number(s.longitude).toFixed(4)}°E
           </td>
@@ -309,11 +327,12 @@
               ${s.status}
             </span>
           </td>
-          <td style="padding: 0.75rem 1rem; font-weight: 700; color: #7C3AED;">
-            👍 ${s.community_votes || 0}
+          <td style="padding: 0.75rem 1rem; font-weight: 600; color: #7C3AED; font-size: 0.84rem;">
+            👍 ${votes}
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
   </script>
 </body>

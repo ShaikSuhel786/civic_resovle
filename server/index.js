@@ -43,6 +43,9 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/staff', require('./routes/staff'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/knowledge', require('./routes/knowledge'));
+app.use('/api/reports/public/knowledge', require('./routes/knowledge'));
+app.use('/api/ai', require('./routes/ai'));
 app.use('/api', require('./routes/photos'));
 
 // Health check endpoint
@@ -157,6 +160,16 @@ app.use((err, req, res, next) => {
 });
 
 if (require.main === module) {
+  // PRD F5: Start lightweight background escalation checker (runs every 10 minutes)
+  try {
+    const { checkEscalations } = require('./services/escalation');
+    checkEscalations();
+    const interval = setInterval(checkEscalations, 10 * 60 * 1000);
+    if (interval.unref) interval.unref();
+  } catch (e) {
+    console.warn('[Escalation] Background worker initialization note:', e.message);
+  }
+
   app.listen(PORT, () => {
     console.log(`====================================================`);
     console.log(`  Civic Resolve AI Prototype Server Running on Port ${PORT}`);

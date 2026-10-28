@@ -59,6 +59,17 @@ router.post('/reports/:id/status', (req, res) => {
     if (!resolutionSummary || resolutionSummary.trim().length < 15) {
       return res.status(400).json({ error: 'Resolution requires a comprehensive summary of actions taken (minimum 15 characters).' });
     }
+    // PRD F4: Proof of Resolution — Staff must upload an after-repair photo before marking resolved
+    const resolutionPhoto = db.get(`
+      SELECT id, file_name, storage_path, created_at
+      FROM photo_metadata
+      WHERE report_id = ? AND is_resolution_photo = 1
+    `, [reportId]);
+    if (!resolutionPhoto) {
+      return res.status(400).json({
+        error: 'Proof of Resolution Required (PRD F4): An after-repair photo must be attached before marking this complaint resolved.'
+      });
+    }
   } else {
     return res.status(400).json({ error: `Invalid staff status transition '${newStatus}'.` });
   }
