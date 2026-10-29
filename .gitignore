@@ -153,3 +153,4 @@ server/data/
 uploads/
 *.db
 *.sqlite
+.ai-session/

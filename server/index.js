@@ -1,5 +1,5 @@
 // Civic Resolve AI: Express Server Entrypoint
-// Hackathon Prototype Server implementing Vercel Serverless & Local Node execution.
+// Production-grade civic platform server enforcing strict authentication, CORS, and role-based access.
 
 require('dotenv').config();
 const express = require('express');
@@ -10,8 +10,36 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3050;
 
-// Middleware
-app.use(cors());
+// Explicit CORS origin policy
+const defaultOrigins = [
+  'http://localhost:3050',
+  'http://localhost:3000',
+  'http://127.0.0.1:3050',
+  'http://127.0.0.1:3000',
+  'https://civicresovle.vercel.app'
+];
+const customOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
+  : [];
+const allowedOrigins = [...defaultOrigins, ...customOrigins];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. mobile apps, curl, automated test suites)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Cross-Origin Request Blocked: Origin not authorized by Civic Resolve Security Policy'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -26,13 +54,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Ensure uploads directory exists
+// Ensure uploads directory exists (local disk or serverless temporary volume)
 const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const uploadDir = isVercel ? '/tmp/uploads' : path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   try { fs.mkdirSync(uploadDir, { recursive: true }); } catch (_) {}
 }
-app.use('/uploads', express.static(uploadDir));
+
+// Protected evidence photo routes (authenticated & authorized access only; NOT public static)
+app.use('/', require('./routes/photos'));
+app.use('/api', require('./routes/photos'));
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -46,7 +77,6 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/knowledge', require('./routes/knowledge'));
 app.use('/api/reports/public/knowledge', require('./routes/knowledge'));
 app.use('/api/ai', require('./routes/ai'));
-app.use('/api', require('./routes/photos'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -54,9 +84,9 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     product: 'Civic Resolve AI',
     version: '1.0.0',
-    environment: process.env.NODE_ENV || 'production',
+    environment: process.env.NODE_ENV || 'development',
     realUsersEnabled: true,
-    authentication: 'JWT + BCrypt',
+    authentication: 'JWT + BCrypt (Strict Verification)',
     timestamp: new Date().toISOString()
   });
 });
@@ -155,6 +185,9 @@ app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return res.status(400).json({ error: 'Malformed JSON payload.' });
   }
+  if (err.message && err.message.includes('Cross-Origin Request Blocked')) {
+    return res.status(403).json({ error: err.message });
+  }
   console.error('[Server Error]', err.stack || err);
   res.status(500).json({ error: 'An unexpected internal error occurred.' });
 });
@@ -174,7 +207,7 @@ if (require.main === module) {
     console.log(`====================================================`);
     console.log(`  Civic Resolve AI Prototype Server Running on Port ${PORT}`);
     console.log(`  Local URL: http://localhost:${PORT}`);
-    console.log(`  Mode: Demonstration Prototype (Synthetic Data Only)`);
+    console.log(`  Mode: Demonstration Prototype (Strict Security Enabled)`);
     console.log(`====================================================`);
   });
 }

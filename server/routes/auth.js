@@ -6,8 +6,24 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { JWT_SECRET, requireAuth } = require('../middleware/auth');
 
+// Seeded evaluator demo accounts permitted for 1-click evaluation only in non-production or when explicitly enabled
+const ALLOWED_DEMO_ACCOUNTS = new Set([
+  'usr-admin-01',
+  'usr-citizen-01',
+  'usr-citizen-02',
+  'usr-staff-roads',
+  'usr-staff-sanitation',
+  'usr-staff-electrical',
+  'usr-staff-water',
+  'usr-staff-publicworks'
+]);
+
 // Public demo accounts list for evaluator 1-click convenience
 router.get('/demo-accounts', (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Demo accounts listing is disabled in production.' });
+  }
+
   const accounts = db.all(`
     SELECT p.id, p.email, p.display_name, p.role, p.department_id, d.name as department_name
     FROM profiles p
@@ -93,15 +109,32 @@ router.post('/register', (req, res) => {
   }
 });
 
-// Sign-in endpoint (Supports both real users and demo evaluator accounts)
+// Sign-in endpoint (Strict password verification; demo shortcuts gated to non-production)
 router.post('/login', (req, res) => {
   const { email, password, demoUserId } = req.body;
 
   let user = null;
 
+  // 1. Gated demo user 1-click evaluation
   if (demoUserId) {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Passwordless demo login is strictly disabled in production environments.' });
+    }
+
+    if (!ALLOWED_DEMO_ACCOUNTS.has(demoUserId)) {
+      return res.status(403).json({ error: 'Unauthorized demo account identifier.' });
+    }
+
     user = db.get('SELECT * FROM profiles WHERE id = ? AND active = 1', [demoUserId]);
+    if (!user) {
+      return res.status(404).json({ error: 'Demo account not found.' });
+    }
   } else if (email) {
+    // 2. Standard email + password authentication
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required to sign in.' });
+    }
+
     const cleanEmail = email.trim().toLowerCase();
     const altEmail = cleanEmail.includes('@civicresolve.demo') 
       ? cleanEmail.replace('@civicresolve.demo', '@civicsync.demo')
@@ -112,13 +145,16 @@ router.post('/login', (req, res) => {
       altEmail
     ]);
 
-    if (user && password) {
-      const match = user.password_hash ? bcrypt.compareSync(password, user.password_hash) : false;
-      const isDemoPass = ['DemoAdmin123!', 'DemoCitizen123!', 'DemoStaff123!', 'password', 'password123', 'admin'].includes(password);
-      if (!match && !isDemoPass) {
-        return res.status(401).json({ error: 'Invalid email or password.' });
-      }
+    if (!user || !user.password_hash) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
+
+    const isMatch = bcrypt.compareSync(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+  } else {
+    return res.status(400).json({ error: 'Email and password are required.' });
   }
 
   if (!user) {
@@ -226,12 +262,8 @@ router.put('/change-password', requireAuth, (req, res) => {
   const user = db.get('SELECT * FROM profiles WHERE id = ?', [req.user.id]);
   if (!user) return res.status(404).json({ error: 'User not found.' });
 
-  if (user.password_hash) {
-    const isCurrentValid = bcrypt.compareSync(currentPassword, user.password_hash);
-    const isDemoFallback = ['DemoAdmin123!', 'DemoCitizen123!', 'DemoStaff123!', 'password123'].includes(currentPassword);
-    if (!isCurrentValid && !isDemoFallback) {
-      return res.status(400).json({ error: 'Current password does not match.' });
-    }
+  if (!currentPassword || !user.password_hash || !bcrypt.compareSync(currentPassword, user.password_hash)) {
+    return res.status(400).json({ error: 'Current password does not match.' });
   }
 
   const newHash = bcrypt.hashSync(newPassword, 10);

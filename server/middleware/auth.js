@@ -1,51 +1,65 @@
-// Civic Resolve AI: Server-side Authentication & Role-Based Authorization Middleware
-// Enforces FR-01, Section 3.2: Never trust client role claims; check active state.
+// Civic Resolve AI: Production Authentication & Role-Based Authorization Middleware
+// Enforces least-privilege role boundaries and cryptographic token verification.
 
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 
-const JWT_SECRET = process.env.SESSION_SECRET || 'civic_resolve_secure_session_secret_for_prototype_eval_only_2026';
+// Enforce strong session secret in production environments
+function resolveJwtSecret() {
+  const secret = process.env.SESSION_SECRET;
+  const isProduction = process.env.NODE_ENV === 'production';
 
-function extractUserId(req) {
-  let userId = null;
-
-  // 1. Check Bearer token
-  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      userId = decoded.userId || decoded.id;
-    } catch (e) {
-      // Invalid token
+  if (isProduction) {
+    if (!secret || secret.length < 32 || secret.includes('prototype_eval_only')) {
+      throw new Error(
+        '[FATAL SECURITY CONFIGURATION] In production mode, SESSION_SECRET environment variable ' +
+        'must be explicitly set with a cryptographically strong secret of at least 32 characters.'
+      );
     }
+    return secret;
   }
 
-  // 2. Fallback to demo header for streamlined evaluator testing if configured
-  if (!userId && (req.headers['x-demo-user-id'] || req.headers['X-Demo-User-Id'])) {
-    userId = req.headers['x-demo-user-id'] || req.headers['X-Demo-User-Id'];
+  // Non-production development fallback
+  return secret || 'civic_resolve_secure_session_secret_for_prototype_eval_only_2026';
+}
+
+const JWT_SECRET = resolveJwtSecret();
+
+/**
+ * Extracts and verifies user ID strictly from cryptographically signed JWTs in HTTP headers.
+ * Rejects all arbitrary header-spoofing and URL/query-string session token leaks.
+ */
+function extractUserId(req) {
+  let token = null;
+
+  // Strictly accept Bearer token in Authorization header
+  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+  if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
   }
 
-  // 3. Fallback to query param or cookie for simple preview
-  if (!userId && req.query && req.query.demo_user_id) {
-    userId = req.query.demo_user_id;
-  }
+  if (!token) return null;
 
-  return userId;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return decoded.userId || decoded.id || null;
+  } catch (e) {
+    return null;
+  }
 }
 
 function requireAuth(req, res, next) {
   const userId = extractUserId(req);
 
   if (!userId) {
-    return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    return res.status(401).json({ error: 'Authentication required. Please sign in with a valid session.' });
   }
 
   // Look up profile in database and verify active state
   const profile = db.get('SELECT id, email, display_name, role, department_id, active, preferred_language FROM profiles WHERE id = ?', [userId]);
 
   if (!profile) {
-    return res.status(401).json({ error: 'User profile not found.' });
+    return res.status(401).json({ error: 'User profile not found or invalidated.' });
   }
 
   if (!profile.active) {
@@ -86,6 +100,8 @@ function requireRole(allowedRoles) {
 
 module.exports = {
   JWT_SECRET,
+  resolveJwtSecret,
+  extractUserId,
   requireAuth,
   optionalAuth,
   requireRole

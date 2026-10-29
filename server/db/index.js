@@ -313,25 +313,31 @@ if (Database) {
         for (const c of seedData.categories) insCat.run(c.id, c.name, c.department_id);
 
         const insProf = db.prepare(`
-          INSERT OR IGNORE INTO profiles (id, email, display_name, role, department_id, active, preferred_language, password_hash)
-          VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+          INSERT OR IGNORE INTO profiles (id, email, display_name, role, department_id, active, preferred_language, password_hash, phone)
+          VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
         `);
         for (const p of seedData.profiles) {
-          insProf.run(p.id, p.email, p.display_name, p.role, p.department_id, p.preferred_language || 'en', p.password_hash);
+          insProf.run(p.id, p.email, p.display_name, p.role, p.department_id, p.preferred_language || 'en', p.password_hash, p.phone || null);
         }
 
         const insRep = db.prepare(`
           INSERT OR IGNORE INTO reports (
             id, reference_number, citizen_id, title, description, category_id, department_id,
             location_text, latitude, longitude, status, priority_score, priority_level,
-            safety_flag, safety_flag_reason, review_required, review_reason, assigned_staff_id, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            severity_factor, safety_factor, people_factor, duration_factor,
+            safety_flag, safety_flag_reason, review_required, review_reason, analysis_state,
+            suggested_category_id, suggested_department_id, confidence_score, analysis_reasoning,
+            assigned_staff_id, blocked_reason, rejected_reason, resolution_summary, idempotency_key, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         for (const r of seedData.reports) {
           insRep.run(
             r.id, r.reference_number, r.citizen_id, r.title, r.description, r.category_id, r.department_id,
             r.location_text, r.latitude, r.longitude, r.status, r.priority_score, r.priority_level,
-            r.safety_flag, r.safety_flag_reason, r.review_required, r.review_reason, r.assigned_staff_id, r.created_at
+            r.severity_factor || 50, r.safety_factor || 50, r.people_factor || 50, r.duration_factor || 50,
+            r.safety_flag || 0, r.safety_flag_reason || null, r.review_required || 0, r.review_reason || null, r.analysis_state || 'Completed',
+            r.suggested_category_id || r.category_id, r.suggested_department_id || r.department_id, r.confidence_score || 90, r.analysis_reasoning || 'Automated triage',
+            r.assigned_staff_id || null, r.blocked_reason || null, r.rejected_reason || null, r.resolution_summary || null, r.idempotency_key || null, r.created_at, r.updated_at || r.created_at
           );
         }
         console.log('[DB] Auto-seed complete.');
@@ -345,58 +351,11 @@ if (Database) {
   }
 }
 
-// Memory database fallback for serverless environments where native modules cannot load
+// In production, fail fast if the selected persistent database cannot initialize
 if (!db) {
-  console.log('[DB] Operating in Serverless Resilient Memory Mode.');
-  const memProfiles = [...seedData.profiles];
-  const memReports = [...seedData.reports];
-  const memCategories = [...seedData.categories];
-  const memDepartments = [...seedData.departments];
-
-  db = {
-    pragma() {},
-    exec() {},
-    transaction(fn) { return fn; },
-    prepare(sql) {
-      const s = sql.trim().toLowerCase();
-      return {
-        all(params = []) {
-          if (s.includes('from profiles')) {
-            if (s.includes("role = 'staff'") || s.includes('role = "staff"')) {
-              return memProfiles.filter(p => p.role === 'staff');
-            }
-            return memProfiles;
-          }
-          if (s.includes('from reports')) {
-            return memReports;
-          }
-          if (s.includes('from categories')) return memCategories;
-          if (s.includes('from departments')) return memDepartments;
-          return [];
-        },
-        get(params = []) {
-          if (s.includes('from profiles')) {
-            if (params.length > 0) {
-              const pVal = String(params[0]).toLowerCase();
-              return memProfiles.find(p => p.id === params[0] || p.email.toLowerCase() === pVal) || null;
-            }
-            return memProfiles[0] || null;
-          }
-          if (s.includes('from reports')) {
-            if (params.length > 0) {
-              return memReports.find(r => r.id === params[0] || r.reference_number === params[0]) || null;
-            }
-            return memReports[0] || null;
-          }
-          if (s.includes('count(*)')) return { count: memProfiles.length };
-          return null;
-        },
-        run(params = []) {
-          return { changes: 1, lastInsertRowid: Date.now() };
-        }
-      };
-    }
-  };
+  const fatalMsg = '[DB FATAL] Database initialization failed. Persistent database engine could not be initialized. Silent in-memory mock fallback is disabled to prevent silent data loss.';
+  console.error(fatalMsg);
+  throw new Error(fatalMsg);
 }
 
 module.exports = {
