@@ -7,7 +7,14 @@
 const assert = require('assert');
 const { Readable } = require('stream');
 const { ServerResponse } = require('http');
+const jwt = require('jsonwebtoken');
 const app = require('../server/index.js');
+const db = require('../server/db/index.js');
+const { JWT_SECRET } = require('../server/middleware/auth.js');
+
+function makeToken(user) {
+  return jwt.sign({ userId: user.id, email: user.email, role: user.role, department_id: user.department_id }, JWT_SECRET, { expiresIn: '1h' });
+}
 
 function request(url, options = {}) {
   return new Promise((resolve, reject) => {
@@ -217,6 +224,78 @@ async function runMaintenanceSuite() {
     // Verify it is gone
     const getRes = await request(`/api/maintenance/${newMaintId}`);
     assert.strictEqual(getRes.status, 404);
+  });
+
+  // 10. GET /api/staff/maintenance returns maintenance activities for staff's department
+  await test('GET /api/staff/maintenance returns assigned department tasks for staff', async () => {
+    const staffRoads = db.get("SELECT * FROM profiles WHERE role = 'staff' AND department_id = 'dept-roads' LIMIT 1");
+    assert.ok(staffRoads, 'Staff member for Roads must exist');
+    const token = makeToken(staffRoads);
+
+    const res = await request('/api/staff/maintenance', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.data.success, true);
+    assert.ok(Array.isArray(res.data.schedules));
+    // Must only contain tasks for dept-roads or assigned to this staff member
+    for (const item of res.data.schedules) {
+      assert.ok(item.department_id === 'dept-roads' || item.assigned_staff_id === staffRoads.id);
+    }
+  });
+
+  // 11. POST /api/staff/maintenance/:id/status updates task status within staff department
+  await test('POST /api/staff/maintenance/:id/status updates execution status within department', async () => {
+    const staffRoads = db.get("SELECT * FROM profiles WHERE role = 'staff' AND department_id = 'dept-roads' LIMIT 1");
+    const token = makeToken(staffRoads);
+
+    // Create a temporary task in dept-roads
+    const createRes = await request('/api/maintenance', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Road Pavement Core Sampling',
+        departmentId: 'dept-roads',
+        departmentName: 'Roads & Transport',
+        area: 'Banjara Hills Rd 12',
+        startDate: '2026-11-01',
+        endDate: '2026-11-05',
+        status: 'Scheduled',
+        description: 'Pavement depth evaluation before monsoon resurfacing.'
+      })
+    });
+    assert.strictEqual(createRes.status, 201);
+    const tempTaskId = createRes.data.schedule.id;
+
+    // Staff updates status to In Progress
+    const updateRes = await request(`/api/staff/maintenance/${tempTaskId}/status`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ status: 'In Progress' })
+    });
+    assert.strictEqual(updateRes.status, 200);
+    assert.strictEqual(updateRes.data.schedule.status, 'In Progress');
+    assert.strictEqual(updateRes.data.schedule.assigned_staff_id, staffRoads.id);
+
+    // Clean up
+    await request(`/api/maintenance/${tempTaskId}`, { method: 'DELETE' });
+  });
+
+  // 12. Security boundary: Staff cannot update maintenance task of another department
+  await test('POST /api/staff/maintenance/:id/status rejects staff from a different department (403)', async () => {
+    const staffRoads = db.get("SELECT * FROM profiles WHERE role = 'staff' AND department_id = 'dept-roads' LIMIT 1");
+    const token = makeToken(staffRoads);
+
+    // Find or create task in dept-water
+    const waterTask = db.get("SELECT * FROM maintenance_schedules WHERE department_id = 'dept-water' LIMIT 1");
+    assert.ok(waterTask, 'Water department task must exist');
+
+    const res = await request(`/api/staff/maintenance/${waterTask.id}/status`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ status: 'In Progress' })
+    });
+    assert.strictEqual(res.status, 403);
+    assert.ok(res.data.error.includes('Security boundary'));
   });
 
   console.log('\n====================================================');

@@ -28,86 +28,351 @@
     </div>
   </header>
 
-  <!-- Hero Section (Screen 1) -->
-  <section class="hero-section">
-    <div class="hero-content">
-      <h1 class="hero-title" data-i18n="hero_title">Smarter Cities<br>Happier Communities</h1>
-      <p class="hero-subtitle" data-i18n="hero_sub">
-        AI-powered civic issue reporting and resolution for cleaner, safer, and more sustainable cities.
-      </p>
+  <!-- Hero Section: The Sculpted 3D Civic Nerve Center -->
+  <section class="hero-section" id="hero-civic-hub">
+    <!-- 3D WebGL Sculpted City Environment Layer -->
+    <div id="city-3d-viewport" class="hero-3d-viewport" aria-hidden="true"></div>
 
-      <div class="hero-actions">
-        <a href="/report" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" data-i18n="hero_btn_report">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
-          Report an Issue
-        </a>
-        <a href="/dashboard" class="btn btn-secondary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" data-i18n="hero_btn_dashboard">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-          Explore Dashboard
-        </a>
+    <!-- Precision Architectural Coordinate Frame -->
+    <div class="hero-grid-bg" aria-hidden="true">
+      <div class="hero-datum hero-datum-tl">LAT 17°23′44″N • LON 78°28′06″E</div>
+      <div class="hero-datum hero-datum-tr">GRID: HYD-SEC-04B // WARD 12</div>
+      <div class="hero-datum hero-datum-bl">TOPOLOGY: SCULPTED CIVIC MESH</div>
+      <div class="hero-datum hero-datum-br">ENGINE: DETERMINISTIC SLA v1.0</div>
+    </div>
+
+    <div class="hero-container">
+      <!-- Left Column: Typographic Monument & Civic Mission -->
+      <div class="hero-editorial-col">
+        <div class="hero-status-strip">
+          <span class="live-pulse-badge">
+            <span class="pulse-indicator"></span>
+            LIVE MUNICIPAL MESH
+          </span>
+          <span class="status-sep">/</span>
+          <span class="status-caption">Direct Citizen-to-Crew Resolution</span>
+        </div>
+
+        <h1 class="hero-title" data-i18n="hero_title">
+          Smarter Cities Through Direct Civic Accountability.
+        </h1>
+
+        <p class="hero-subtitle" data-i18n="hero_sub">
+          An open-loop complaint gets buried; a closed-loop system enforces resolution. Civic Resolve AI pairs deterministic triage with mandatory field-photo verification to close the gap between reporting an urban hazard and certifying the repair.
+        </p>
+
+        <!-- Tactile Action Group -->
+        <div class="hero-actions-cluster">
+          <a href="/report" class="btn-civic-primary" data-i18n="hero_btn_report">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
+            <span>Report an Issue</span>
+            <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </a>
+
+          <a href="/dashboard" class="btn-civic-secondary" data-i18n="hero_btn_dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            <span>Explore Dashboard</span>
+          </a>
+        </div>
+
+        <!-- Integrated Municipal Telemetry Bar (Binds live API stats) -->
+        <div class="hero-telemetry-bar" role="region" aria-label="Municipal Resolution Metrics">
+          <div class="telemetry-cell">
+            <div class="telemetry-meta">
+              <span class="telemetry-label" data-i18n="stat_reported">Issues Reported</span>
+              <span class="telemetry-tag">Total</span>
+            </div>
+            <div class="telemetry-val" id="stat-total" data-tabular>1,248</div>
+            <div class="telemetry-track"><div class="telemetry-fill" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="telemetry-cell">
+            <div class="telemetry-meta">
+              <span class="telemetry-label" data-i18n="stat_resolved">Resolved</span>
+              <span class="telemetry-tag tag-success">Verified Proof</span>
+            </div>
+            <div class="telemetry-val val-success" id="stat-resolved" data-tabular>892</div>
+            <div class="telemetry-track"><div class="telemetry-fill fill-success" style="width: 72%;"></div></div>
+          </div>
+
+          <div class="telemetry-cell">
+            <div class="telemetry-meta">
+              <span class="telemetry-label" data-i18n="stat_rate">Resolution Rate</span>
+              <span class="telemetry-tag tag-accent">Closed-Loop</span>
+            </div>
+            <div class="telemetry-val val-accent" id="stat-rate" data-tabular>72%</div>
+            <div class="telemetry-track"><div class="telemetry-fill fill-accent" style="width: 72%;"></div></div>
+          </div>
+
+          <div class="telemetry-cell">
+            <div class="telemetry-meta">
+              <span class="telemetry-label" data-i18n="stat_days">Avg. Days</span>
+              <span class="telemetry-tag">SLA Target</span>
+            </div>
+            <div class="telemetry-val val-navy" id="stat-days" data-tabular>12</div>
+            <div class="telemetry-track"><div class="telemetry-fill fill-navy" style="width: 45%;"></div></div>
+          </div>
+        </div>
+
+        <!-- Trust & Compliance Micro-Marks -->
+        <div class="hero-trust-marks">
+          <span class="trust-mark">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Deterministic Formula Triage
+          </span>
+          <span class="trust-mark">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Cryptographic Audit Trails
+          </span>
+          <span class="trust-mark">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Bilingual English &amp; తెలుగు
+          </span>
+        </div>
       </div>
 
-      <!-- Aggregate Synthetic Metrics Cards (Matching Reference Screen 1) -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-val" id="stat-total">1,248</div>
-          <div class="stat-label" data-i18n="stat_reported">Issues Reported</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val" style="color: var(--success);" id="stat-resolved">892</div>
-          <div class="stat-label" data-i18n="stat_resolved">Resolved</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val" style="color: #C2410C;" id="stat-rate">72%</div>
-          <div class="stat-label" data-i18n="stat_rate">Resolution Rate</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val" style="color: var(--primary-deep);" id="stat-days">12</div>
-          <div class="stat-label" data-i18n="stat_days">Avg. Days</div>
+      <!-- Right Column: The Living Resolution Centerpiece -->
+      <div class="hero-centerpiece-col">
+        <div class="resolution-console" id="civic-resolution-console">
+          <!-- Console Top Ribbon -->
+          <div class="console-header">
+            <div class="console-header-left">
+              <span class="console-dot-live"></span>
+              <span class="console-feed-title">INCIDENT TELEMETRY // HYD-SEC-04</span>
+            </div>
+            <div class="console-ref-tag">REF: #REP-2026-001</div>
+          </div>
+
+          <!-- Dual-State Interactive Verification Viewport (Pure Vector & CAD Telemetry, NO raster images!) -->
+          <div class="console-viewport">
+            <!-- Inspection Mode Toggle -->
+            <div class="viewport-switch-bar">
+              <span class="switch-legend">RESOLUTION STAGE:</span>
+              <div class="viewport-toggle-pills" role="tablist">
+                <button type="button" class="view-pill active" id="btn-view-before" role="tab" aria-selected="true" onclick="window.switchHeroProofView('before')">
+                  <span class="pill-dot dot-warn"></span>
+                  <span>1. Incident Triage (Active)</span>
+                </button>
+                <button type="button" class="view-pill" id="btn-view-after" role="tab" aria-selected="false" onclick="window.switchHeroProofView('after')">
+                  <span class="pill-dot dot-success"></span>
+                  <span>2. Verified Repair (Closed)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Visual Viewport Canvas (Pure Vector CAD Telemetry) -->
+            <div class="proof-canvas-container" id="proof-canvas">
+              <!-- State 1: Active Triage -->
+              <div class="proof-stage stage-before active" id="stage-before">
+                <div class="stage-cad-wrapper">
+                  <div class="cad-grid-mesh"></div>
+                  <!-- Vector Reticle HUD -->
+                  <div class="cad-telemetry-hud">
+                    <div class="cad-crosshair">
+                      <svg width="100%" height="100%" viewBox="0 0 320 180" fill="none">
+                        <!-- Orthogonal Vector Grid Rules -->
+                        <line x1="20" y1="90" x2="300" y2="90" stroke="rgba(245, 158, 11, 0.25)" stroke-dasharray="4 4" stroke-width="1"/>
+                        <line x1="160" y1="20" x2="160" y2="160" stroke="rgba(245, 158, 11, 0.25)" stroke-dasharray="4 4" stroke-width="1"/>
+                        <!-- Target Reticle Box -->
+                        <rect x="90" y="45" width="140" height="90" rx="4" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="6 3"/>
+                        <circle cx="160" cy="90" r="18" stroke="#F59E0B" stroke-width="1.2" opacity="0.8"/>
+                        <circle cx="160" cy="90" r="4" fill="#F59E0B"/>
+                        <!-- Reticle Corner Brackets -->
+                        <path d="M85 55 V45 H95" stroke="#F59E0B" stroke-width="2.5" fill="none"/>
+                        <path d="M235 55 V45 H225" stroke="#F59E0B" stroke-width="2.5" fill="none"/>
+                        <path d="M85 125 V135 H95" stroke="#F59E0B" stroke-width="2.5" fill="none"/>
+                        <path d="M235 125 V135 H225" stroke="#F59E0B" stroke-width="2.5" fill="none"/>
+                      </svg>
+                      <div class="cad-hud-tag">
+                        <span class="badge-pulse"></span>
+                        <span>DEFECT DETECT: SEVERE ROAD CAVITATION</span>
+                      </div>
+                      <div class="cad-hud-coords">
+                        <span>LAT 17.4156° N</span>
+                        <span>LON 78.4352° E</span>
+                        <span>CONFIDENCE 92%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="stage-footer">
+                  <div class="stage-location">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span>Opposite St. Marks School, Road No 12, Banjara Hills</span>
+                  </div>
+                  <span class="stage-time">Reported Oct 24, 10:15 AM</span>
+                </div>
+              </div>
+
+              <!-- State 2: Verified Closed -->
+              <div class="proof-stage stage-after" id="stage-after">
+                <div class="stage-cad-wrapper stage-resolved-bg">
+                  <div class="cad-grid-mesh"></div>
+                  <div class="seal-overlay">
+                    <div class="resolution-stamp">
+                      <div class="stamp-header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>MUNICIPAL COMPLIANCE VERIFIED</span>
+                      </div>
+                      <div class="stamp-body">
+                        <div>DEPT: ROADS &amp; TRANSPORT</div>
+                        <div>CREW LEAD: USR-STAFF-ROADS</div>
+                        <div>WORK: HOT-MIX COMPACTION FINISHED</div>
+                        <div class="stamp-hash">AUDIT HASH: SHA256:4f8e9a21b3c7...</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="stage-footer footer-resolved">
+                  <div class="stage-location">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Certified Repair Closed • SLA: 4.2h (Met Target)</span>
+                  </div>
+                  <span class="stage-time">Verified Oct 24, 02:30 PM</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deterministic SLA Priority Score HUD -->
+            <div class="console-triage-panel">
+              <div class="triage-panel-header">
+                <span class="triage-title">DETERMINISTIC AI TRIAGE ENGINE</span>
+                <span class="formula-rule">P = 0.40S + 0.30R + 0.20P + 0.10D</span>
+              </div>
+              <div class="triage-factors-grid">
+                <div class="triage-factor">
+                  <div class="factor-header">
+                    <span class="factor-name">Severity (0.40)</span>
+                    <span class="factor-score">88/100</span>
+                  </div>
+                  <div class="factor-meter"><div class="meter-bar bar-danger" style="width: 88%;"></div></div>
+                </div>
+                <div class="triage-factor">
+                  <div class="factor-header">
+                    <span class="factor-name">Safety Risk (0.30)</span>
+                    <span class="factor-score">94/100</span>
+                  </div>
+                  <div class="factor-meter"><div class="meter-bar bar-danger" style="width: 94%;"></div></div>
+                </div>
+                <div class="triage-factor">
+                  <div class="factor-header">
+                    <span class="factor-name">Population (0.20)</span>
+                    <span class="factor-score">85/100</span>
+                  </div>
+                  <div class="factor-meter"><div class="meter-bar bar-warning" style="width: 85%;"></div></div>
+                </div>
+                <div class="triage-factor">
+                  <div class="factor-header">
+                    <span class="factor-name">Duration (0.10)</span>
+                    <span class="factor-score">40/100</span>
+                  </div>
+                  <div class="factor-meter"><div class="meter-bar bar-accent" style="width: 40%;"></div></div>
+                </div>
+              </div>
+              <div class="triage-composite-badge">
+                <div class="badge-label">COMPOSITE PRIORITY:</div>
+                <div class="badge-score">86 / 100</div>
+                <div class="badge-urgency">URGENT DISPATCH • 24H SLA</div>
+              </div>
+            </div>
+
+            <!-- Console Lower Status Bar -->
+            <div class="console-footer">
+              <div class="sla-countdown-indicator">
+                <span class="sla-pulse"></span>
+                <span class="sla-text">ACTIVE SLA TARGET: <strong>18H 35M REMAINING</strong></span>
+              </div>
+              <a href="/digital-twin" class="console-map-link">
+                <span>View on Digital Twin Map</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- How It Works Section (Screen 1) -->
+  <!-- How It Works Section: 4-Stage Closed-Loop Resolution Pipeline -->
   <section class="how-it-works-section" id="how-it-works">
     <div class="container">
-      <div style="text-align: center; margin-bottom: 2.5rem;">
+      <div class="pipeline-header">
+        <span class="pipeline-datum-tag">MUNICIPAL RESOLUTION LIFECYCLE</span>
         <h2>How It Works</h2>
-        <p style="color: var(--text-muted); font-size: 1.05rem;">An end-to-end transparent workflow from citizen reporting to verified resolution</p>
+        <p>A closed-loop, accountable municipal issue resolution lifecycle from citizen reporting to verified after-repair photo proof.</p>
       </div>
 
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-icon">
-            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      <div class="pipeline-continuum">
+        <!-- Stage 01 -->
+        <div class="pipeline-node">
+          <div class="pipeline-node-top">
+            <span class="pipeline-step-badge">STAGE 01</span>
+            <div class="pipeline-icon-circle">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            </div>
           </div>
-          <div class="step-title" data-i18n="step_1_title">1. Report</div>
-          <div class="step-desc" data-i18n="step_1_desc">Submit civic issues with description, map location and optional photos.</div>
+          <div class="pipeline-node-body">
+            <h3 data-i18n="step_1_title">1. Report</h3>
+            <p data-i18n="step_1_desc">Submit civic issues with description, map location and optional photos.</p>
+          </div>
+          <div class="pipeline-meta-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>GPS Pin + Voice Input</span>
+          </div>
         </div>
 
-        <div class="step-card">
-          <div class="step-icon" style="background: #FEF3C7; color: #D97706;">
-            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <!-- Stage 02 -->
+        <div class="pipeline-node">
+          <div class="pipeline-node-top">
+            <span class="pipeline-step-badge">STAGE 02</span>
+            <div class="pipeline-icon-circle">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </div>
           </div>
-          <div class="step-title" data-i18n="step_2_title">2. AI Analyses</div>
-          <div class="step-desc" data-i18n="step_2_desc">Smart categorisation, priority scoring (0-100) & duplicate candidate detection.</div>
+          <div class="pipeline-node-body">
+            <h3 data-i18n="step_2_title">2. AI Analyses</h3>
+            <p data-i18n="step_2_desc">Smart categorisation, priority scoring (0-100) &amp; duplicate candidate detection.</p>
+          </div>
+          <div class="pipeline-meta-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Deterministic SLA Engine</span>
+          </div>
         </div>
 
-        <div class="step-card">
-          <div class="step-icon" style="background: #E0E7FF; color: #4F46E5;">
-            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <!-- Stage 03 -->
+        <div class="pipeline-node">
+          <div class="pipeline-node-top">
+            <span class="pipeline-step-badge">STAGE 03</span>
+            <div class="pipeline-icon-circle">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
           </div>
-          <div class="step-title" data-i18n="step_3_title">3. Assign</div>
-          <div class="step-desc" data-i18n="step_3_desc">Admin reviews and assigns to an active staff member in the mapped department.</div>
+          <div class="pipeline-node-body">
+            <h3 data-i18n="step_3_title">3. Assign</h3>
+            <p data-i18n="step_3_desc">Admin reviews and assigns to an active staff member in the mapped department.</p>
+          </div>
+          <div class="pipeline-meta-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Department Field Queue</span>
+          </div>
         </div>
 
-        <div class="step-card">
-          <div class="step-icon" style="background: #DCFCE7; color: #16A34A;">
-            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <!-- Stage 04 -->
+        <div class="pipeline-node">
+          <div class="pipeline-node-top">
+            <span class="pipeline-step-badge">STAGE 04</span>
+            <div class="pipeline-icon-circle">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
           </div>
-          <div class="step-title" data-i18n="step_4_title">4. Track</div>
-          <div class="step-desc" data-i18n="step_4_desc">Follow live progress on a transparent citizen timeline with in-app notifications.</div>
+          <div class="pipeline-node-body">
+            <h3 data-i18n="step_4_title">4. Track</h3>
+            <p data-i18n="step_4_desc">Follow live progress on a transparent citizen timeline with in-app notifications.</p>
+          </div>
+          <div class="pipeline-meta-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Photo Proof &amp; Appeals</span>
+          </div>
         </div>
       </div>
     </div>
@@ -149,11 +414,38 @@
     </div>
   </footer>
 
+  <script src="/js/three.min.js"></script>
+  <script src="/js/city-3d-environment.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/i18n.js"></script>
   <script src="/js/glass-nav.js"></script>
   <script>
+    // Dual-state interactive proof-of-resolution switcher
+    window.switchHeroProofView = function(view) {
+      const btnBefore = document.getElementById('btn-view-before');
+      const btnAfter = document.getElementById('btn-view-after');
+      const stageBefore = document.getElementById('stage-before');
+      const stageAfter = document.getElementById('stage-after');
+      if (!btnBefore || !btnAfter || !stageBefore || !stageAfter) return;
+
+      if (view === 'after') {
+        btnBefore.classList.remove('active');
+        btnBefore.setAttribute('aria-selected', 'false');
+        btnAfter.classList.add('active');
+        btnAfter.setAttribute('aria-selected', 'true');
+        stageBefore.classList.remove('active');
+        stageAfter.classList.add('active');
+      } else {
+        btnAfter.classList.remove('active');
+        btnAfter.setAttribute('aria-selected', 'false');
+        btnBefore.classList.add('active');
+        btnBefore.setAttribute('aria-selected', 'true');
+        stageAfter.classList.remove('active');
+        stageBefore.classList.add('active');
+      }
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
       CivicAuth.bootNav();
 
@@ -161,10 +453,14 @@
       CivicAPI.request('/api/analytics/summary')
         .then(data => {
           if (data && data.kpis) {
-            document.getElementById('stat-total').textContent = data.kpis.totalIssues.toLocaleString();
-            document.getElementById('stat-resolved').textContent = data.kpis.resolvedIssues.toLocaleString();
-            document.getElementById('stat-rate').textContent = data.kpis.resolutionRate;
-            document.getElementById('stat-days').textContent = data.kpis.avgResolutionDays;
+            const elTotal = document.getElementById('stat-total');
+            const elResolved = document.getElementById('stat-resolved');
+            const elRate = document.getElementById('stat-rate');
+            const elDays = document.getElementById('stat-days');
+            if (elTotal) elTotal.textContent = data.kpis.totalIssues.toLocaleString();
+            if (elResolved) elResolved.textContent = data.kpis.resolvedIssues.toLocaleString();
+            if (elRate) elRate.textContent = data.kpis.resolutionRate;
+            if (elDays) elDays.textContent = data.kpis.avgResolutionDays;
           }
         })
         .catch(e => console.warn('Analytics fetch error:', e));

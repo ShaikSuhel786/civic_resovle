@@ -17,6 +17,8 @@ const CATEGORY_RULES = [
     keywords: ['streetlight', 'streetlights', 'street light', 'lamp post', 'dark street', 'pole', 'light not working', 'bulb', 'sparking wire', 'hanging wire', 'electric pole', 'street lamp', 'lighting']
   },
   {
+    
+    
     id: 'cat-garbage',
     name: 'Garbage and sanitation',
     departmentId: 'dept-sanitation',

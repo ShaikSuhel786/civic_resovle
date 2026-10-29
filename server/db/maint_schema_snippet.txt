@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS maintenance_schedules (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    department_id TEXT REFERENCES departments(id) ON DELETE SET NULL,
+    department_name TEXT NOT NULL,
+    area TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Scheduled' CHECK(status IN ('Scheduled', 'In Progress', 'Completed', 'Delayed', 'Overdue')),
+    official_source TEXT,
+    description TEXT NOT NULL,
+    assigned_staff_id TEXT REFERENCES profiles(id) ON DELETE SET NULL,
+    assigned_staff_name TEXT,
+    created_by TEXT REFERENCES profiles(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

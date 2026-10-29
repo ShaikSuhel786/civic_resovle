@@ -196,6 +196,8 @@ CREATE TABLE IF NOT EXISTS maintenance_schedules (
     status TEXT NOT NULL DEFAULT 'Scheduled' CHECK(status IN ('Scheduled', 'In Progress', 'Completed', 'Delayed', 'Overdue')),
     official_source TEXT,
     description TEXT NOT NULL,
+    assigned_staff_id TEXT REFERENCES profiles(id) ON DELETE SET NULL,
+    assigned_staff_name TEXT,
     created_by TEXT REFERENCES profiles(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -260,6 +262,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipien
 CREATE INDEX IF NOT EXISTS idx_maint_dates ON maintenance_schedules(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_maint_status ON maintenance_schedules(status);
 CREATE INDEX IF NOT EXISTS idx_maint_dept ON maintenance_schedules(department_id);
+CREATE INDEX IF NOT EXISTS idx_maint_staff ON maintenance_schedules(assigned_staff_id);
 CREATE INDEX IF NOT EXISTS idx_community_votes_report ON community_votes(report_id);
 CREATE INDEX IF NOT EXISTS idx_community_votes_citizen ON community_votes(citizen_id);
 CREATE INDEX IF NOT EXISTS idx_appeals_report ON report_appeals(report_id);

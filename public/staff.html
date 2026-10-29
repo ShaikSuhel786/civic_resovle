@@ -68,18 +68,36 @@
       <!-- Main Assigned Queue -->
       <div>
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
           <div>
-            <h1 style="font-size: 1.5rem; color: var(--primary-deep);">My Assigned Field Tasks</h1>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Update progress, document field obstacles, and record verified resolutions.</p>
+            <h1 style="font-size: 1.5rem; color: var(--primary-deep);" id="staff-queue-heading">My Assigned Field Queue</h1>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Manage civic issue reports and scheduled municipal maintenance work orders.</p>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="loadAssignedReports()">
+          <button class="btn btn-secondary btn-sm" onclick="refreshActiveQueue()">
             Refresh Tasks
           </button>
         </div>
 
+        <!-- Queue Switcher Tabs -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.75rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm btn-primary" id="tab-btn-reports" onclick="switchStaffTab('reports')">
+            <span>📋 Reported Issues</span>
+            <span id="badge-count-reports" class="badge" style="background: rgba(255,255,255,0.25); color: #fff; margin-left: 4px;">0</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" id="tab-btn-maintenance" onclick="switchStaffTab('maintenance')">
+            <span>📅 Scheduled Maintenance Works</span>
+            <span id="badge-count-maint" class="badge badge-assigned" style="margin-left: 4px;">0</span>
+          </button>
+        </div>
+
+        <!-- Container 1: Reported Issues -->
         <div id="assigned-reports-container">
           <div style="padding: 3rem; text-align: center; color: var(--text-muted);">Loading assigned tasks...</div>
+        </div>
+
+        <!-- Container 2: Scheduled Maintenance Orders -->
+        <div id="assigned-maintenance-container" style="display: none;">
+          <div style="padding: 3rem; text-align: center; color: var(--text-muted);">Loading maintenance tasks...</div>
         </div>
 
       </div>
@@ -178,6 +196,45 @@
   <script src="/js/glass-nav.js"></script>
   <script>
     let activeActionReportId = null;
+    let currentStaffTab = 'reports';
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function switchStaffTab(tab) {
+      currentStaffTab = tab;
+      const reportsBtn = document.getElementById('tab-btn-reports');
+      const maintBtn = document.getElementById('tab-btn-maintenance');
+      const reportsContainer = document.getElementById('assigned-reports-container');
+      const maintContainer = document.getElementById('assigned-maintenance-container');
+      const heading = document.getElementById('staff-queue-heading');
+
+      if (tab === 'reports') {
+        reportsBtn.className = 'btn btn-sm btn-primary';
+        maintBtn.className = 'btn btn-sm btn-secondary';
+        reportsContainer.style.display = 'block';
+        maintContainer.style.display = 'none';
+        if (heading) heading.textContent = 'My Assigned Field Reports';
+        loadAssignedReports();
+      } else {
+        reportsBtn.className = 'btn btn-sm btn-secondary';
+        maintBtn.className = 'btn btn-sm btn-primary';
+        reportsContainer.style.display = 'none';
+        maintContainer.style.display = 'block';
+        if (heading) heading.textContent = 'Scheduled Maintenance Works';
+        loadStaffMaintenance();
+      }
+    }
+
+    function refreshActiveQueue() {
+      if (currentStaffTab === 'reports') {
+        loadAssignedReports();
+      } else {
+        loadStaffMaintenance();
+      }
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (!CivicAuth.requireAuth('staff')) return;
@@ -186,14 +243,28 @@
       const user = CivicAuth.getUser();
       document.getElementById('staff-name').textContent = user.displayName;
 
-      await loadAssignedReports();
+      await Promise.all([
+        loadAssignedReports(),
+        preloadMaintenanceCount()
+      ]);
     });
+
+    async function preloadMaintenanceCount() {
+      try {
+        const res = await CivicAPI.request('/api/staff/maintenance');
+        const count = res.schedules ? res.schedules.length : 0;
+        const badge = document.getElementById('badge-count-maint');
+        if (badge) badge.textContent = count;
+      } catch (_) {}
+    }
 
     async function loadAssignedReports() {
       const container = document.getElementById('assigned-reports-container');
       try {
         const res = await CivicAPI.request('/api/staff/reports');
         const reports = res.reports || [];
+        const badge = document.getElementById('badge-count-reports');
+        if (badge) badge.textContent = reports.length;
 
         if (reports.length === 0) {
           container.innerHTML = `
@@ -453,6 +524,107 @@
         await loadStaffNotes();
       } catch (err) {
         alert('Failed to post note: ' + err.message);
+      }
+    }
+    // Staff Maintenance Work Queue
+    async function loadStaffMaintenance() {
+      const container = document.getElementById('assigned-maintenance-container');
+      container.innerHTML = '<div style="padding: 3rem; text-align: center; color: var(--text-muted);">Loading maintenance tasks...</div>';
+      try {
+        const res = await CivicAPI.request('/api/staff/maintenance');
+        const schedules = res.schedules || [];
+        const badge = document.getElementById('badge-count-maint');
+        if (badge) badge.textContent = schedules.length;
+
+        if (schedules.length === 0) {
+          container.innerHTML = `
+            <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Scheduled Maintenance Works</h3>
+              <p style="font-size: 0.88rem;">There are no active municipal maintenance orders currently assigned to you or your department.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = schedules.map(m => {
+          let badgeClass = 'badge-assigned';
+          if (m.status === 'In Progress') badgeClass = 'badge-progress';
+          else if (m.status === 'Completed') badgeClass = 'badge-resolved';
+          else if (m.status === 'Delayed' || m.status === 'Overdue') badgeClass = 'badge-urgent';
+
+          const isInProgress = m.status === 'In Progress';
+          const isCompleted = m.status === 'Completed';
+
+          return `
+            <div class="assigned-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase;">WORK ORDER: ${m.id}</span>
+                  <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-top: 0.15rem;">${escapeHtml(m.title)}</h3>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <span class="badge" style="background: #EFF6FF; color: var(--interactive-blue);">${escapeHtml(m.department_name)}</span>
+                  <span class="badge ${badgeClass}">${m.status}</span>
+                </div>
+              </div>
+
+              <p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 1rem; line-height: 1.5;">${escapeHtml(m.description)}</p>
+
+              <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 1.25rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+                <span>📍 <strong>Location / Area:</strong> ${escapeHtml(m.area)}</span>
+                <span>📅 <strong>Schedule:</strong> ${m.start_date} to ${m.end_date}</span>
+                <span>📜 <strong>Authority Ref:</strong> ${escapeHtml(m.official_source || 'Municipal Works Notice')}</span>
+                ${m.assigned_staff_name ? `<span>👷 <strong>Assigned Lead:</strong> ${escapeHtml(m.assigned_staff_name)}</span>` : '<span style="color: #D97706;">⚠️ Unclaimed Dept Work</span>'}
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">Status:</label>
+                  <select class="form-select" style="width: auto; font-size: 0.82rem; padding: 0.3rem 0.6rem;" onchange="updateMaintStatus('${m.id}', this.value)" ${isCompleted ? 'disabled' : ''}>
+                    <option value="Scheduled" ${m.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+                    <option value="In Progress" ${m.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="Delayed" ${m.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
+                    <option value="Completed" ${m.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem;">
+                  ${!isInProgress && !isCompleted ? `
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="updateMaintStatus('${m.id}', 'In Progress')">
+                      ▶ Start Work
+                    </button>
+                  ` : ''}
+                  ${isInProgress ? `
+                    <button type="button" class="btn btn-primary btn-sm" style="background: var(--success); border-color: var(--success);" onclick="updateMaintStatus('${m.id}', 'Completed')">
+                      ✓ Mark Completed
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="updateMaintStatus('${m.id}', 'Delayed')">
+                      ⚠️ Report Delay
+                    </button>
+                  ` : ''}
+                  <a href="/maintenance" class="btn btn-secondary btn-sm">
+                    View Calendar ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger); text-align: center; padding: 2rem;">Failed to load maintenance works: ${err.message}</div>`;
+      }
+    }
+
+    async function updateMaintStatus(id, newStatus) {
+      try {
+        await CivicAPI.request(`/api/staff/maintenance/${id}/status`, {
+          method: 'POST',
+          body: JSON.stringify({ status: newStatus })
+        });
+        await loadStaffMaintenance();
+      } catch (err) {
+        alert('Failed to update maintenance task: ' + err.message);
       }
     }
   </script>

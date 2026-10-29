@@ -28,7 +28,8 @@ router.get('/reports', (req, res) => {
 // POST /api/staff/reports/:id/status - Update permitted status for assigned report
 router.post('/reports/:id/status', (req, res) => {
   const reportId = req.params.id;
-  const { newStatus, reason, resolutionSummary } = req.body;
+  const newStatus = req.body.newStatus || req.body.status;
+  const { reason, resolutionSummary } = req.body;
 
   // Verify report belongs to this staff member
   const report = db.get('SELECT * FROM reports WHERE id = ?', [reportId]);
@@ -189,5 +190,81 @@ router.get('/reports/:id/notes', (req, res) => {
 
   res.json({ notes });
 });
+
+// ================================================================
+// CIVIC MAINTENANCE CALENDAR: STAFF WORK QUEUE ENDPOINTS
+// ================================================================
+
+// GET /api/staff/maintenance - List maintenance activities assigned to this staff member or their department
+router.get('/maintenance', (req, res) => {
+  try {
+    const schedules = db.all(`
+      SELECT * FROM maintenance_schedules
+      WHERE assigned_staff_id = ? OR (department_id = ? AND (assigned_staff_id IS NULL OR assigned_staff_id = ''))
+      ORDER BY 
+        CASE status 
+          WHEN 'In Progress' THEN 1 
+          WHEN 'Delayed' THEN 2 
+          WHEN 'Scheduled' THEN 3 
+          ELSE 4 END, 
+        start_date ASC
+    `, [req.user.id, req.user.department_id]);
+
+    res.json({ success: true, schedules });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve staff maintenance tasks: ' + err.message });
+  }
+});
+
+// POST /api/staff/maintenance/:id/status - Update execution status for assigned maintenance activity
+function handleStaffMaintStatus(req, res) {
+  try {
+    const maintId = req.params.id;
+    const { status } = req.body;
+
+    const validStatuses = ['Scheduled', 'In Progress', 'Completed', 'Delayed'];
+    const newStatus = status === 'Overdue' ? 'Delayed' : status;
+    if (!validStatuses.includes(newStatus)) {
+      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    const task = db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [maintId]);
+    if (!task) {
+      return res.status(404).json({ error: 'Maintenance task not found.' });
+    }
+
+    // Verify staff boundary: must be assigned staff or in the same department
+    const isAssigned = task.assigned_staff_id === req.user.id;
+    const isDeptMatch = req.user.department_id && task.department_id === req.user.department_id;
+    if (!isAssigned && !isDeptMatch) {
+      return res.status(403).json({
+        error: 'Security boundary: You can only update maintenance tasks assigned to you or within your department.'
+      });
+    }
+
+    // If task was unassigned in this department, claim assignment upon status action
+    let staffId = task.assigned_staff_id || req.user.id;
+    let staffName = task.assigned_staff_name || req.user.display_name;
+
+    db.run(`
+      UPDATE maintenance_schedules
+      SET status = ?, assigned_staff_id = ?, assigned_staff_name = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `, [newStatus, staffId, staffName, maintId]);
+
+    const updated = db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [maintId]);
+
+    res.json({
+      success: true,
+      message: `Maintenance task status updated to ${newStatus}.`,
+      schedule: updated
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update maintenance task: ' + err.message });
+  }
+}
+
+router.post('/maintenance/:id/status', handleStaffMaintStatus);
+router.patch('/maintenance/:id/status', handleStaffMaintStatus);
 
 module.exports = router;

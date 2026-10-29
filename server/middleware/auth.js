@@ -6,7 +6,7 @@ const db = require('../db');
 
 const JWT_SECRET = process.env.SESSION_SECRET || 'civic_resolve_secure_session_secret_for_prototype_eval_only_2026';
 
-function requireAuth(req, res, next) {
+function extractUserId(req) {
   let userId = null;
 
   // 1. Check Bearer token
@@ -31,6 +31,12 @@ function requireAuth(req, res, next) {
     userId = req.query.demo_user_id;
   }
 
+  return userId;
+}
+
+function requireAuth(req, res, next) {
+  const userId = extractUserId(req);
+
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required. Please sign in.' });
   }
@@ -48,6 +54,18 @@ function requireAuth(req, res, next) {
 
   // Attach verified user to request
   req.user = profile;
+  next();
+}
+
+function optionalAuth(req, res, next) {
+  const userId = extractUserId(req);
+
+  if (userId) {
+    const profile = db.get('SELECT id, email, display_name, role, department_id, active, preferred_language FROM profiles WHERE id = ?', [userId]);
+    if (profile && profile.active) {
+      req.user = profile;
+    }
+  }
   next();
 }
 
@@ -69,5 +87,6 @@ function requireRole(allowedRoles) {
 module.exports = {
   JWT_SECRET,
   requireAuth,
+  optionalAuth,
   requireRole
 };

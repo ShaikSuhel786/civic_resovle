@@ -15,34 +15,48 @@ const CivicAPI = {
         headers
       });
 
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+
+      if (response.ok) {
+        if (isJson) {
+          return await response.json();
+        }
+        return await response.text();
+      }
+
+      // Handle HTTP error responses
+      let errorMessage = `Request failed with status ${response.status}`;
+      let errData = null;
+      if (isJson) {
+        try {
+          errData = await response.json();
+          if (errData && (errData.error || errData.message)) {
+            errorMessage = errData.error || errData.message;
+          }
+        } catch (_) {}
+      }
+
       if (response.status === 401) {
         // If unauthorized, clear invalid session and prompt login
         if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
           CivicAuth.logout();
         }
+        throw new Error(errorMessage || 'Session expired. Please sign in again.');
       }
 
-      const contentType = response.headers.get('content-type') || '';
-      const isJson = contentType.includes('application/json');
-
-      if (response.ok && isJson) {
-        return await response.json();
-      }
-
-      if (response.status === 401 && isJson) {
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-          CivicAuth.logout();
-        }
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'Invalid credentials or session expired.');
-      }
-
-      // If response is not JSON (e.g. Vercel 404/500 HTML page), do not crash on response.json()
-      console.warn(`[CivicAPI] Non-JSON or error status (${response.status}) on ${endpoint}. Using resilient fallback.`);
-      return CivicAPI.getMockFallback(endpoint, options);
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.data = errData;
+      throw error;
     } catch (err) {
-      console.warn('[CivicAPI Fallback] Live request failed for:', endpoint, err.message);
-      return CivicAPI.getMockFallback(endpoint, options);
+      // Only invoke offline mock fallback if this was a network connectivity failure (TypeError: fetch failed)
+      // and NOT a real HTTP error response from the backend.
+      if (err.name === 'TypeError' && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
+        console.warn('[CivicAPI Fallback] Network offline for:', endpoint, err.message);
+        return CivicAPI.getMockFallback(endpoint, options);
+      }
+      throw err;
     }
   },
 

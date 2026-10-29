@@ -56,6 +56,8 @@ if (Database) {
     try { db.exec('ALTER TABLE reports ADD COLUMN last_escalated_at TEXT;'); } catch (_) {}
     try { db.exec('ALTER TABLE photo_metadata ADD COLUMN vision_clues_json TEXT;'); } catch (_) {}
     try { db.exec('ALTER TABLE photo_metadata ADD COLUMN confidence_score INTEGER;'); } catch (_) {}
+    try { db.exec('ALTER TABLE maintenance_schedules ADD COLUMN assigned_staff_id TEXT;'); } catch (_) {}
+    try { db.exec('ALTER TABLE maintenance_schedules ADD COLUMN assigned_staff_name TEXT;'); } catch (_) {}
 
     // Initialize schema if not present
     const schemaSqlPath = path.join(__dirname, 'schema.sql');
@@ -132,6 +134,8 @@ if (Database) {
             status TEXT NOT NULL DEFAULT 'Scheduled' CHECK(status IN ('Scheduled', 'In Progress', 'Completed', 'Delayed', 'Overdue')),
             official_source TEXT,
             description TEXT NOT NULL,
+            assigned_staff_id TEXT REFERENCES profiles(id) ON DELETE SET NULL,
+            assigned_staff_name TEXT,
             created_by TEXT REFERENCES profiles(id) ON DELETE SET NULL,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
