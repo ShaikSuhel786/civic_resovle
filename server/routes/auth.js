@@ -29,7 +29,7 @@ router.get('/demo-accounts', async (req, res) => {
       SELECT p.id, p.email, p.display_name, p.role, p.department_id, d.name as department_name
       FROM profiles p
       LEFT JOIN departments d ON p.department_id = d.id
-      WHERE p.active = 1
+      WHERE p.active = TRUE
       ORDER BY CASE p.role 
         WHEN 'admin' THEN 1 
         WHEN 'staff' THEN 2 
@@ -74,14 +74,14 @@ router.post('/register', async (req, res) => {
 
     await db.run(`
       INSERT INTO profiles (id, email, display_name, role, department_id, active, preferred_language, password_hash, phone, created_at)
-      VALUES (?, ?, ?, 'citizen', NULL, 1, ?, ?, ?, datetime('now'))
+      VALUES (?, ?, ?, 'citizen', NULL, TRUE, ?, ?, ?, datetime('now'))
     `, [userId, cleanEmail, fullName.trim(), lang, passwordHash, cleanPhone]);
 
     // Send Welcome Notification
     const notifId = 'notif-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 6);
     await db.run(`
       INSERT INTO notifications (id, recipient_id, title, message, read, created_at)
-      VALUES (?, ?, ?, ?, 0, datetime('now'))
+      VALUES (?, ?, ?, ?, FALSE, datetime('now'))
     `, [
       notifId,
       userId,
@@ -130,7 +130,7 @@ router.post('/login', async (req, res) => {
         return res.status(403).json({ error: 'Unauthorized demo account identifier.' });
       }
 
-      user = await db.get('SELECT * FROM profiles WHERE id = ? AND active = 1', [demoUserId]);
+      user = await db.get('SELECT * FROM profiles WHERE id = ? AND active = TRUE', [demoUserId]);
       if (!user) {
         return res.status(404).json({ error: 'Demo account not found.' });
       }
@@ -145,7 +145,7 @@ router.post('/login', async (req, res) => {
         ? cleanEmail.replace('@civicresolve.demo', '@civicsync.demo')
         : cleanEmail.replace('@civicsync.demo', '@civicresolve.demo');
 
-      user = await db.get('SELECT * FROM profiles WHERE (LOWER(email) = ? OR LOWER(email) = ?) AND active = 1', [
+      user = await db.get('SELECT * FROM profiles WHERE (LOWER(email) = ? OR LOWER(email) = ?) AND active = TRUE', [
         cleanEmail,
         altEmail
       ]);

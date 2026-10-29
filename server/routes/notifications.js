@@ -19,7 +19,7 @@ router.get('/', requireAuth, async (req, res) => {
     `, [req.user.id]);
 
     const countRes = await db.get(`
-      SELECT COUNT(*) as count FROM notifications WHERE recipient_id = ? AND read = 0
+      SELECT COUNT(*) as count FROM notifications WHERE recipient_id = ? AND read = FALSE
     `, [req.user.id]);
     const unreadCount = countRes?.count || 0;
 
@@ -40,7 +40,7 @@ router.post('/:id/read', requireAuth, async (req, res) => {
 
     await db.run(`
       UPDATE notifications
-      SET read = 1, read_at = datetime('now')
+      SET read = TRUE, read_at = datetime('now')
       WHERE id = ?
     `, [req.params.id]);
 
@@ -55,8 +55,8 @@ router.post('/mark-all-read', requireAuth, async (req, res) => {
   try {
     await db.run(`
       UPDATE notifications
-      SET read = 1, read_at = datetime('now')
-      WHERE recipient_id = ? AND read = 0
+      SET read = TRUE, read_at = datetime('now')
+      WHERE recipient_id = ? AND read = FALSE
     `, [req.user.id]);
 
     res.json({ success: true, message: 'All notifications marked as read.' });
@@ -96,7 +96,7 @@ router.post('/jobs/retry', requireAuth, requireRole('admin'), async (req, res) =
           const notifId = 'ntf-' + Math.random().toString(36).slice(2, 10);
           await db.run(`
             INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-            VALUES (?, ?, ?, ?, ?, 0, ?, datetime('now'))
+            VALUES (?, ?, ?, ?, ?, FALSE, ?, datetime('now'))
             ON CONFLICT(idempotency_key) DO NOTHING
           `, [notifId, job.recipient_id, job.report_id, payload.title, payload.message, 'retry-' + job.id]);
 

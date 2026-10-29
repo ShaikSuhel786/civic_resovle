@@ -252,7 +252,7 @@ router.post('/', requireAuth, requireRole('admin'), async (req, res) => {
         const notifId = `notif-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`;
         await db.run(`
           INSERT INTO notifications (id, recipient_id, title, message, read, created_at)
-          VALUES (?, ?, ?, ?, 0, datetime('now'))
+          VALUES (?, ?, ?, ?, FALSE, datetime('now'))
         `, [
           notifId,
           finalStaffId,

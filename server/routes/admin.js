@@ -21,7 +21,7 @@ router.get('/queues', async (req, res) => {
       LEFT JOIN categories c ON r.category_id = c.id
       LEFT JOIN departments d ON r.department_id = d.id
       LEFT JOIN profiles p ON r.citizen_id = p.id
-      WHERE (r.safety_flag = 1 OR r.priority_score >= 80)
+      WHERE (r.safety_flag = TRUE OR r.priority_score >= 80)
         AND r.status IN ('Submitted', 'Under Review')
       ORDER BY r.safety_flag DESC, r.priority_score DESC, r.created_at ASC
     `);
@@ -33,7 +33,7 @@ router.get('/queues', async (req, res) => {
       LEFT JOIN categories c ON r.category_id = c.id
       LEFT JOIN departments d ON r.department_id = d.id
       LEFT JOIN profiles p ON r.citizen_id = p.id
-      WHERE (r.review_required = 1 OR r.department_id IS NULL) AND r.status NOT IN ('Resolved', 'Rejected', 'Withdrawn')
+      WHERE (r.review_required = TRUE OR r.department_id IS NULL) AND r.status NOT IN ('Resolved', 'Rejected', 'Withdrawn')
       ORDER BY r.created_at ASC
     `);
 
@@ -55,7 +55,7 @@ router.get('/queues', async (req, res) => {
              COUNT(DISTINCT CASE WHEN r.status IN ('Assigned', 'In Progress', 'Blocked') THEN r.id END) as active_workload,
              COUNT(DISTINCT CASE WHEN r.status = 'Resolved' THEN r.id END) as resolved_count
       FROM departments d
-      LEFT JOIN profiles p ON p.department_id = d.id AND p.active = 1
+      LEFT JOIN profiles p ON p.department_id = d.id AND p.active = TRUE
       LEFT JOIN reports r ON r.department_id = d.id
       GROUP BY d.id, d.name
       ORDER BY active_workload DESC
@@ -108,7 +108,7 @@ router.get('/staff', async (req, res) => {
       FROM profiles p
       JOIN departments d ON p.department_id = d.id
       LEFT JOIN reports r ON r.assigned_staff_id = p.id AND r.status IN ('Assigned', 'In Progress', 'Blocked')
-      WHERE p.role = 'staff' AND p.active = 1
+      WHERE p.role = 'staff' AND p.active = TRUE
       GROUP BY p.id, p.display_name, p.email, p.department_id, d.name
       ORDER BY d.name ASC, p.display_name ASC
     `);
@@ -160,14 +160,14 @@ router.post('/reports/:id/assign', async (req, res) => {
     await db.transaction(async () => {
       // 1. Deactivate old assignments if any
       if (previousStaffId) {
-        await db.run("UPDATE assignments SET active = 0, ended_at = datetime('now') WHERE report_id = ? AND active = 1", [reportId]);
+        await db.run("UPDATE assignments SET active = FALSE, ended_at = datetime('now') WHERE report_id = ? AND active = TRUE", [reportId]);
       }
 
       // 2. Insert new assignment
       const assignId = 'asg-' + crypto.randomUUID().slice(0, 8);
       await db.run(`
         INSERT INTO assignments (id, report_id, staff_id, assigned_by, assigned_at, reason, active)
-        VALUES (?, ?, ?, ?, datetime('now'), ?, 1)
+        VALUES (?, ?, ?, ?, datetime('now'), ?, TRUE)
       `, [assignId, reportId, staffId, req.user.id, reason || 'Initial assignment']);
 
       // 3. Update Report
@@ -175,7 +175,7 @@ router.post('/reports/:id/assign', async (req, res) => {
         UPDATE reports
         SET assigned_staff_id = ?,
             status = ?,
-            review_required = 0,
+            review_required = FALSE,
             review_reason = NULL,
             updated_at = datetime('now')
         WHERE id = ?
@@ -188,7 +188,7 @@ router.post('/reports/:id/assign', async (req, res) => {
       
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'assigned', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'assigned', TRUE, ?, ?, datetime('now'))
       `, ['evt-' + crypto.randomUUID().slice(0, 8), reportId, req.user.id, eventMsg, JSON.stringify({ staffId, isReassignment })]);
 
       // 5. Audit Event
@@ -208,7 +208,7 @@ router.post('/reports/:id/assign', async (req, res) => {
       // 6. Notify Citizen
       await db.run(`
         INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-        VALUES (?, ?, ?, 'Report Assigned', ?, 0, ?, datetime('now'))
+        VALUES (?, ?, ?, 'Report Assigned', ?, FALSE, ?, datetime('now'))
       `, [
         'ntf-' + crypto.randomUUID().slice(0, 8),
         report.citizen_id,
@@ -253,14 +253,14 @@ router.post('/reports/:id/status', async (req, res) => {
         UPDATE reports
         SET status = ?,
             rejected_reason = ?,
-            review_required = 0,
+            review_required = FALSE,
             updated_at = datetime('now')
         WHERE id = ?
       `, [newStatus, newStatus === 'Rejected' ? reason.trim() : report.rejected_reason, reportId]);
 
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'status_changed', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'status_changed', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         reportId,
@@ -284,7 +284,7 @@ router.post('/reports/:id/status', async (req, res) => {
       if (newStatus === 'Rejected') {
         await db.run(`
           INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-          VALUES (?, ?, ?, 'Report Rejected', ?, 0, ?, datetime('now'))
+          VALUES (?, ?, ?, 'Report Rejected', ?, FALSE, ?, datetime('now'))
         `, [
           'ntf-' + crypto.randomUUID().slice(0, 8),
           report.citizen_id,
@@ -317,8 +317,8 @@ router.post('/reports/:id/clear-safety-flag', async (req, res) => {
     await db.transaction(async () => {
       await db.run(`
         UPDATE reports
-        SET safety_flag = 0,
-            review_required = 0,
+        SET safety_flag = FALSE,
+            review_required = FALSE,
             review_reason = NULL,
             updated_at = datetime('now')
         WHERE id = ?
@@ -332,13 +332,13 @@ router.post('/reports/:id/clear-safety-flag', async (req, res) => {
         req.user.id,
         reportId,
         JSON.stringify({ safetyFlag: report.safety_flag, reason: report.safety_flag_reason }),
-        JSON.stringify({ safetyFlag: 0 }),
+        JSON.stringify({ safetyFlag: false }),
         reason
       ]);
 
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'hazard_cleared', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'hazard_cleared', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         reportId,
@@ -393,7 +393,7 @@ router.post('/reports/:id/confirm-duplicate', async (req, res) => {
         UPDATE reports
         SET status = 'Duplicate',
             primary_report_id = ?,
-            review_required = 0,
+            review_required = FALSE,
             updated_at = datetime('now')
         WHERE id = ?
       `, [primaryId, duplicateId]);
@@ -401,7 +401,7 @@ router.post('/reports/:id/confirm-duplicate', async (req, res) => {
       // 3. Insert report event for citizen
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'duplicate_linked', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'duplicate_linked', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         duplicateId,
@@ -426,7 +426,7 @@ router.post('/reports/:id/confirm-duplicate', async (req, res) => {
       // 5. Notify Citizen with primary link
       await db.run(`
         INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-        VALUES (?, ?, ?, 'Duplicate Identified', ?, 0, ?, datetime('now'))
+        VALUES (?, ?, ?, 'Duplicate Identified', ?, FALSE, ?, datetime('now'))
       `, [
         'ntf-' + crypto.randomUUID().slice(0, 8),
         duplicateReport.citizen_id,
@@ -465,7 +465,7 @@ router.post('/reports/:id/reverse-duplicate', async (req, res) => {
         UPDATE reports
         SET status = 'Under Review',
             primary_report_id = NULL,
-            review_required = 1,
+            review_required = TRUE,
             review_reason = 'Duplicate status reversed. Admin review required.',
             updated_at = datetime('now')
         WHERE id = ?
@@ -473,7 +473,7 @@ router.post('/reports/:id/reverse-duplicate', async (req, res) => {
 
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'duplicate_reversed', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'duplicate_reversed', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         duplicateId,
@@ -577,7 +577,7 @@ router.post('/appeals/:id/decide', async (req, res) => {
         await db.run(`
           UPDATE reports
           SET status = 'Under Review',
-              review_required = 0,
+              review_required = FALSE,
               review_reason = NULL,
               updated_at = datetime('now')
           WHERE id = ?
@@ -585,7 +585,7 @@ router.post('/appeals/:id/decide', async (req, res) => {
 
         await db.run(`
           INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-          VALUES (?, ?, ?, 'appeal_approved', 1, ?, ?, datetime('now'))
+          VALUES (?, ?, ?, 'appeal_approved', TRUE, ?, ?, datetime('now'))
         `, [
           'evt-' + crypto.randomUUID().slice(0, 8),
           appeal.report_id,
@@ -609,7 +609,7 @@ router.post('/appeals/:id/decide', async (req, res) => {
         // Notify citizen
         await db.run(`
           INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-          VALUES (?, ?, ?, 'Appeal Approved: Issue Reopened', ?, 0, ?, datetime('now'))
+          VALUES (?, ?, ?, 'Appeal Approved: Issue Reopened', ?, FALSE, ?, datetime('now'))
         `, [
           'ntf-' + crypto.randomUUID().slice(0, 8),
           appeal.citizen_id,
@@ -621,7 +621,7 @@ router.post('/appeals/:id/decide', async (req, res) => {
         // If Rejected: Uphold closure/rejection
         await db.run(`
           UPDATE reports
-          SET review_required = 0,
+          SET review_required = FALSE,
               review_reason = NULL,
               updated_at = datetime('now')
           WHERE id = ?
@@ -629,7 +629,7 @@ router.post('/appeals/:id/decide', async (req, res) => {
 
         await db.run(`
           INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-          VALUES (?, ?, ?, 'appeal_rejected', 1, ?, ?, datetime('now'))
+          VALUES (?, ?, ?, 'appeal_rejected', TRUE, ?, ?, datetime('now'))
         `, [
           'evt-' + crypto.randomUUID().slice(0, 8),
           appeal.report_id,
@@ -653,7 +653,7 @@ router.post('/appeals/:id/decide', async (req, res) => {
         // Notify citizen
         await db.run(`
           INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-          VALUES (?, ?, ?, 'Appeal Decision', ?, 0, ?, datetime('now'))
+          VALUES (?, ?, ?, 'Appeal Decision', ?, FALSE, ?, datetime('now'))
         `, [
           'ntf-' + crypto.randomUUID().slice(0, 8),
           appeal.citizen_id,

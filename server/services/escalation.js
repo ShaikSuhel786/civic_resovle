@@ -113,7 +113,7 @@ function checkEscalations() {
               UPDATE reports
               SET escalation_level = 2,
                   last_escalated_at = datetime('now'),
-                  review_required = 1,
+                  review_required = TRUE,
                   review_reason = 'SLA Target Exceeded (Overdue). Escalated to Department Head.',
                   updated_at = datetime('now')
               WHERE id = ?
@@ -122,7 +122,7 @@ function checkEscalations() {
             const eventId = 'evt-' + crypto.randomUUID().slice(0, 8);
             await db.run(`
               INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-              VALUES (?, ?, null, 'sla_breached', 1, ?, ?, datetime('now'))
+              VALUES (?, ?, null, 'sla_breached', TRUE, ?, ?, datetime('now'))
             `, [
               eventId,
               rep.id,
@@ -133,7 +133,7 @@ function checkEscalations() {
             if (rep.assigned_staff_id) {
               await db.run(`
                 INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-                VALUES (?, ?, ?, 'URGENT: SLA Deadline Breached', ?, 0, ?, datetime('now'))
+                VALUES (?, ?, ?, 'URGENT: SLA Deadline Breached', ?, FALSE, ?, datetime('now'))
               `, [
                 'ntf-' + crypto.randomUUID().slice(0, 8),
                 rep.assigned_staff_id,
@@ -143,11 +143,11 @@ function checkEscalations() {
               ]);
             }
 
-            const admins = await db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = 1");
+            const admins = await db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = TRUE");
             for (const adm of admins) {
               await db.run(`
                 INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-                VALUES (?, ?, ?, 'Escalation Alert: SLA Breached', ?, 0, ?, datetime('now'))
+                VALUES (?, ?, ?, 'Escalation Alert: SLA Breached', ?, FALSE, ?, datetime('now'))
               `, [
                 'ntf-' + crypto.randomUUID().slice(0, 8),
                 adm.id,
@@ -171,7 +171,7 @@ function checkEscalations() {
             const eventId = 'evt-' + crypto.randomUUID().slice(0, 8);
             await db.run(`
               INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-              VALUES (?, ?, null, 'escalation_warning', 1, ?, ?, datetime('now'))
+              VALUES (?, ?, null, 'escalation_warning', TRUE, ?, ?, datetime('now'))
             `, [
               eventId,
               rep.id,
@@ -182,7 +182,7 @@ function checkEscalations() {
             if (rep.assigned_staff_id) {
               await db.run(`
                 INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-                VALUES (?, ?, ?, 'SLA Warning: Deadline Approaching', ?, 0, ?, datetime('now'))
+                VALUES (?, ?, ?, 'SLA Warning: Deadline Approaching', ?, FALSE, ?, datetime('now'))
               `, [
                 'ntf-' + crypto.randomUUID().slice(0, 8),
                 rep.assigned_staff_id,
@@ -219,7 +219,7 @@ function checkEscalations() {
           UPDATE reports
           SET escalation_level = 2,
               last_escalated_at = datetime('now'),
-              review_required = 1,
+              review_required = TRUE,
               review_reason = 'SLA Target Exceeded (Overdue). Escalated to Department Head.',
               updated_at = datetime('now')
           WHERE id = ?
@@ -228,7 +228,7 @@ function checkEscalations() {
         const eventId = 'evt-' + crypto.randomUUID().slice(0, 8);
         db.run(`
           INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-          VALUES (?, ?, null, 'sla_breached', 1, ?, ?, datetime('now'))
+          VALUES (?, ?, null, 'sla_breached', TRUE, ?, ?, datetime('now'))
         `, [
           eventId,
           rep.id,
@@ -239,7 +239,7 @@ function checkEscalations() {
         if (rep.assigned_staff_id) {
           db.run(`
             INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-            VALUES (?, ?, ?, 'URGENT: SLA Deadline Breached', ?, 0, ?, datetime('now'))
+            VALUES (?, ?, ?, 'URGENT: SLA Deadline Breached', ?, FALSE, ?, datetime('now'))
           `, [
             'ntf-' + crypto.randomUUID().slice(0, 8),
             rep.assigned_staff_id,
@@ -249,11 +249,11 @@ function checkEscalations() {
           ]);
         }
 
-        const admins = db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = 1");
+        const admins = db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = TRUE");
         for (const adm of admins) {
           db.run(`
             INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-            VALUES (?, ?, ?, 'Escalation Alert: SLA Breached', ?, 0, ?, datetime('now'))
+            VALUES (?, ?, ?, 'Escalation Alert: SLA Breached', ?, FALSE, ?, datetime('now'))
           `, [
             'ntf-' + crypto.randomUUID().slice(0, 8),
             adm.id,
@@ -277,7 +277,7 @@ function checkEscalations() {
         const eventId = 'evt-' + crypto.randomUUID().slice(0, 8);
         db.run(`
           INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-          VALUES (?, ?, null, 'escalation_warning', 1, ?, ?, datetime('now'))
+          VALUES (?, ?, null, 'escalation_warning', TRUE, ?, ?, datetime('now'))
         `, [
           eventId,
           rep.id,
@@ -288,7 +288,7 @@ function checkEscalations() {
         if (rep.assigned_staff_id) {
           db.run(`
             INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-            VALUES (?, ?, ?, 'SLA Warning: Deadline Approaching', ?, 0, ?, datetime('now'))
+            VALUES (?, ?, ?, 'SLA Warning: Deadline Approaching', ?, FALSE, ?, datetime('now'))
           `, [
             'ntf-' + crypto.randomUUID().slice(0, 8),
             rep.assigned_staff_id,

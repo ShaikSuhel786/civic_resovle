@@ -150,6 +150,34 @@ async function runDatabaseAdapterTests() {
     await db.run('DELETE FROM departments WHERE id = ?', [booleanTestId]);
   });
 
+  // 10. toPgSql translates strftime('%Y-%m', col) to TO_CHAR(col, 'YYYY-MM')
+  await test('toPgSql translates strftime to PostgreSQL TO_CHAR', () => {
+    const sql = "SELECT strftime('%Y-%m', r.created_at) as month, COUNT(*) as count FROM reports r GROUP BY month";
+    const translated = db.toPgSql(sql);
+    assert.ok(translated.includes("TO_CHAR(r.created_at, 'YYYY-MM') as month"));
+    assert.ok(!translated.includes("strftime"));
+  });
+
+  // 11. sanitizePgParamsForSql converts integer 0/1 to boolean for boolean columns, preserving integers for count/rating
+  await test('sanitizePgParamsForSql targets boolean columns without corrupting numeric integer values', () => {
+    const insertSql = 'INSERT INTO reports (id, title, location_verified, safety_flag, priority_score, community_votes) VALUES (?, ?, ?, ?, ?, ?)';
+    const insertParams = ['rep-1', 'Test Title', 1, 0, 85, 12];
+    const cleanedInsert = db.sanitizePgParamsForSql(insertSql, insertParams);
+    assert.strictEqual(cleanedInsert[0], 'rep-1');
+    assert.strictEqual(cleanedInsert[1], 'Test Title');
+    assert.strictEqual(cleanedInsert[2], true);
+    assert.strictEqual(cleanedInsert[3], false);
+    assert.strictEqual(cleanedInsert[4], 85);
+    assert.strictEqual(cleanedInsert[5], 12);
+
+    const updateSql = 'UPDATE notifications SET read = ?, attempts = ? WHERE active = ?';
+    const updateParams = [1, 2, 0];
+    const cleanedUpdate = db.sanitizePgParamsForSql(updateSql, updateParams);
+    assert.strictEqual(cleanedUpdate[0], true);
+    assert.strictEqual(cleanedUpdate[1], 2);
+    assert.strictEqual(cleanedUpdate[2], false);
+  });
+
   console.log('\n======================================================');
   console.log(`🎉 ALL ${passed}/${passed + failed} DATABASE ADAPTER TESTS PASSED!`);
   console.log('======================================================\n');

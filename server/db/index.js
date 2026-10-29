@@ -59,6 +59,17 @@ if (isSupabaseConfigured) {
 // --------------------------------------------------------------------------
 // SQL Normalizer for PostgreSQL Dialect
 // --------------------------------------------------------------------------
+const BOOLEAN_COLUMNS = new Set([
+  'active',
+  'location_verified',
+  'is_out_of_boundary',
+  'safety_flag',
+  'review_required',
+  'citizen_visible',
+  'is_resolution_photo',
+  'read'
+]);
+
 function toPgSql(sql) {
   if (!sql || typeof sql !== 'string') return sql;
 
@@ -67,6 +78,9 @@ function toPgSql(sql) {
     .replace(/datetime\('now'\)/gi, 'CURRENT_TIMESTAMP')
     .replace(/datetime\("now"\)/gi, 'CURRENT_TIMESTAMP')
     .replace(/datetime\('now',\s*'-30 days'\)/gi, "CURRENT_TIMESTAMP - INTERVAL '30 days'")
+    .replace(/datetime\('now',\s*'([^']+)'\)/gi, "CURRENT_TIMESTAMP + INTERVAL '$1'")
+    // strftime to TO_CHAR
+    .replace(/strftime\('%Y-%m',\s*([^)]+)\)/gi, "TO_CHAR($1, 'YYYY-MM')")
     // Boolean comparison replacements (PostgreSQL boolean columns do not accept integer 1/0)
     .replace(/\bactive\s*=\s*1\b/gi, 'active = TRUE')
     .replace(/\bactive\s*=\s*0\b/gi, 'active = FALSE')
@@ -78,6 +92,12 @@ function toPgSql(sql) {
     .replace(/\bsafety_flag\s*=\s*1\b/gi, 'safety_flag = TRUE')
     .replace(/\bcitizen_visible\s*=\s*1\b/gi, 'citizen_visible = TRUE')
     .replace(/\bcitizen_visible\s*=\s*0\b/gi, 'citizen_visible = FALSE')
+    .replace(/\blocation_verified\s*=\s*1\b/gi, 'location_verified = TRUE')
+    .replace(/\blocation_verified\s*=\s*0\b/gi, 'location_verified = FALSE')
+    .replace(/\bis_out_of_boundary\s*=\s*1\b/gi, 'is_out_of_boundary = TRUE')
+    .replace(/\bis_out_of_boundary\s*=\s*0\b/gi, 'is_out_of_boundary = FALSE')
+    .replace(/\bis_resolution_photo\s*=\s*1\b/gi, 'is_resolution_photo = TRUE')
+    .replace(/\bis_resolution_photo\s*=\s*0\b/gi, 'is_resolution_photo = FALSE')
     // SQLite INSERT OR IGNORE translation
     .replace(/INSERT\s+OR\s+IGNORE\s+INTO/gi, 'INSERT INTO');
 
@@ -91,6 +111,47 @@ function toPgSql(sql) {
   }
 
   return pgSql;
+}
+
+function sanitizePgParamsForSql(sql, params = []) {
+  if (!Array.isArray(params) || params.length === 0) {
+    return params ? params.map(p => (p === undefined ? null : p)) : [];
+  }
+  const cleanParams = params.map(p => (p === undefined ? null : p));
+  if (!sql || typeof sql !== 'string') return cleanParams;
+
+  // 1. Check INSERT INTO table (col1, col2, ...) VALUES (?, ?, ...)
+  const insertMatch = sql.match(/INSERT\s+INTO\s+[^(]+\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/i);
+  if (insertMatch) {
+    const cols = insertMatch[1].split(',').map(c => c.trim().toLowerCase());
+    for (let i = 0; i < cols.length && i < cleanParams.length; i++) {
+      if (BOOLEAN_COLUMNS.has(cols[i])) {
+        const val = cleanParams[i];
+        if (val !== null && val !== undefined) {
+          cleanParams[i] = Boolean(val === true || val === 1 || val === '1' || val === 'true');
+        }
+      }
+    }
+    return cleanParams;
+  }
+
+  // 2. Check WHERE / UPDATE: find each '?' and see if it is preceded by a boolean column name
+  let paramIdx = 0;
+  const colParamRegex = /(?:([a-zA-Z0-9_]+)\s*=\s*\?|\?)/g;
+  let match;
+  while ((match = colParamRegex.exec(sql)) !== null) {
+    if (paramIdx >= cleanParams.length) break;
+    const colName = match[1] ? match[1].toLowerCase() : null;
+    if (colName && BOOLEAN_COLUMNS.has(colName)) {
+      const val = cleanParams[paramIdx];
+      if (val !== null && val !== undefined) {
+        cleanParams[paramIdx] = Boolean(val === true || val === 1 || val === '1' || val === 'true');
+      }
+    }
+    paramIdx++;
+  }
+
+  return cleanParams;
 }
 
 // --------------------------------------------------------------------------
@@ -133,7 +194,7 @@ if (isPostgresConfigured) {
       const store = asyncLocalStorage.getStore();
       const client = store?.client || pool;
       const pgSql = toPgSql(sql);
-      const cleanParams = sanitizePgParams(params);
+      const cleanParams = sanitizePgParamsForSql(sql, params);
       return await client.query(pgSql, cleanParams);
     },
 
@@ -273,5 +334,6 @@ module.exports = {
   supabaseClient,
   isSupabaseConfigured,
   isPostgresConfigured,
-  toPgSql
+  toPgSql,
+  sanitizePgParamsForSql
 };

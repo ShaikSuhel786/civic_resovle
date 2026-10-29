@@ -121,7 +121,7 @@ router.post('/reports/:id/claim', async (req, res) => {
         UPDATE reports
         SET assigned_staff_id = ?,
             status = 'Assigned',
-            review_required = 0,
+            review_required = FALSE,
             review_reason = NULL,
             updated_at = datetime('now')
         WHERE id = ?
@@ -137,20 +137,20 @@ router.post('/reports/:id/claim', async (req, res) => {
       }
 
       // Deactivate any previous assignments for this report
-      await db.run("UPDATE assignments SET active = 0, ended_at = datetime('now') WHERE report_id = ? AND active = 1", [reportId]);
+      await db.run("UPDATE assignments SET active = FALSE, ended_at = datetime('now') WHERE report_id = ? AND active = TRUE", [reportId]);
 
       // Insert new assignment record
       const assignId = 'asg-' + crypto.randomUUID().slice(0, 8);
       await db.run(`
         INSERT INTO assignments (id, report_id, staff_id, assigned_by, assigned_at, reason, active)
-        VALUES (?, ?, ?, ?, datetime('now'), ?, 1)
+        VALUES (?, ?, ?, ?, datetime('now'), ?, TRUE)
       `, [assignId, reportId, req.user.id, req.user.id, 'Self-claimed by field staff']);
 
       // Insert timeline event
       const staffName = req.user.display_name || req.user.displayName || 'Field Staff';
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'assigned', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'assigned', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         reportId,
@@ -166,7 +166,7 @@ router.post('/reports/:id/claim', async (req, res) => {
       // Notify citizen of assignment
       await db.run(`
         INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-        VALUES (?, ?, ?, ?, ?, 0, ?, datetime('now'))
+        VALUES (?, ?, ?, ?, ?, FALSE, ?, datetime('now'))
       `, [
         'ntf-' + crypto.randomUUID().slice(0, 8),
         report.citizen_id,
@@ -243,7 +243,7 @@ router.post('/reports/:id/status', async (req, res) => {
       const resolutionPhoto = await db.get(`
         SELECT id, file_name, storage_path, created_at
         FROM photo_metadata
-        WHERE report_id = ? AND is_resolution_photo = 1
+        WHERE report_id = ? AND is_resolution_photo = TRUE
       `, [reportId]);
       if (!resolutionPhoto) {
         return res.status(400).json({
@@ -288,7 +288,7 @@ router.post('/reports/:id/status', async (req, res) => {
 
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'status_changed', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'status_changed', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         reportId,
@@ -310,7 +310,7 @@ router.post('/reports/:id/status', async (req, res) => {
 
       await db.run(`
         INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-        VALUES (?, ?, ?, ?, ?, 0, ?, datetime('now'))
+        VALUES (?, ?, ?, ?, ?, FALSE, ?, datetime('now'))
       `, [
         'ntf-' + crypto.randomUUID().slice(0, 8),
         report.citizen_id,

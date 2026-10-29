@@ -24,7 +24,7 @@ router.get('/categories', async (req, res) => {
       SELECT c.id, c.name, c.department_id, d.name as department_name 
       FROM categories c
       JOIN departments d ON c.department_id = d.id
-      WHERE c.active = 1
+      WHERE c.active = TRUE
       ORDER BY c.name ASC
     `);
     res.json({ categories });
@@ -236,7 +236,7 @@ router.post('/', requireAuth, async (req, res) => {
           SELECT c.id, c.department_id, c.active, d.active as dept_active
           FROM categories c
           LEFT JOIN departments d ON c.department_id = d.id
-          WHERE c.id = ? AND c.active = 1
+          WHERE c.id = ? AND c.active = TRUE
         `, [analysis.suggestedCategoryId]);
 
         if (suggestedCat && suggestedCat.department_id && (suggestedCat.dept_active === 1 || suggestedCat.dept_active === true)) {
@@ -285,9 +285,9 @@ router.post('/', requireAuth, async (req, res) => {
         )
       `, [
         reportId, refNumber, req.user.id, reportTitle, description.trim(), finalCategoryId, finalDepartmentId,
-        locationText.trim(), lat, lng, locationVerified ? 1 : 0, isOutOfBoundary,
+        locationText.trim(), lat, lng, Boolean(locationVerified), Boolean(isOutOfBoundary),
         analysis.priorityScore, analysis.priorityLevel, analysis.severityFactor, analysis.safetyFactor, analysis.peopleFactor, analysis.durationFactor,
-        analysis.safetyFlag ? 1 : 0, analysis.safetyFlagReason, reviewRequired, reviewReason, analysis.analysisState,
+        Boolean(analysis.safetyFlag), analysis.safetyFlagReason, Boolean(reviewRequired), reviewReason, analysis.analysisState,
         analysis.suggestedCategoryId, analysis.suggestedDepartmentId, analysis.confidenceScore, analysis.analysisReasoning,
         idempotencyKey || ('key-' + reportId), privacyNoticeVersion, slaDeadline
       ]);
@@ -295,13 +295,13 @@ router.post('/', requireAuth, async (req, res) => {
       // Insert Report Event: Submitted
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'submitted', 1, 'Issue reported by citizen with location details.', ?, datetime('now'))
-      `, ['evt-' + crypto.randomUUID().slice(0, 8), reportId, req.user.id, JSON.stringify({ isOutOfBoundary, locationVerified })]);
+        VALUES (?, ?, ?, 'submitted', TRUE, 'Issue reported by citizen with location details.', ?, datetime('now'))
+      `, ['evt-' + crypto.randomUUID().slice(0, 8), reportId, req.user.id, JSON.stringify({ isOutOfBoundary: Boolean(isOutOfBoundary), locationVerified: Boolean(locationVerified) })]);
 
       // Insert Report Event: AI Analyzed
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, null, 'ai_analyzed', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, null, 'ai_analyzed', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         reportId,
@@ -316,7 +316,7 @@ router.post('/', requireAuth, async (req, res) => {
       // Insert Citizen Notification
       await db.run(`
         INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-        VALUES (?, ?, ?, ?, ?, 0, ?, datetime('now'))
+        VALUES (?, ?, ?, ?, ?, FALSE, ?, datetime('now'))
       `, [
         'ntf-' + crypto.randomUUID().slice(0, 8),
         req.user.id,
@@ -484,7 +484,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     const eventsParams = [report.id];
 
     if (req.user.role === 'citizen') {
-      eventsQuery += ` AND re.citizen_visible = 1 `;
+      eventsQuery += ` AND re.citizen_visible = TRUE `;
     }
     eventsQuery += ` ORDER BY re.created_at ASC `;
     const timeline = await db.all(eventsQuery, eventsParams);
@@ -573,7 +573,7 @@ router.post('/:id/follow-up', requireAuth, async (req, res) => {
     const eventId = 'evt-' + crypto.randomUUID().slice(0, 8);
     await db.run(`
       INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-      VALUES (?, ?, ?, 'follow_up', 1, ?, ?, datetime('now'))
+      VALUES (?, ?, ?, 'follow_up', TRUE, ?, ?, datetime('now'))
     `, [eventId, report.id, req.user.id, `Citizen Follow-up: ${note.trim()}`, JSON.stringify({ authorRole: req.user.role })]);
 
     await db.run('UPDATE reports SET updated_at = datetime(\'now\') WHERE id = ?', [report.id]);
@@ -602,11 +602,11 @@ router.post('/:id/request-action', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Please provide a clear reason (minimum 10 characters).' });
     }
 
-    // Create an event and set review_required = 1 for admin attention
+    // Create an event and set review_required = TRUE for admin attention
     await db.transaction(async () => {
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'citizen_request', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'citizen_request', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         report.id,
@@ -617,7 +617,7 @@ router.post('/:id/request-action', requireAuth, async (req, res) => {
 
       await db.run(`
         UPDATE reports
-        SET review_required = 1,
+        SET review_required = TRUE,
             review_reason = ?,
             updated_at = datetime('now')
         WHERE id = ?
@@ -835,7 +835,7 @@ const handleAppealSubmission = async (req, res) => {
 
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'appeal_submitted', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'appeal_submitted', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         report.id,
@@ -846,18 +846,18 @@ const handleAppealSubmission = async (req, res) => {
 
       await db.run(`
         UPDATE reports
-        SET review_required = 1,
+        SET review_required = TRUE,
             review_reason = ?,
             updated_at = datetime('now')
         WHERE id = ?
       `, [`Citizen Appeal (${type.toUpperCase()}): ${reason.trim().slice(0, 50)}`, report.id]);
 
       // Send notifications to admins
-      const admins = await db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = 1");
+      const admins = await db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = TRUE");
       for (const adm of admins) {
         await db.run(`
           INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
-          VALUES (?, ?, ?, 'New Citizen Appeal', ?, 0, ?, datetime('now'))
+          VALUES (?, ?, ?, 'New Citizen Appeal', ?, FALSE, ?, datetime('now'))
         `, [
           'ntf-' + crypto.randomUUID().slice(0, 8),
           adm.id,
@@ -950,7 +950,7 @@ router.post('/:id/feedback', requireAuth, async (req, res) => {
       const stars = '★'.repeat(numRating) + '☆'.repeat(5 - numRating);
       await db.run(`
         INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
-        VALUES (?, ?, ?, 'feedback_submitted', 1, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, 'feedback_submitted', TRUE, ?, ?, datetime('now'))
       `, [
         'evt-' + crypto.randomUUID().slice(0, 8),
         report.id,

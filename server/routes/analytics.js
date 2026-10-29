@@ -110,13 +110,17 @@ router.get('/scorecard', async (req, res) => {
     `, dateParams);
 
     // 7. Monthly Trends (aggregated by calendar month)
+    const ymExpr = db.isPostgres
+      ? "TO_CHAR(r.created_at, 'YYYY-MM')"
+      : "strftime('%Y-%m', r.created_at)";
+
     const monthlyRaw = await db.all(`
-      SELECT strftime('%Y-%m', r.created_at) as ym,
+      SELECT ${ymExpr} as ym,
              COUNT(*) as reported,
              COUNT(CASE WHEN r.status = 'Resolved' THEN 1 END) as resolved
       FROM reports r
       WHERE r.created_at IS NOT NULL
-      GROUP BY ym
+      GROUP BY ${ymExpr}
       ORDER BY ym ASC
     `);
 

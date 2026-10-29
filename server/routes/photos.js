@@ -8,8 +8,12 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const db = require('../db');
+const { supabaseClient, isSupabaseConfigured } = require('../db');
 const { JWT_SECRET, requireAuth, optionalAuth } = require('../middleware/auth');
 const { inspectImage } = require('../services/vision');
+
+const isProduction = process.env.NODE_ENV === 'production';
+const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'civic-photos';
 
 // Upload directory for local demo storage
 const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -92,6 +96,13 @@ router.post('/reports/:id/photos', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Maximum photo limit reached (max 5 photos per report).' });
     }
 
+    // Fail-fast in production if durable photo storage is not configured
+    if (isProduction && !isSupabaseConfigured) {
+      return res.status(503).json({
+        error: 'Durable photo storage is not configured. In production, Supabase Storage credentials (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY) are required to prevent data loss.'
+      });
+    }
+
     // Handle single photo upload
     upload.single('photo')(req, res, async (err) => {
       if (err) {
@@ -113,8 +124,35 @@ router.post('/reports/:id/photos', requireAuth, async (req, res) => {
       }
 
       const photoId = 'pho-' + crypto.randomUUID().slice(0, 8);
-      const relativePath = `/uploads/${req.file.filename}`;
-      const isResolutionPhoto = req.body.isResolutionPhoto === 'true' || req.body.isResolutionPhoto === true ? 1 : 0;
+      let storagePath = `/uploads/${req.file.filename}`;
+      const isResolutionPhoto = Boolean(req.body.isResolutionPhoto === 'true' || req.body.isResolutionPhoto === true);
+
+      // Persist to durable Supabase Storage if configured
+      if (isSupabaseConfigured && supabaseClient) {
+        try {
+          const remoteKey = `reports/${reportId}/${req.file.filename}`;
+          const fileBuffer = fs.readFileSync(filePath);
+          const { error: uploadError } = await supabaseClient.storage
+            .from(bucketName)
+            .upload(remoteKey, fileBuffer, {
+              contentType: req.file.mimetype,
+              upsert: false
+            });
+
+          if (uploadError) {
+            try { fs.unlinkSync(filePath); } catch (_) {}
+            return res.status(500).json({
+              error: `Failed to upload photo to durable storage: ${uploadError.message}`
+            });
+          }
+          storagePath = `supabase://${bucketName}/${remoteKey}`;
+        } catch (sErr) {
+          try { fs.unlinkSync(filePath); } catch (_) {}
+          return res.status(500).json({
+            error: `Failed to upload photo to durable storage: ${sErr.message}`
+          });
+        }
+      }
 
       // Run AI vision inspection on the uploaded image
       try {
@@ -134,7 +172,7 @@ router.post('/reports/:id/photos', requireAuth, async (req, res) => {
           photoId,
           reportId,
           req.user.id,
-          relativePath,
+          storagePath,
           req.file.originalname,
           req.file.mimetype,
           req.file.size,
@@ -147,7 +185,7 @@ router.post('/reports/:id/photos', requireAuth, async (req, res) => {
           success: true,
           photo: {
             id: photoId,
-            storagePath: relativePath,
+            storagePath,
             fileName: req.file.originalname,
             sizeBytes: req.file.size,
             isResolutionPhoto: Boolean(isResolutionPhoto),
@@ -165,7 +203,7 @@ router.post('/reports/:id/photos', requireAuth, async (req, res) => {
           photoId,
           reportId,
           req.user.id,
-          relativePath,
+          storagePath,
           req.file.originalname,
           req.file.mimetype,
           req.file.size,
@@ -176,7 +214,7 @@ router.post('/reports/:id/photos', requireAuth, async (req, res) => {
           success: true,
           photo: {
             id: photoId,
-            storagePath: relativePath,
+            storagePath,
             fileName: req.file.originalname,
             sizeBytes: req.file.size
           }
@@ -216,6 +254,29 @@ router.get('/reports/:id/photos/:photoId/signed-url', requireAuth, async (req, r
 
     if (!isAdmin && !isOwner && !isAssignedStaff && !isPublicResolution) {
       return res.status(403).json({ error: 'Access denied: You do not have permission to access this photo.' });
+    }
+
+    if (photo.storage_path && photo.storage_path.startsWith('supabase://') && isSupabaseConfigured && supabaseClient) {
+      const fullPath = photo.storage_path.replace('supabase://', '');
+      const slashIndex = fullPath.indexOf('/');
+      const targetBucket = slashIndex !== -1 ? fullPath.slice(0, slashIndex) : bucketName;
+      const targetKey = slashIndex !== -1 ? fullPath.slice(slashIndex + 1) : fullPath;
+
+      const { data, error } = await supabaseClient.storage
+        .from(targetBucket)
+        .createSignedUrl(targetKey, 60);
+
+      if (error || !data?.signedUrl) {
+        return res.status(500).json({ error: 'Failed to generate signed URL from durable storage: ' + (error?.message || 'Unknown error') });
+      }
+
+      return res.json({
+        success: true,
+        photoId: photo.id,
+        signedUrl: data.signedUrl,
+        expiresAt: new Date(Date.now() + 60 * 1000).toISOString(),
+        expiresInSeconds: 60
+      });
     }
 
     const safeFilename = path.basename(photo.storage_path);
@@ -279,6 +340,29 @@ router.get('/uploads/:filename', optionalAuth, async (req, res) => {
       }
 
       if (!fs.existsSync(filePath)) {
+        if (isSupabaseConfigured && supabaseClient) {
+          const photoRecord = await db.get(`
+            SELECT * FROM photo_metadata
+            WHERE id = ? OR storage_path LIKE ? OR file_name = ?
+          `, [pid, `%${safeFilename}%`, safeFilename]);
+
+          if (photoRecord && photoRecord.storage_path.startsWith('supabase://')) {
+            const fullPath = photoRecord.storage_path.replace('supabase://', '');
+            const slashIndex = fullPath.indexOf('/');
+            const targetBucket = slashIndex !== -1 ? fullPath.slice(0, slashIndex) : bucketName;
+            const targetKey = slashIndex !== -1 ? fullPath.slice(slashIndex + 1) : fullPath;
+
+            const { data: fileBlob, error: dlErr } = await supabaseClient.storage
+              .from(targetBucket)
+              .download(targetKey);
+
+            if (!dlErr && fileBlob) {
+              const buffer = Buffer.from(await fileBlob.arrayBuffer());
+              res.setHeader('Content-Type', photoRecord.content_type || 'image/jpeg');
+              return res.send(buffer);
+            }
+          }
+        }
         return res.status(404).json({ error: 'Requested photo file does not exist.' });
       }
 
@@ -286,17 +370,13 @@ router.get('/uploads/:filename', optionalAuth, async (req, res) => {
     }
 
     // 3. Path 2: Standard Authorization: Bearer token verification
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Requested photo file does not exist.' });
-    }
-
     // Look up photo record in database
     const photo = await db.get(`
       SELECT p.*, r.citizen_id, r.assigned_staff_id, r.department_id, r.status as report_status
       FROM photo_metadata p
       LEFT JOIN reports r ON p.report_id = r.id
-      WHERE p.storage_path = ? OR p.storage_path LIKE ?
-    `, [`/uploads/${safeFilename}`, `%${safeFilename}%`]);
+      WHERE p.storage_path = ? OR p.storage_path LIKE ? OR p.file_name = ?
+    `, [`/uploads/${safeFilename}`, `%${safeFilename}%`, safeFilename]);
 
     if (photo) {
       const isAdmin = req.user.role === 'admin';
@@ -309,6 +389,26 @@ router.get('/uploads/:filename', optionalAuth, async (req, res) => {
           error: 'Access denied: You do not have permission to view this civic evidence photo.'
         });
       }
+    }
+
+    if (!fs.existsSync(filePath)) {
+      if (isSupabaseConfigured && supabaseClient && photo && photo.storage_path.startsWith('supabase://')) {
+        const fullPath = photo.storage_path.replace('supabase://', '');
+        const slashIndex = fullPath.indexOf('/');
+        const targetBucket = slashIndex !== -1 ? fullPath.slice(0, slashIndex) : bucketName;
+        const targetKey = slashIndex !== -1 ? fullPath.slice(slashIndex + 1) : fullPath;
+
+        const { data: fileBlob, error: dlErr } = await supabaseClient.storage
+          .from(targetBucket)
+          .download(targetKey);
+
+        if (!dlErr && fileBlob) {
+          const buffer = Buffer.from(await fileBlob.arrayBuffer());
+          res.setHeader('Content-Type', photo.content_type || 'image/jpeg');
+          return res.send(buffer);
+        }
+      }
+      return res.status(404).json({ error: 'Requested photo file does not exist.' });
     }
 
     res.sendFile(filePath);

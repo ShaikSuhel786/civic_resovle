@@ -748,7 +748,7 @@ Error Codes: 401 (unauthenticated), 403 (forbidden non-admin), 404 (not found), 
 ## 6. Photo Evidence & Protected Media
 
 ### POST /api/reports/:id/photos
-Description: Uploads photo evidence for a report with binary magic-byte inspection (max 5MB, JPEG/PNG/WebP).
+Description: Uploads photo evidence for a report with binary magic-byte inspection (max 5MB, JPEG/PNG/WebP). Persists to durable Supabase Storage in production.
 
 ```bash
 curl -X POST http://localhost:3050/api/reports/rep-001/photos \
@@ -762,7 +762,7 @@ Sample Response (201):
   "success": true,
   "photo": {
     "id": "pho-abc123",
-    "storagePath": "/uploads/1730000000000-abcd.jpg",
+    "storagePath": "supabase://civic-photos/reports/rep-001/1730000000000-abcd.jpg",
     "fileName": "pothole.jpg",
     "sizeBytes": 102400,
     "isResolutionPhoto": false,
@@ -771,7 +771,30 @@ Sample Response (201):
 }
 ```
 
-Error Codes: 400 (invalid signature or file size), 401 (auth), 403 (not report owner or assigned staff), 404 (not found), 500 (server)
+Error Codes: 400 (invalid signature or file size), 401 (auth), 403 (not report owner or assigned staff), 404 (not found), 500 (server), 503 (durable storage not configured in production)
+
+---
+
+### GET /api/reports/:id/photos/:photoId/signed-url
+Description: Generates a short-lived (60s) single-purpose signed URL for private evidence photo access without exposing session tokens.
+
+```bash
+curl -X GET http://localhost:3050/api/reports/rep-001/photos/pho-abc123/signed-url \
+  -H "Authorization: Bearer <token>"
+```
+
+Sample Response (200):
+```json
+{
+  "success": true,
+  "photoId": "pho-abc123",
+  "signedUrl": "https://your-project.supabase.co/storage/v1/object/sign/civic-photos/reports/rep-001/pothole.jpg?token=...",
+  "expiresAt": "2026-10-30T00:45:00.000Z",
+  "expiresInSeconds": 60
+}
+```
+
+Error Codes: 401 (auth required), 403 (access denied), 404 (photo not found), 500 (server)
 
 ---
 
