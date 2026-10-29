@@ -48,39 +48,47 @@ function extractUserId(req) {
   }
 }
 
-function requireAuth(req, res, next) {
-  const userId = extractUserId(req);
+async function requireAuth(req, res, next) {
+  try {
+    const userId = extractUserId(req);
 
-  if (!userId) {
-    return res.status(401).json({ error: 'Authentication required. Please sign in with a valid session.' });
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in with a valid session.' });
+    }
+
+    // Look up profile in database and verify active state
+    const profile = await db.get('SELECT id, email, display_name, role, department_id, active, preferred_language FROM profiles WHERE id = ?', [userId]);
+
+    if (!profile) {
+      return res.status(401).json({ error: 'User profile not found or invalidated.' });
+    }
+
+    if (!profile.active) {
+      return res.status(403).json({ error: 'Account is deactivated. Contact administrator.' });
+    }
+
+    // Attach verified user to request
+    req.user = profile;
+    next();
+  } catch (err) {
+    next(err);
   }
-
-  // Look up profile in database and verify active state
-  const profile = db.get('SELECT id, email, display_name, role, department_id, active, preferred_language FROM profiles WHERE id = ?', [userId]);
-
-  if (!profile) {
-    return res.status(401).json({ error: 'User profile not found or invalidated.' });
-  }
-
-  if (!profile.active) {
-    return res.status(403).json({ error: 'Account is deactivated. Contact administrator.' });
-  }
-
-  // Attach verified user to request
-  req.user = profile;
-  next();
 }
 
-function optionalAuth(req, res, next) {
-  const userId = extractUserId(req);
+async function optionalAuth(req, res, next) {
+  try {
+    const userId = extractUserId(req);
 
-  if (userId) {
-    const profile = db.get('SELECT id, email, display_name, role, department_id, active, preferred_language FROM profiles WHERE id = ?', [userId]);
-    if (profile && profile.active) {
-      req.user = profile;
+    if (userId) {
+      const profile = await db.get('SELECT id, email, display_name, role, department_id, active, preferred_language FROM profiles WHERE id = ?', [userId]);
+      if (profile && profile.active) {
+        req.user = profile;
+      }
     }
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 }
 
 function requireRole(allowedRoles) {

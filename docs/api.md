@@ -530,7 +530,7 @@ Error Codes: 400 (validation), 401 (auth), 403 (forbidden), 404 (not found), 500
 ## 4. Department Field Staff Workspace
 
 ### GET /api/staff/reports
-Description: Returns task queue strictly restricted to reports assigned to the authenticated staff member.
+Description: Returns field tasks for authenticated staff: unassigned claimable reports belonging to their department and reports assigned to the current staff member.
 
 ```bash
 curl -X GET http://localhost:3050/api/staff/reports \
@@ -543,14 +543,61 @@ Sample Response (200):
   "reports": [
     {
       "id": "rep-002",
+      "reference_number": "REP-20261029-4102",
       "title": "Large pothole on main road",
-      "status": "Assigned"
+      "department_id": "dept-roads",
+      "assigned_staff_id": "usr-staff-roads",
+      "status": "Assigned",
+      "is_assigned_to_me": 1,
+      "is_claimable": 0
+    },
+    {
+      "id": "rep-005",
+      "reference_number": "REP-20261029-8812",
+      "title": "Cracked divider on highway road",
+      "department_id": "dept-roads",
+      "assigned_staff_id": null,
+      "status": "Submitted",
+      "is_assigned_to_me": 0,
+      "is_claimable": 1
     }
-  ]
+  ],
+  "assignedReports": [...],
+  "availableReports": [...],
+  "department": {
+    "id": "dept-roads",
+    "name": "Roads & Transport"
+  }
 }
 ```
 
 Error Codes: 401 (auth), 403 (forbidden), 500 (server)
+
+---
+
+### POST /api/staff/reports/:id/claim
+Description: Securely claims an unassigned department report, assigning it to the authenticated staff member and advancing status to 'Assigned'.
+
+```bash
+curl -X POST http://localhost:3050/api/staff/reports/rep-005/claim \
+  -H "Authorization: Bearer <staff_token>"
+```
+
+Sample Response (200):
+```json
+{
+  "success": true,
+  "message": "Report successfully claimed.",
+  "report": {
+    "id": "rep-005",
+    "reference_number": "REP-20261029-8812",
+    "status": "Assigned",
+    "assigned_staff_id": "usr-staff-roads"
+  }
+}
+```
+
+Error Codes: 400 (not eligible), 401 (auth), 403 (wrong department or deactivated), 404 (not found), 409 (already claimed), 500 (server)
 
 ---
 

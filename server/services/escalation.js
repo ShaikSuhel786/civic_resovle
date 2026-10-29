@@ -87,15 +87,125 @@ function getSlaStatus(report) {
 /**
  * In-process escalation job checker.
  * Scans open reports, identifies reports nearing or past SLA, escalates level, and logs events.
+ * Supports both async PostgreSQL execution and synchronous SQLite execution.
  */
 function checkEscalations() {
-  const activeReports = db.all(`
+  const activeReportsQuery = `
     SELECT r.id, r.reference_number, r.title, r.citizen_id, r.assigned_staff_id, r.department_id,
            r.status, r.created_at, r.sla_deadline, r.escalation_level, r.priority_level, r.category_id, r.safety_flag
     FROM reports r
     WHERE r.status IN ('Submitted', 'Under Review', 'Assigned', 'In Progress', 'Blocked')
-  `);
+  `;
 
+  if (db.isPostgres) {
+    return (async () => {
+      const activeReports = await db.all(activeReportsQuery);
+      let warningsTriggered = 0;
+      let breachesTriggered = 0;
+
+      for (const rep of activeReports) {
+        const sla = getSlaStatus(rep);
+        if (!sla) continue;
+
+        if (sla.isBreached && (rep.escalation_level || 0) < 2) {
+          await db.transaction(async () => {
+            await db.run(`
+              UPDATE reports
+              SET escalation_level = 2,
+                  last_escalated_at = datetime('now'),
+                  review_required = 1,
+                  review_reason = 'SLA Target Exceeded (Overdue). Escalated to Department Head.',
+                  updated_at = datetime('now')
+              WHERE id = ?
+            `, [rep.id]);
+
+            const eventId = 'evt-' + crypto.randomUUID().slice(0, 8);
+            await db.run(`
+              INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
+              VALUES (?, ?, null, 'sla_breached', 1, ?, ?, datetime('now'))
+            `, [
+              eventId,
+              rep.id,
+              `SLA Deadline Exceeded: Issue is past targeted resolution window (${sla.displayText}). High-priority escalation triggered to Municipal Oversight.`,
+              JSON.stringify({ deadline: sla.deadline, hoursOverdue: Math.abs(sla.hoursRemaining), escalationLevel: 2 })
+            ]);
+
+            if (rep.assigned_staff_id) {
+              await db.run(`
+                INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
+                VALUES (?, ?, ?, 'URGENT: SLA Deadline Breached', ?, 0, ?, datetime('now'))
+              `, [
+                'ntf-' + crypto.randomUUID().slice(0, 8),
+                rep.assigned_staff_id,
+                rep.id,
+                `Report #${rep.reference_number} has exceeded its resolution deadline (${sla.displayText}). Priority resolution required.`,
+                `notif-breach-${rep.id}-2`
+              ]);
+            }
+
+            const admins = await db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = 1");
+            for (const adm of admins) {
+              await db.run(`
+                INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
+                VALUES (?, ?, ?, 'Escalation Alert: SLA Breached', ?, 0, ?, datetime('now'))
+              `, [
+                'ntf-' + crypto.randomUUID().slice(0, 8),
+                adm.id,
+                rep.id,
+                `Report #${rep.reference_number} (${rep.title}) is overdue by ${Math.abs(sla.hoursRemaining)}h. Automated Level 2 Escalation applied.`,
+                `notif-breach-adm-${rep.id}-${adm.id}`
+              ]);
+            }
+          });
+          breachesTriggered++;
+        } else if (sla.isWarning && (rep.escalation_level || 0) < 1) {
+          await db.transaction(async () => {
+            await db.run(`
+              UPDATE reports
+              SET escalation_level = 1,
+                  last_escalated_at = datetime('now'),
+                  updated_at = datetime('now')
+              WHERE id = ?
+            `, [rep.id]);
+
+            const eventId = 'evt-' + crypto.randomUUID().slice(0, 8);
+            await db.run(`
+              INSERT INTO report_events (id, report_id, actor_id, event_type, citizen_visible, message, metadata_json, created_at)
+              VALUES (?, ?, null, 'escalation_warning', 1, ?, ?, datetime('now'))
+            `, [
+              eventId,
+              rep.id,
+              `SLA Warning: 80% of target resolution window has elapsed (${sla.displayText}). Automated alert dispatched to field team.`,
+              JSON.stringify({ deadline: sla.deadline, hoursRemaining: sla.hoursRemaining, escalationLevel: 1 })
+            ]);
+
+            if (rep.assigned_staff_id) {
+              await db.run(`
+                INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
+                VALUES (?, ?, ?, 'SLA Warning: Deadline Approaching', ?, 0, ?, datetime('now'))
+              `, [
+                'ntf-' + crypto.randomUUID().slice(0, 8),
+                rep.assigned_staff_id,
+                rep.id,
+                `Report #${rep.reference_number} has reached 80% of its resolution window (${sla.displayText}).`,
+                `notif-warn-${rep.id}-1`
+              ]);
+            }
+          });
+          warningsTriggered++;
+        }
+      }
+
+      return {
+        checkedCount: activeReports.length,
+        warningsTriggered,
+        breachesTriggered
+      };
+    })();
+  }
+
+  // SQLite synchronous mode
+  const activeReports = db.all(activeReportsQuery);
   let warningsTriggered = 0;
   let breachesTriggered = 0;
 
@@ -103,7 +213,6 @@ function checkEscalations() {
     const sla = getSlaStatus(rep);
     if (!sla) continue;
 
-    // 1. Check SLA Breach (Level 2 Escalation)
     if (sla.isBreached && (rep.escalation_level || 0) < 2) {
       db.transaction(() => {
         db.run(`
@@ -127,7 +236,6 @@ function checkEscalations() {
           JSON.stringify({ deadline: sla.deadline, hoursOverdue: Math.abs(sla.hoursRemaining), escalationLevel: 2 })
         ]);
 
-        // Notify assigned staff
         if (rep.assigned_staff_id) {
           db.run(`
             INSERT INTO notifications (id, recipient_id, report_id, title, message, read, idempotency_key, created_at)
@@ -141,7 +249,6 @@ function checkEscalations() {
           ]);
         }
 
-        // Notify all department admins
         const admins = db.all("SELECT id FROM profiles WHERE role = 'admin' AND active = 1");
         for (const adm of admins) {
           db.run(`
@@ -156,12 +263,8 @@ function checkEscalations() {
           ]);
         }
       });
-
       breachesTriggered++;
-    }
-
-    // 2. Check Pre-Deadline Warning (Level 1 Escalation at 80% elapsed)
-    else if (sla.isWarning && (rep.escalation_level || 0) < 1) {
+    } else if (sla.isWarning && (rep.escalation_level || 0) < 1) {
       db.transaction(() => {
         db.run(`
           UPDATE reports
@@ -195,7 +298,6 @@ function checkEscalations() {
           ]);
         }
       });
-
       warningsTriggered++;
     }
   }

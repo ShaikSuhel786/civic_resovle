@@ -59,7 +59,7 @@ router.post('/vision-inspect', handleImageUpload, async (req, res) => {
     } 
     // 2. Check for reportId lookup
     else if (req.body?.reportId) {
-      const photo = db.get('SELECT * FROM photo_metadata WHERE report_id = ? ORDER BY created_at ASC LIMIT 1', [req.body.reportId]);
+      const photo = await db.get('SELECT * FROM photo_metadata WHERE report_id = ? ORDER BY created_at ASC LIMIT 1', [req.body.reportId]);
       if (!photo) {
         return res.status(404).json({ success: false, error: 'No photos found for this report.' });
       }

@@ -50,72 +50,15 @@ const CivicAPI = {
       error.data = errData;
       throw error;
     } catch (err) {
-      // Only invoke offline mock fallback if this was a network connectivity failure (TypeError: fetch failed)
-      // and NOT a real HTTP error response from the backend.
+      // In production, never return fake successful mock responses on network failures.
+      // Doing so causes silent data loss and deceives citizens into believing reports were saved.
       if (err.name === 'TypeError' && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
-        console.warn('[CivicAPI Fallback] Network offline for:', endpoint, err.message);
-        return CivicAPI.getMockFallback(endpoint, options);
+        const netErr = new Error('Network connection error: Unable to communicate with the Civic Resolve server. Please check your connection and retry.');
+        netErr.status = 0;
+        throw netErr;
       }
       throw err;
     }
-  },
-
-  getMockFallback(endpoint, options = {}) {
-    let body = {};
-    try {
-      if (options.body) body = JSON.parse(options.body);
-    } catch (_) {}
-
-    if (endpoint === '/api/auth/login') {
-      const id = body.demoUserId || (body.email && body.email.includes('admin') ? 'usr-admin-01' : (body.email && body.email.includes('staff') ? 'usr-staff-roads' : 'usr-citizen-01'));
-      const isAdm = id.includes('admin');
-      const isStf = id.includes('staff');
-      return {
-        token: 'fallback-jwt-token-' + Date.now(),
-        user: {
-          id: id,
-          email: body.email || (isAdm ? 'admin@civicsync.demo' : (isStf ? 'staff.roads@civicsync.demo' : 'citizen@civicsync.demo')),
-          displayName: isAdm ? 'Municipal Admin Officer' : (isStf ? 'Venkatesh Rao (Roads Staff)' : 'Priya Sharma (Citizen)'),
-          role: isAdm ? 'admin' : (isStf ? 'staff' : 'citizen'),
-          departmentId: isStf ? 'dept-roads' : null,
-          preferredLanguage: 'en'
-        }
-      };
-    }
-
-    if (endpoint === '/api/analytics/summary') {
-      return { totalReports: 1248, resolvedReports: 892, resolutionRate: 72, avgDays: 12, byDepartment: [] };
-    }
-
-    if (endpoint === '/api/notifications') {
-      return { unreadCount: 0, notifications: [] };
-    }
-
-    if (endpoint === '/api/reports/categories') {
-      return {
-        categories: [
-          { id: 'cat-roads', name: 'Roads and potholes', department_id: 'dept-roads' },
-          { id: 'cat-streetlights', name: 'Streetlights', department_id: 'dept-electrical' },
-          { id: 'cat-garbage', name: 'Garbage and sanitation', department_id: 'dept-sanitation' },
-          { id: 'cat-water', name: 'Water supply and leakage', department_id: 'dept-water' },
-          { id: 'cat-drainage', name: 'Drainage and sewage', department_id: 'dept-water' }
-        ]
-      };
-    }
-
-    if (endpoint === '/api/reports') {
-      return { reports: [], counts: { active: 0, inProgress: 0, resolved: 0, needsAttention: 0 } };
-    }
-
-    if (endpoint === '/api/admin/queues') {
-      return { urgentHazardQueue: [], aiReviewQueue: [], allReports: [], stats: { totalReports: 0, urgentCount: 0, needsReview: 0, assignedCount: 0 } };
-    }
-
-    if (endpoint === '/api/admin/staff') {
-      return { staff: [] };
-    }
-
-    return { success: true };
   }
 };
 

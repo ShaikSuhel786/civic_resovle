@@ -53,6 +53,21 @@ async function runRegressionTests() {
   console.log('  CIVIC RESOLVE AI — PHASE 5 REGRESSION TEST SUITE');
   console.log('======================================================\n');
 
+  const app = require('../server/index.js');
+  let serverInstance = null;
+  await new Promise((resolve, reject) => {
+    const testReq = http.get('http://localhost:3050/api/health', (res) => {
+      resolve();
+    });
+    testReq.on('error', () => {
+      serverInstance = http.createServer(app);
+      serverInstance.listen(3050, 'localhost', () => {
+        resolve();
+      });
+      serverInstance.on('error', reject);
+    });
+  });
+
   let passed = 0;
   let total = 0;
 
@@ -159,7 +174,7 @@ async function runRegressionTests() {
   await test('Sign In: Valid Citizen Email & Password', async () => {
     const res = await postJSON('/api/auth/login', {
       email: 'citizen@civicsync.demo',
-      password: 'password123'
+      password: 'DemoCitizen123!'
     });
     assert.strictEqual(res.status, 200);
     assert.ok(res.json.token);
@@ -178,7 +193,7 @@ async function runRegressionTests() {
   await test('Sign In: Non-existent Email Rejection (401)', async () => {
     const res = await postJSON('/api/auth/login', {
       email: 'doesnotexist_9999@example.com',
-      password: 'password123'
+      password: 'DemoCitizen123!'
     });
     assert.strictEqual(res.status, 401);
     assert.strictEqual(res.json.error, 'Invalid email or password.');
@@ -239,6 +254,10 @@ async function runRegressionTests() {
     assert.strictEqual(res.status, 200);
     assert.ok(res.body.includes('Staff') || res.body.includes('Work Queue'));
   });
+
+  if (serverInstance) {
+    serverInstance.close();
+  }
 
   console.log('\n======================================================');
   console.log(`🎉 ALL ${passed}/${total} PHASE 5 REGRESSION TESTS PASSED!`);

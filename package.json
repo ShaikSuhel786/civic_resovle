@@ -7,7 +7,8 @@
     "start": "node server/index.js",
     "dev": "node server/index.js",
     "seed": "node scripts/seed.js",
-    "test": "node tests/workflow.test.js && node tests/routing.test.js && node tests/maintenance.test.js && node tests/phase1_public_endpoints.test.js && node tests/phase2_voting_and_resolution.test.js && node tests/phase3_escalation_and_appeals.test.js && node tests/phase4_vision_and_voice.test.js && node tests/e2e_full_smoke_test.js && node tests/phase5_signin_regression.test.js && node tests/security_regression.test.js"
+    "test": "node tests/workflow.test.js && node tests/routing.test.js && node tests/maintenance.test.js && node tests/phase1_public_endpoints.test.js && node tests/phase2_voting_and_resolution.test.js && node tests/phase3_escalation_and_appeals.test.js && node tests/phase4_vision_and_voice.test.js && node tests/e2e_full_smoke_test.js && node tests/phase5_signin_regression.test.js && node tests/security_regression.test.js && node tests/staff_integration.test.js && node tests/database_adapter.test.js && node tests/final_e2e_verification.test.js",
+    "migrate:postgres": "node scripts/migrate_to_postgres.js"
   },
   "repository": {
     "type": "git",
@@ -34,6 +35,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.395.0",
     "multer": "^2.5.0",
+    "pg": "^8.23.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.3.0"

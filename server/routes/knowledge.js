@@ -22,7 +22,7 @@ function tokenizeQuery(text) {
 // --------------------------------------------------------------------------
 // 1. GET /api/knowledge (Search and list verified articles)
 // --------------------------------------------------------------------------
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { category, search } = req.query;
 
@@ -46,7 +46,7 @@ router.get('/', (req, res) => {
 
     query += ` ORDER BY id ASC `;
 
-    const articles = db.all(query, params);
+    const articles = await db.all(query, params);
 
     res.json({
       governance: 'PRD Section 4 Verified Municipal Knowledge — Zero Simulated Citations',
@@ -62,7 +62,7 @@ router.get('/', (req, res) => {
 // --------------------------------------------------------------------------
 // 2. POST /api/knowledge/ask (Grounded statutory Q&A with mandatory fallback)
 // --------------------------------------------------------------------------
-router.post('/ask', (req, res) => {
+router.post('/ask', async (req, res) => {
   try {
     const { query } = req.body;
 
@@ -77,7 +77,7 @@ router.post('/ask', (req, res) => {
     const queryLower = cleanQuery.toLowerCase();
     const tokens = tokenizeQuery(cleanQuery);
 
-    const allArticles = db.all(`
+    const allArticles = await db.all(`
       SELECT id, title, category, content, official_source, last_verified
       FROM knowledge_articles
     `);
@@ -152,4 +152,3 @@ router.post('/ask', (req, res) => {
 });
 
 module.exports = router;
-

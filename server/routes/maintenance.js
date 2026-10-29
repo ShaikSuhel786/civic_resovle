@@ -4,8 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const dbHelper = require('../db');
-const { db } = dbHelper;
+const db = require('../db');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 
 /**
@@ -20,7 +19,7 @@ function getTodayStr() {
  * GET /api/maintenance
  * Retrieve confirmed maintenance schedules with optional filters and live KPI stats (Public Read)
  */
-router.get('/', optionalAuth, (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { department, status, search, month, staffId, assignedToMe } = req.query;
     const today = getTodayStr();
@@ -63,8 +62,8 @@ router.get('/', optionalAuth, (req, res) => {
 
     // Filter by month (YYYY-MM format)
     if (month) {
-      query += " AND (strftime('%Y-%m', start_date) = ? OR strftime('%Y-%m', end_date) = ?)";
-      params.push(month, month);
+      query += " AND (start_date LIKE ? OR end_date LIKE ?)";
+      params.push(`${month}%`, `${month}%`);
     }
 
     // Filter by assigned staff ID
@@ -81,15 +80,26 @@ router.get('/', optionalAuth, (req, res) => {
 
     query += ' ORDER BY start_date ASC, created_at DESC';
 
-    const schedules = db.prepare(query).all(...params);
+    const schedules = await db.all(query, params);
 
     // Compute live operational KPI stats
-    const totalCount = db.prepare('SELECT count(*) as count FROM maintenance_schedules').get()?.count || 0;
-    const inProgressCount = db.prepare("SELECT count(*) as count FROM maintenance_schedules WHERE status = 'In Progress'").get()?.count || 0;
-    const completedCount = db.prepare("SELECT count(*) as count FROM maintenance_schedules WHERE status = 'Completed'").get()?.count || 0;
-    const delayedCount = db.prepare("SELECT count(*) as count FROM maintenance_schedules WHERE status = 'Delayed'").get()?.count || 0;
-    const overdueCount = db.prepare("SELECT count(*) as count FROM maintenance_schedules WHERE status NOT IN ('Completed') AND end_date < ?").get(today)?.count || 0;
-    const upcomingCount = db.prepare("SELECT count(*) as count FROM maintenance_schedules WHERE status = 'Scheduled' AND start_date > ?").get(today)?.count || 0;
+    const totalCountRes = await db.get('SELECT count(*) as count FROM maintenance_schedules');
+    const totalCount = totalCountRes?.count || 0;
+
+    const inProgressCountRes = await db.get("SELECT count(*) as count FROM maintenance_schedules WHERE status = 'In Progress'");
+    const inProgressCount = inProgressCountRes?.count || 0;
+
+    const completedCountRes = await db.get("SELECT count(*) as count FROM maintenance_schedules WHERE status = 'Completed'");
+    const completedCount = completedCountRes?.count || 0;
+
+    const delayedCountRes = await db.get("SELECT count(*) as count FROM maintenance_schedules WHERE status = 'Delayed'");
+    const delayedCount = delayedCountRes?.count || 0;
+
+    const overdueCountRes = await db.get("SELECT count(*) as count FROM maintenance_schedules WHERE status NOT IN ('Completed') AND end_date < ?", [today]);
+    const overdueCount = overdueCountRes?.count || 0;
+
+    const upcomingCountRes = await db.get("SELECT count(*) as count FROM maintenance_schedules WHERE status = 'Scheduled' AND start_date > ?", [today]);
+    const upcomingCount = upcomingCountRes?.count || 0;
 
     res.json({
       success: true,
@@ -113,10 +123,10 @@ router.get('/', optionalAuth, (req, res) => {
  * GET /api/maintenance/:id
  * Retrieve specific maintenance activity details (Public Read)
  */
-router.get('/:id', optionalAuth, (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const schedule = db.prepare('SELECT * FROM maintenance_schedules WHERE id = ?').get(id);
+    const schedule = await db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [id]);
 
     if (!schedule) {
       return res.status(404).json({ error: 'Maintenance activity not found.' });
@@ -144,7 +154,7 @@ router.get('/:id', optionalAuth, (req, res) => {
  * POST /api/maintenance
  * Schedule a new municipal maintenance activity (Privileged Admin Mutation)
  */
-router.post('/', requireAuth, requireRole('admin'), (req, res) => {
+router.post('/', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const {
       title,
@@ -191,7 +201,7 @@ router.post('/', requireAuth, requireRole('admin'), (req, res) => {
     let finalStaffName = null;
 
     if (assignedStaffId) {
-      const staffProfile = db.prepare("SELECT id, display_name, department_id, role, active FROM profiles WHERE id = ?").get(assignedStaffId);
+      const staffProfile = await db.get("SELECT id, display_name, department_id, role, active FROM profiles WHERE id = ?", [assignedStaffId]);
       if (staffProfile) {
         if (staffProfile.role !== 'staff' && staffProfile.role !== 'admin') {
           return res.status(400).json({ error: 'Assigned user must have a staff or admin role.' });
@@ -213,14 +223,12 @@ router.post('/', requireAuth, requireRole('admin'), (req, res) => {
 
     const createdBy = req.user ? req.user.id : null;
 
-    const stmt = db.prepare(`
+    await db.run(`
       INSERT INTO maintenance_schedules (
         id, title, department_id, department_name, area, start_date, end_date,
         status, official_source, description, assigned_staff_id, assigned_staff_name, created_by, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `);
-
-    stmt.run(
+    `, [
       id,
       title.trim(),
       departmentId || null,
@@ -234,23 +242,23 @@ router.post('/', requireAuth, requireRole('admin'), (req, res) => {
       finalStaffId,
       finalStaffName,
       createdBy
-    );
+    ]);
 
-    const createdSchedule = db.prepare('SELECT * FROM maintenance_schedules WHERE id = ?').get(id);
+    const createdSchedule = await db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [id]);
 
     // If staff was assigned, send in-app notification to the assigned staff member
     if (finalStaffId) {
       try {
         const notifId = `notif-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`;
-        db.prepare(`
+        await db.run(`
           INSERT INTO notifications (id, recipient_id, title, message, read, created_at)
           VALUES (?, ?, ?, ?, 0, datetime('now'))
-        `).run(
+        `, [
           notifId,
           finalStaffId,
           'New Municipal Maintenance Task Assigned',
           `You have been assigned to oversee maintenance work: "${title.trim()}" in ${area.trim()} scheduled from ${startDate} to ${endDate}.`
-        );
+        ]);
       } catch (notifErr) {
         console.warn('[Maintenance] Staff notification dispatch notice:', notifErr.message);
       }
@@ -270,10 +278,10 @@ router.post('/', requireAuth, requireRole('admin'), (req, res) => {
  * PUT /api/maintenance/:id
  * Full update of maintenance schedule (Admin only)
  */
-function handleFullUpdate(req, res) {
+async function handleFullUpdate(req, res) {
   try {
     const { id } = req.params;
-    const existing = db.prepare('SELECT * FROM maintenance_schedules WHERE id = ?').get(id);
+    const existing = await db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({ error: 'Maintenance activity not found.' });
     }
@@ -308,7 +316,7 @@ function handleFullUpdate(req, res) {
         finalStaffId = null;
         finalStaffName = null;
       } else {
-        const staffProfile = db.prepare("SELECT id, display_name, role, active FROM profiles WHERE id = ?").get(assignedStaffId);
+        const staffProfile = await db.get("SELECT id, display_name, role, active FROM profiles WHERE id = ?", [assignedStaffId]);
         if (staffProfile) {
           if (staffProfile.role !== 'staff' && staffProfile.role !== 'admin') {
             return res.status(400).json({ error: 'Assigned user must have a staff or admin role.' });
@@ -331,19 +339,19 @@ function handleFullUpdate(req, res) {
     const updatedSource = officialSource !== undefined ? officialSource.trim() : existing.official_source;
     const updatedDesc = description !== undefined ? description.trim() : existing.description;
 
-    db.prepare(`
+    await db.run(`
       UPDATE maintenance_schedules
       SET title = ?, department_id = ?, department_name = ?, area = ?,
           start_date = ?, end_date = ?, status = ?, official_source = ?, description = ?,
           assigned_staff_id = ?, assigned_staff_name = ?, updated_at = datetime('now')
       WHERE id = ?
-    `).run(
+    `, [
       updatedTitle, updatedDeptId, updatedDeptName, updatedArea,
       updatedStart, updatedEnd, updatedStatus, updatedSource, updatedDesc,
       finalStaffId, finalStaffName, id
-    );
+    ]);
 
-    const updated = db.prepare('SELECT * FROM maintenance_schedules WHERE id = ?').get(id);
+    const updated = await db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [id]);
 
     res.json({
       success: true,
@@ -361,7 +369,7 @@ router.put('/:id', requireAuth, requireRole('admin'), handleFullUpdate);
  * PATCH or POST /api/maintenance/:id/status
  * Update status of scheduled maintenance task (Admin or Staff within mapped department)
  */
-function handleStatusUpdate(req, res) {
+async function handleStatusUpdate(req, res) {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -374,7 +382,7 @@ function handleStatusUpdate(req, res) {
       });
     }
 
-    const existing = db.prepare('SELECT * FROM maintenance_schedules WHERE id = ?').get(id);
+    const existing = await db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({ error: 'Maintenance activity not found.' });
     }
@@ -390,13 +398,13 @@ function handleStatusUpdate(req, res) {
       }
     }
 
-    db.prepare(`
+    await db.run(`
       UPDATE maintenance_schedules
       SET status = ?, updated_at = datetime('now')
       WHERE id = ?
-    `).run(newStatus, id);
+    `, [newStatus, id]);
 
-    const updated = db.prepare('SELECT * FROM maintenance_schedules WHERE id = ?').get(id);
+    const updated = await db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [id]);
 
     res.json({
       success: true,
@@ -415,15 +423,15 @@ router.post('/:id/status', requireAuth, requireRole(['admin', 'staff']), handleS
  * DELETE /api/maintenance/:id
  * Remove or cancel a scheduled maintenance work order (Admin only)
  */
-router.delete('/:id', requireAuth, requireRole('admin'), (req, res) => {
+router.delete('/:id', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const existing = db.prepare('SELECT * FROM maintenance_schedules WHERE id = ?').get(id);
+    const existing = await db.get('SELECT * FROM maintenance_schedules WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({ error: 'Maintenance activity not found.' });
     }
 
-    db.prepare('DELETE FROM maintenance_schedules WHERE id = ?').run(id);
+    await db.run('DELETE FROM maintenance_schedules WHERE id = ?', [id]);
 
     res.json({
       success: true,
