@@ -154,3 +154,5 @@ uploads/
 *.db
 *.sqlite
 .ai-session/
+
+*.zip
