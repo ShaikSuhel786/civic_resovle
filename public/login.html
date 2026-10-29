@@ -6,7 +6,42 @@
   <title>Sign In & Register — Civic Resolve AI</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
-<body style="min-height: 100vh; display: flex; flex-direction: column;">
+<body class="auth-page-body">
+
+  <!-- Civic Infrastructure Background Image Layer with Graceful Fallback (Phase 2) -->
+  <div class="auth-bg-container" aria-hidden="true">
+    <div class="auth-bg-fallback"></div>
+    <div class="auth-bg-image" id="auth-bg-image"></div>
+    <div class="auth-bg-overlay"></div>
+  </div>
+
+  <!-- Floating Connected Civic Sky Nodes (Reference Format) -->
+  <div class="civic-sky-nodes" aria-hidden="true">
+    <div class="civic-sky-connector"></div>
+    <div class="civic-node-pill">
+      <span class="civic-node-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+      </span>
+      <span>Cleaner Environment</span>
+    </div>
+    <div class="civic-node-pill">
+      <span class="civic-node-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </span>
+      <span>Safer Communities</span>
+    </div>
+    <div class="civic-node-pill">
+      <span class="civic-node-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </span>
+      <span>Smarter Municipal Services</span>
+    </div>
+  </div>
+
+  <!-- Ambient Geo Marker Pin on Right Horizon -->
+  <div class="civic-hud-pin" aria-hidden="true" title="Live Municipal Telemetry">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+  </div>
 
   <header class="navbar">
     <div class="nav-container">
@@ -21,12 +56,12 @@
     </div>
   </header>
 
-  <main style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2.5rem 1rem;">
+  <main class="auth-page-main">
     <div class="auth-layout">
       
-      <!-- Authentication Card: Sign In & Registration -->
-      <div class="card" style="box-shadow: var(--shadow-lg); background: #FFFFFF;">
-        <div class="card-header" style="background: var(--bg-main); border-bottom: 1px solid var(--border-color); padding: 1.25rem 1.5rem 0.75rem;">
+      <!-- 1. Authentication Card: Sign In & Registration (Left Column) -->
+      <div class="card auth-card">
+        <div class="card-header auth-card-header">
           <div class="auth-tabs" id="auth-mode-tabs">
             <button type="button" class="auth-tab-btn active" id="tab-btn-login" onclick="setAuthTab('login')">
               Sign In
@@ -37,57 +72,73 @@
           </div>
         </div>
 
-        <div class="card-body" style="padding: 1.5rem;">
+        <div class="card-body auth-card-body">
           <div id="auth-error" style="display: none; padding: 0.75rem 1rem; border-radius: var(--radius-sm); background: var(--danger-bg); color: var(--danger); font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
           <div id="auth-success" style="display: none; padding: 0.75rem 1rem; border-radius: var(--radius-sm); background: #ECFDF5; color: #065F46; font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
 
           <!-- 1. SIGN IN FORM -->
           <form id="login-form">
             <div style="margin-bottom: 1.25rem;">
-              <h3 style="font-size: 1.2rem; color: var(--primary-deep); margin-bottom: 0.25rem;">Welcome Back</h3>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--primary-deep); margin-bottom: 0.25rem;">Welcome Back</h3>
               <p style="font-size: 0.85rem; color: var(--text-muted);">Sign in to your registered citizen or municipal account</p>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="login-email">Email Address</label>
-              <input type="email" id="login-email" class="form-input" placeholder="e.g. citizen@example.com" required autocomplete="username">
+              <div class="input-icon-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <input type="email" id="login-email" class="form-input form-input-with-icon" placeholder="e.g. citizen@example.com" required autocomplete="username">
+              </div>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="login-password">Password</label>
-              <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
+              <div class="input-icon-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input type="password" id="login-password" class="form-input form-input-with-icon" placeholder="••••••••••••" required autocomplete="current-password">
+              </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" id="login-submit-btn" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
-              Sign In
+            <button type="submit" class="btn btn-primary" id="login-submit-btn" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+              <span>Sign In</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </button>
 
-            <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
-              New to Civic Resolve AI? <a href="javascript:void(0)" onclick="setAuthTab('register')" style="font-weight: 600;">Create an account</a>
+            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-muted);">
+              New to Civic Resolve AI? <a href="javascript:void(0)" onclick="setAuthTab('register')" style="font-weight: 600; color: var(--interactive-blue);">Create an account</a>
             </div>
           </form>
 
           <!-- 2. REGISTRATION FORM (Real Citizens) -->
           <form id="register-form" style="display: none;">
             <div style="margin-bottom: 1.25rem;">
-              <h3 style="font-size: 1.2rem; color: var(--primary-deep); margin-bottom: 0.25rem;">Create Citizen Account</h3>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--primary-deep); margin-bottom: 0.25rem;">Create Citizen Account</h3>
               <p style="font-size: 0.85rem; color: var(--text-muted);">Register to report issues, track live municipal progress, and receive updates</p>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="reg-name">Full Name <span style="color: var(--danger);">*</span></label>
-              <input type="text" id="reg-name" class="form-input" placeholder="e.g. Rahul Varma" required minlength="2">
+              <div class="input-icon-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input type="text" id="reg-name" class="form-input form-input-with-icon" placeholder="e.g. Rahul Varma" required minlength="2">
+              </div>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="reg-email">Email Address <span style="color: var(--danger);">*</span></label>
-              <input type="email" id="reg-email" class="form-input" placeholder="e.g. rahul@example.com" required autocomplete="email">
+              <div class="input-icon-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <input type="email" id="reg-email" class="form-input form-input-with-icon" placeholder="e.g. rahul@example.com" required autocomplete="email">
+              </div>
             </div>
 
             <div class="auth-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
               <div class="form-group">
                 <label class="form-label" for="reg-phone">Phone (Optional)</label>
-                <input type="tel" id="reg-phone" class="form-input" placeholder="+91 98765 43210">
+                <div class="input-icon-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <input type="tel" id="reg-phone" class="form-input form-input-with-icon" placeholder="+91 98765 43210">
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="reg-lang">Language Preference</label>
@@ -100,108 +151,126 @@
 
             <div class="form-group">
               <label class="form-label" for="reg-password">Password <span style="color: var(--danger);">*</span></label>
-              <input type="password" id="reg-password" class="form-input" placeholder="Minimum 8 characters" required minlength="8" autocomplete="new-password">
+              <div class="input-icon-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input type="password" id="reg-password" class="form-input form-input-with-icon" placeholder="Minimum 8 characters" required minlength="8" autocomplete="new-password">
+              </div>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="reg-confirm-password">Confirm Password <span style="color: var(--danger);">*</span></label>
-              <input type="password" id="reg-confirm-password" class="form-input" placeholder="Re-enter password" required minlength="8" autocomplete="new-password">
+              <div class="input-icon-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <input type="password" id="reg-confirm-password" class="form-input form-input-with-icon" placeholder="Re-enter password" required minlength="8" autocomplete="new-password">
+              </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" id="reg-submit-btn" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
-              Create Citizen Account
+            <button type="submit" class="btn btn-primary" id="reg-submit-btn" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+              <span>Create Citizen Account</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </button>
 
-            <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
-              Already have an account? <a href="javascript:void(0)" onclick="setAuthTab('login')" style="font-weight: 600;">Sign In</a>
+            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-muted);">
+              Already have an account? <a href="javascript:void(0)" onclick="setAuthTab('login')" style="font-weight: 600; color: var(--interactive-blue);">Sign In</a>
             </div>
           </form>
 
         </div>
       </div>
 
-      <!-- Quick Evaluator / Demo Role Switcher -->
-      <div class="card" style="border: 2px solid var(--interactive-blue); background: #FFFFFF;">
-        <div class="card-header" style="background: var(--pale-blue-surface); border-bottom-color: var(--pale-blue-border);">
+      <!-- 2. Quick Evaluator / Demo Role Switcher (Right Column) -->
+      <div class="card auth-role-card">
+        <div class="card-header auth-role-header">
           <div>
-            <span class="badge badge-progress" style="margin-bottom: 0.35rem;">Evaluation & Testing</span>
-            <h3 style="font-size: 1.15rem; color: var(--primary-deep);">1-Click Role Accounts</h3>
-            <p style="font-size: 0.82rem; color: var(--text-muted);">Pre-configured accounts for reviewing Admin triage and Field Staff workflows</p>
+            <span class="badge badge-progress" style="margin-bottom: 0.35rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polygon points="12 8 8 12 12 16 16 12 12 8"></polygon></svg>
+              Evaluation & Testing
+            </span>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--primary-deep); margin-bottom: 0.2rem;">1-Click Role Accounts</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">Pre-configured accounts for reviewing Admin triage and Field Staff workflows</p>
           </div>
         </div>
-        <div class="card-body" style="padding: 1.25rem;">
-          <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">Citizen Accounts</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.25rem;">
-            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-citizen-01')" style="justify-content: flex-start; text-align: left; height: auto; padding: 0.55rem 0.75rem;">
-              <div>
-                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.82rem;">
+
+        <div class="card-body auth-role-body">
+          <div class="auth-role-section-title">Citizen Accounts</div>
+          <div class="auth-role-grid-2col" style="margin-bottom: 1.25rem;">
+            <button type="button" class="auth-role-btn" onclick="quickLogin('usr-citizen-01')">
+              <div style="flex: 1;">
+                <strong class="role-btn-title">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                   <span>Priya Sharma</span>
                 </strong>
-                <span style="font-size: 0.72rem; color: var(--text-muted);">Citizen (English)</span>
+                <span class="role-btn-subtitle">Citizen (English)</span>
               </div>
+              <svg class="role-btn-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
-            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-citizen-02')" style="justify-content: flex-start; text-align: left; height: auto; padding: 0.55rem 0.75rem;">
-              <div>
-                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.82rem;">
+            <button type="button" class="auth-role-btn" onclick="quickLogin('usr-citizen-02')">
+              <div style="flex: 1;">
+                <strong class="role-btn-title">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                   <span>Rajesh Kumar</span>
                 </strong>
-                <span style="font-size: 0.72rem; color: var(--text-muted);">Citizen (తెలుగు)</span>
+                <span class="role-btn-subtitle">Citizen (తెలుగు)</span>
               </div>
+              <svg class="role-btn-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
 
-          <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">Administration</div>
+          <div class="auth-role-section-title">Administration</div>
           <div style="margin-bottom: 1.25rem;">
-            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-admin-01')" style="width: 100%; justify-content: flex-start; text-align: left; background: #FFF1F2; border-color: #FECDD3; padding: 0.65rem 0.85rem;">
-              <div>
-                <strong style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--danger);">
+            <button type="button" class="auth-role-btn role-admin" onclick="quickLogin('usr-admin-01')">
+              <div style="flex: 1;">
+                <strong class="role-btn-title">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                   <span>Municipal Admin Officer</span>
                 </strong>
-                <span style="font-size: 0.75rem; color: #9F1239;">Full queue triage, staff assignment & safety handling</span>
+                <span class="role-btn-subtitle">Full queue triage, staff assignment & safety handling</span>
               </div>
+              <svg class="role-btn-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #FDA4AF;"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
 
-          <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">Department Field Staff</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-staff-roads')" style="justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem;">
-              <div>
-                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+          <div class="auth-role-section-title">Department Field Staff</div>
+          <div class="auth-role-grid-2col">
+            <button type="button" class="auth-role-btn" onclick="quickLogin('usr-staff-roads')">
+              <div style="flex: 1;">
+                <strong class="role-btn-title">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="8" y2="3"></line><line x1="20" y1="21" x2="16" y2="3"></line><line x1="12" y1="7" x2="12" y2="10"></line><line x1="12" y1="14" x2="12" y2="17"></line></svg>
                   <span>Roads & Transport</span>
                 </strong>
-                <span style="font-size: 0.7rem; color: var(--text-muted);">Venkatesh Rao</span>
+                <span class="role-btn-subtitle">Venkatesh Rao</span>
               </div>
+              <svg class="role-btn-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
-            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-staff-sanitation')" style="justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem;">
-              <div>
-                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+            <button type="button" class="auth-role-btn" onclick="quickLogin('usr-staff-sanitation')">
+              <div style="flex: 1;">
+                <strong class="role-btn-title">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                   <span>Sanitation</span>
                 </strong>
-                <span style="font-size: 0.7rem; color: var(--text-muted);">K. Anitha</span>
+                <span class="role-btn-subtitle">K. Anitha</span>
               </div>
+              <svg class="role-btn-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
-            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-staff-electrical')" style="justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem;">
-              <div>
-                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+            <button type="button" class="auth-role-btn" onclick="quickLogin('usr-staff-electrical')">
+              <div style="flex: 1;">
+                <strong class="role-btn-title">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                   <span>Electrical Services</span>
                 </strong>
-                <span style="font-size: 0.7rem; color: var(--text-muted);">Suresh Babu</span>
+                <span class="role-btn-subtitle">Suresh Babu</span>
               </div>
+              <svg class="role-btn-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
-            <button class="btn btn-secondary btn-sm" onclick="quickLogin('usr-staff-water')" style="justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem;">
-              <div>
-                <strong style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;">
+            <button type="button" class="auth-role-btn" onclick="quickLogin('usr-staff-water')">
+              <div style="flex: 1;">
+                <strong class="role-btn-title">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
                   <span>Water & Drainage</span>
                 </strong>
-                <span style="font-size: 0.7rem; color: var(--text-muted);">Mohammed Ali</span>
+                <span class="role-btn-subtitle">Mohammed Ali</span>
               </div>
+              <svg class="role-btn-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
         </div>
@@ -235,6 +304,11 @@
         tabLogin.classList.add('active');
         tabRegister.classList.remove('active');
       }
+    }
+
+    // Auto-select tab if ?tab=register specified in URL
+    if (new URLSearchParams(window.location.search).get('tab') === 'register') {
+      setAuthTab('register');
     }
 
     function redirectByRole(role) {
@@ -350,6 +424,56 @@
         btn.textContent = 'Create Citizen Account';
       }
     });
+
+    // Phase 3: Subtle, non-intrusive hover interaction & micro-parallax for civic background
+    (function initBackgroundHover() {
+      const bgImg = document.getElementById('auth-bg-image');
+      if (!bgImg || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      // Allow visual inspection of hover state via query param ?hover=true
+      if (new URLSearchParams(window.location.search).get('hover') === 'true') {
+        bgImg.classList.add('is-hovered');
+        document.body.classList.add('is-hovered');
+      }
+
+      if (window.matchMedia('(hover: none)').matches) return;
+
+      let targetX = 0, targetY = 0, currX = 0, currY = 0, isHovered = false, animFrame = null;
+
+      function render() {
+        currX += (targetX - currX) * 0.06;
+        currY += (targetY - currY) * 0.06;
+        const scale = isHovered ? 1.035 : 1.0;
+        bgImg.style.transform = `translate3d(${-currX.toFixed(2)}px, ${-currY.toFixed(2)}px, 0) scale(${scale})`;
+
+        if (Math.abs(targetX - currX) > 0.05 || Math.abs(targetY - currY) > 0.05 || isHovered) {
+          animFrame = requestAnimationFrame(render);
+        } else {
+          animFrame = null;
+        }
+      }
+
+      document.addEventListener('mousemove', (e) => {
+        isHovered = true;
+        const normX = (e.clientX / window.innerWidth) - 0.5;
+        const normY = (e.clientY / window.innerHeight) - 0.5;
+        targetX = normX * 16; // Restrained ±8px subtle movement
+        targetY = normY * 12;
+
+        if (!animFrame) {
+          animFrame = requestAnimationFrame(render);
+        }
+      }, { passive: true });
+
+      document.addEventListener('mouseleave', () => {
+        isHovered = false;
+        targetX = 0;
+        targetY = 0;
+        if (!animFrame) {
+          animFrame = requestAnimationFrame(render);
+        }
+      });
+    })();
   </script>
 </body>
 </html>
