@@ -6,12 +6,126 @@
   <title>Confirmed Civic Maintenance Calendar — Civic Resolve AI</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* Maintenance Calendar Design System Tokens & Layout */
+    /* Civic Maintenance Calendar Styles & Layout */
+    .maint-header-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+    .maint-db-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+    .maint-pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+      animation: pulseAnim 2s infinite;
+    }
+    @keyframes pulseAnim {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Role Quick-Switch Bar for Evaluation */
+    .maint-role-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.65rem 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.82rem;
+    }
+    .role-switch-pills {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .role-btn {
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.76rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .role-btn:hover {
+      border-color: var(--interactive-blue);
+      color: var(--interactive-blue);
+      background: #EFF6FF;
+    }
+    .role-btn.active {
+      background: var(--interactive-blue);
+      border-color: var(--interactive-blue);
+      color: #FFFFFF;
+    }
+
+    /* KPI Grid */
     .maint-kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
       margin-bottom: 1.5rem;
+    }
+    .maint-kpi-card {
+      padding: 1.15rem;
+      border-radius: var(--radius-md);
+      text-align: center;
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .maint-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+      border-color: var(--interactive-blue);
+    }
+    .maint-kpi-num {
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .maint-kpi-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
+
+    /* Control Bar */
+    .maint-ctrl-card {
+      margin-bottom: 1.5rem;
+      padding: 1.15rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
     }
     .maint-ctrl-bar {
       display: flex;
@@ -19,11 +133,11 @@
       align-items: center;
       flex-wrap: wrap;
       gap: 1rem;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
     .filter-pills-row {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.45rem;
       align-items: center;
       flex-wrap: wrap;
     }
@@ -36,7 +150,7 @@
       border: 1px solid var(--border-color);
       background: #FFFFFF;
       color: var(--text-muted);
-      transition: all 0.2s ease;
+      transition: all 0.18s ease;
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
@@ -44,11 +158,13 @@
     .maint-filter-pill:hover {
       border-color: var(--interactive-blue);
       color: var(--interactive-blue);
+      background: #EFF6FF;
     }
     .maint-filter-pill.active {
       background: var(--interactive-blue);
       color: #FFFFFF;
       border-color: var(--interactive-blue);
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
     }
     .dept-filter-chip {
       padding: 0.32rem 0.75rem;
@@ -59,16 +175,21 @@
       border: 1px solid var(--border-color);
       background: #F8FAFC;
       color: var(--text-main);
-      transition: all 0.2s ease;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
     }
     .dept-filter-chip:hover {
       background: #EFF6FF;
       color: var(--interactive-blue);
+      border-color: #BFDBFE;
     }
     .dept-filter-chip.active {
       background: #EFF6FF;
       border-color: var(--interactive-blue);
       color: var(--interactive-blue);
+      font-weight: 700;
     }
     .maint-search-box {
       position: relative;
@@ -78,12 +199,13 @@
     }
     .maint-search-input {
       width: 100%;
-      padding: 0.45rem 0.85rem 0.45rem 2.2rem;
+      padding: 0.48rem 0.85rem 0.48rem 2.2rem;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       font-size: 0.85rem;
       outline: none;
       background: #FFFFFF;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
     .maint-search-input:focus {
       border-color: var(--interactive-blue);
@@ -91,33 +213,43 @@
     }
     .maint-search-icon {
       position: absolute;
-      left: 0.65rem;
+      left: 0.75rem;
       top: 50%;
       transform: translateY(-50%);
       color: var(--text-light);
+      pointer-events: none;
     }
 
-    /* Dynamic Month Grid */
+    /* Dynamic Month Grid (Production Fixed 7-Column Layout) */
     .cal-nav-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
       padding: 0.5rem 0;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .cal-grid-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+      background: var(--border-color);
     }
     .cal-grid-month {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 1px;
+      width: 100%;
+      min-width: 780px;
       background: var(--border-color);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      margin-bottom: 1.5rem;
     }
     .cal-day-header {
-      background: #F1F5F9;
-      padding: 0.65rem 0.5rem;
+      background: #F8FAFC;
+      padding: 0.75rem 0.5rem;
       text-align: center;
       font-size: 0.75rem;
       font-weight: 700;
@@ -127,12 +259,14 @@
     }
     .cal-cell {
       background: #FFFFFF;
-      min-height: 105px;
-      padding: 0.4rem;
+      min-height: 110px;
+      padding: 0.45rem;
       font-size: 0.8rem;
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.3rem;
+      min-width: 0;
+      overflow: hidden;
       transition: background 0.15s ease;
     }
     .cal-cell:hover {
@@ -140,11 +274,11 @@
     }
     .cal-cell.other-month {
       background: #FAFAFA;
-      color: #CBD5E1;
-      opacity: 0.6;
+      color: #94A3B8;
+      opacity: 0.55;
     }
     .cal-cell.today {
-      background: #EFF6FF;
+      background: #F0FDF4;
     }
     .cal-cell.today .cal-cell-day-num {
       background: var(--interactive-blue);
@@ -158,13 +292,13 @@
     }
     .cal-cell-day-num {
       font-weight: 700;
-      font-size: 0.8rem;
-      margin-bottom: 0.2rem;
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
       color: var(--text-main);
     }
     .cal-event-pill {
-      font-size: 0.7rem;
-      padding: 0.2rem 0.45rem;
+      font-size: 0.72rem;
+      padding: 0.22rem 0.45rem;
       border-radius: var(--radius-sm);
       white-space: nowrap;
       overflow: hidden;
@@ -173,16 +307,24 @@
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: 0.3rem;
+      min-width: 0;
+      max-width: 100%;
       transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .cal-event-pill > span:last-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .cal-event-pill:hover {
       transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.12);
     }
     .pill-scheduled { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
-    .pill-progress { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
-    .pill-delayed { background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; }
+    .pill-progress { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+    .pill-delayed { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
     .pill-completed { background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; }
 
     /* Work Order Card */
@@ -201,30 +343,62 @@
       box-shadow: var(--shadow-sm);
       border-color: #CBD5E1;
     }
-    .maint-card.status-in-progress { border-left: 4px solid #EA580C; }
-    .maint-card.status-scheduled { border-color: var(--border-color); }
-    .maint-card.status-delayed { border-color: #FECACA; }
-    .maint-card.status-completed { border-color: #A7F3D0; }
+    .maint-card.status-in-progress { border-left: 4px solid #D97706; }
+    .maint-card.status-scheduled { border-left: 4px solid #0284C7; }
+    .maint-card.status-delayed { border-left: 4px solid #DC2626; }
+    .maint-card.status-completed { border-left: 4px solid #16A34A; }
+
+    /* Department Badges */
+    .badge-dept {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-dept-roads { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+    .badge-dept-water { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
+    .badge-dept-electrical { background: #EDE9FE; color: #5B21B6; border: 1px solid #DDD6FE; }
+    .badge-dept-sanitation { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+    .badge-dept-publicworks { background: #F1F5F9; color: #334155; border: 1px solid #CBD5E1; }
+
+    /* Staff Assigned Chip */
+    .staff-assigned-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
 
     /* Glass Calendar Component (PRD Feature 3) */
     .glass-calendar-container {
-      padding: 1.5rem 0;
+      padding: 2rem 1rem;
       position: relative;
       margin-bottom: 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
     }
     .glass-calendar-card {
       width: 100%;
-      max-width: 440px;
+      max-width: 460px;
       border-radius: 1.5rem;
       padding: 1.5rem;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      background: rgba(0, 0, 0, 0.38);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       color: #FFFFFF;
     }
     .glass-tab-group {
@@ -232,43 +406,42 @@
       align-items: center;
       gap: 0.25rem;
       border-radius: 0.5rem;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.35);
       padding: 0.25rem;
     }
     .glass-tab-btn {
       border: none;
       border-radius: 0.375rem;
-      padding: 0.25rem 0.85rem;
-      font-size: 0.75rem;
+      padding: 0.3rem 0.85rem;
+      font-size: 0.76rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s ease;
     }
     .glass-tab-btn.active {
       background: #FFFFFF;
-      color: #000000;
+      color: #0F172A;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     .glass-tab-btn:not(.active) {
       background: transparent;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.65);
     }
     .glass-tab-btn:not(.active):hover {
       color: #FFFFFF;
     }
     .glass-month-title {
-      font-size: 2.25rem;
+      font-size: 2rem;
       font-weight: 800;
       letter-spacing: -0.025em;
       margin: 0;
       color: #FFFFFF;
-      transition: transform 0.2s ease, opacity 0.2s ease;
     }
     .glass-nav-btn {
-      background: transparent;
-      border: none;
-      color: rgba(255, 255, 255, 0.7);
-      padding: 0.35rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+      padding: 0.4rem;
       border-radius: 9999px;
       cursor: pointer;
       display: inline-flex;
@@ -277,61 +450,66 @@
       transition: all 0.15s ease;
     }
     .glass-nav-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.22);
     }
     .glass-track {
       display: flex;
-      gap: 0.85rem;
+      gap: 0.75rem;
       overflow-x: auto;
-      padding: 0.5rem 0.25rem;
+      padding: 0.65rem 0.25rem;
       margin: 0 -0.5rem;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.3) transparent;
     }
     .glass-track::-webkit-scrollbar {
-      display: none;
+      height: 4px;
+    }
+    .glass-track::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px;
     }
     .glass-day-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.45rem;
       flex-shrink: 0;
     }
     .glass-weekday-label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(255, 255, 255, 0.6);
       text-transform: uppercase;
     }
     .glass-day-btn {
-      width: 2.25rem;
-      height: 2.25rem;
+      width: 2.35rem;
+      height: 2.35rem;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 9999px;
       font-size: 0.85rem;
       font-weight: 600;
-      border: none;
+      border: 1px solid rgba(255,255,255,0.12);
       cursor: pointer;
       position: relative;
       transition: all 0.2s ease;
       color: #FFFFFF;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.06);
     }
     .glass-day-btn.selected {
       background: var(--interactive-blue);
+      border-color: var(--interactive-blue);
       color: #FFFFFF;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
+      font-weight: 700;
     }
     .glass-day-btn:not(.selected):hover {
       background: rgba(255, 255, 255, 0.2);
     }
     .glass-today-dot {
       position: absolute;
-      bottom: 2px;
+      bottom: 3px;
       width: 4px;
       height: 4px;
       border-radius: 50%;
@@ -339,20 +517,21 @@
     }
     .glass-has-events-dot {
       position: absolute;
-      top: 2px;
-      right: 2px;
+      top: 3px;
+      right: 3px;
       width: 5px;
       height: 5px;
       border-radius: 50%;
       background: #38BDF8;
+      box-shadow: 0 0 4px #38BDF8;
     }
 
     @media (max-width: 900px) {
       .maint-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
     }
-    @media (max-width: 480px) {
+    @media (max-width: 560px) {
       .maint-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-      .cal-cell { min-height: 52px; font-size: 0.68rem; padding: 0.2rem; }
+      .cal-cell { min-height: 80px; font-size: 0.72rem; padding: 0.3rem; }
     }
   </style>
 </head>
@@ -377,57 +556,91 @@
 
   <main class="container">
     
-    <!-- Page Header & Action -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <!-- 1. Header Banner & Actions -->
+    <div class="maint-header-banner">
       <div>
-        <h1 style="font-size: 1.8rem; color: var(--primary-deep); margin-bottom: 0.25rem;" data-i18n="nav_maintenance">Confirmed Civic Maintenance Calendar</h1>
-        <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">Official scheduled civil works, pipeline overhauls, road resurfacing, and municipal maintenance tracking.</p>
+        <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+          <h1 style="font-size: 1.85rem; color: var(--primary-deep); margin: 0; font-weight: 800;" data-i18n="nav_maintenance">
+            Civic Maintenance Calendar
+          </h1>
+          <span class="maint-db-badge">
+            <span class="maint-pulse-dot"></span>
+            <span>Live Database Synchronized</span>
+          </span>
+        </div>
+        <p style="font-size: 0.92rem; color: var(--text-muted); margin: 0; max-width: 720px;">
+          Official scheduled municipal civil works, pipeline overhauls, street grid upgrades, and road resurfacing tracked directly from the city database.
+        </p>
       </div>
 
       <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+        <!-- Sync Refresh Button -->
+        <button type="button" class="btn btn-secondary btn-sm" onclick="loadMaintenanceData(true)" title="Fetch latest updates from database" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span id="btn-sync-text">Sync Live DB</span>
+        </button>
+
         <!-- View Mode Switcher -->
-        <div style="background: #F1F5F9; border-radius: var(--radius-sm); padding: 2px; display: inline-flex;">
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-mode-list" onclick="setCalendarMode('list')" style="border: none; background: transparent;">
-            📋 Work Orders
-          </button>
+        <div style="background: #F1F5F9; border-radius: var(--radius-sm); padding: 3px; display: inline-flex;">
           <button type="button" class="btn btn-primary btn-sm" id="btn-mode-grid" onclick="setCalendarMode('grid')">
             📅 Month Grid
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-mode-list" onclick="setCalendarMode('list')" style="border: none; background: transparent;">
+            📋 Work Orders
           </button>
           <button type="button" class="btn btn-secondary btn-sm" id="btn-mode-glass" onclick="setCalendarMode('glass')" style="border: none; background: transparent;">
             ✨ Glass Calendar
           </button>
         </div>
 
-        <!-- Schedule New Maintenance Activity Action -->
-        <button type="button" class="btn btn-primary btn-sm" onclick="openScheduleModal()" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+        <!-- Schedule New Maintenance Activity Action (Admin / Privileged) -->
+        <button type="button" class="btn btn-primary btn-sm" onclick="triggerScheduleModal()" style="display: inline-flex; align-items: center; gap: 0.4rem;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           <span>Schedule Activity</span>
         </button>
       </div>
     </div>
 
-    <!-- 1. Dedicated Maintenance KPI Metric Cards -->
-    <div class="maint-kpi-grid">
-      <div class="card" style="padding: 1.15rem; text-align: center; background: #FFFFFF; cursor: pointer;" onclick="filterByStatus('all')">
-        <div style="font-size: 1.7rem; font-weight: 700; color: var(--primary-deep);" id="kpi-total-tasks">0</div>
-        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-top: 0.2rem;">Total Scheduled Works</div>
+    <!-- 2. Evaluation 1-Click Role Switcher Bar -->
+    <div class="maint-role-bar">
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <span style="font-weight: 700; color: var(--primary-deep);">Active Session:</span>
+        <span id="current-user-pill" class="badge badge-assigned" style="font-size: 0.78rem;">Guest (Read-Only)</span>
+        <span id="current-user-detail" style="color: var(--text-muted); font-size: 0.78rem;"></span>
       </div>
-      <div class="card" style="padding: 1.15rem; text-align: center; background: #FFFBEB; border-color: #FDE68A; cursor: pointer;" onclick="filterByStatus('in_progress')">
-        <div style="font-size: 1.7rem; font-weight: 700; color: #D97706;" id="kpi-in-progress">0</div>
-        <div style="font-size: 0.8rem; color: #92400E; font-weight: 600; margin-top: 0.2rem;">Active In Progress</div>
-      </div>
-      <div class="card" style="padding: 1.15rem; text-align: center; background: #EFF6FF; border-color: #BFDBFE; cursor: pointer;" onclick="filterByStatus('upcoming')">
-        <div style="font-size: 1.7rem; font-weight: 700; color: var(--interactive-blue);" id="kpi-upcoming">0</div>
-        <div style="font-size: 0.8rem; color: #1E40AF; font-weight: 600; margin-top: 0.2rem;">Upcoming Confirmed</div>
-      </div>
-      <div class="card" style="padding: 1.15rem; text-align: center; background: #FEF2F2; border-color: #FECACA; cursor: pointer;" onclick="filterByStatus('overdue')">
-        <div style="font-size: 1.7rem; font-weight: 700; color: #DC2626;" id="kpi-overdue">0</div>
-        <div style="font-size: 0.8rem; color: #991B1B; font-weight: 600; margin-top: 0.2rem;">Overdue / Delayed</div>
+      <div class="role-switch-pills">
+        <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">1-Click Role Switch:</span>
+        <button type="button" class="role-btn" onclick="quickLoginRole('admin')" title="Switch to Admin Officer (Full CRUD)">👑 Admin</button>
+        <button type="button" class="role-btn" onclick="quickLoginRole('staff-roads')" title="Switch to Roads Staff">🚧 Roads Staff</button>
+        <button type="button" class="role-btn" onclick="quickLoginRole('staff-water')" title="Switch to Water Staff">💧 Water Staff</button>
+        <button type="button" class="role-btn" onclick="quickLoginRole('staff-electrical')" title="Switch to Electrical Staff">⚡ Electrical Staff</button>
+        <button type="button" class="role-btn" onclick="quickLoginRole('citizen')" title="Switch to Citizen (Alerts)">👤 Citizen</button>
+        <button type="button" class="role-btn" onclick="quickLogout()" title="Sign out to Public Guest View">🚪 Sign Out</button>
       </div>
     </div>
 
-    <!-- 2. Interactive Control Bar: Status Tabs, Search, and Department Filters -->
-    <div class="card" style="margin-bottom: 1.5rem; padding: 1.15rem;">
+    <!-- 3. Dedicated Maintenance KPI Metric Cards -->
+    <div class="maint-kpi-grid">
+      <div class="maint-kpi-card" onclick="filterByStatus('all')">
+        <div class="maint-kpi-num" style="color: var(--primary-deep);" id="kpi-total-tasks">0</div>
+        <div class="maint-kpi-label">Total Scheduled Works</div>
+      </div>
+      <div class="maint-kpi-card" style="background: #FFFBEB; border-color: #FDE68A;" onclick="filterByStatus('in_progress')">
+        <div class="maint-kpi-num" style="color: #D97706;" id="kpi-in-progress">0</div>
+        <div class="maint-kpi-label" style="color: #92400E;">Active In Progress</div>
+      </div>
+      <div class="maint-kpi-card" style="background: #EFF6FF; border-color: #BFDBFE;" onclick="filterByStatus('upcoming')">
+        <div class="maint-kpi-num" style="color: var(--interactive-blue);" id="kpi-upcoming">0</div>
+        <div class="maint-kpi-label" style="color: #1E40AF;">Upcoming Confirmed</div>
+      </div>
+      <div class="maint-kpi-card" style="background: #FEF2F2; border-color: #FECACA;" onclick="filterByStatus('overdue')">
+        <div class="maint-kpi-num" style="color: #DC2626;" id="kpi-overdue">0</div>
+        <div class="maint-kpi-label" style="color: #991B1B;">Overdue / Delayed</div>
+      </div>
+    </div>
+
+    <!-- 4. Interactive Control Bar: Status Tabs, Search, and Department Filters -->
+    <div class="maint-ctrl-card">
       
       <!-- Top Row: Status Tabs & Search -->
       <div class="maint-ctrl-bar">
@@ -452,7 +665,7 @@
         <!-- Real-Time Search Input -->
         <div class="maint-search-box">
           <svg class="maint-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="maint-search-input" class="maint-search-input" placeholder="Search by title, area, or official ref #..." oninput="handleSearch(this.value)">
+          <input type="text" id="maint-search-input" class="maint-search-input" placeholder="Search by title, area, staff, ref #..." oninput="handleSearch(this.value)">
         </div>
       </div>
 
@@ -460,71 +673,79 @@
       <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
         <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Department:</span>
         <span class="dept-filter-chip active" id="dept-all" onclick="filterByDept('all')">All Departments</span>
-        <span class="dept-filter-chip" id="dept-roads" onclick="filterByDept('Roads & Transport')">Roads & Transport</span>
-        <span class="dept-filter-chip" id="dept-water" onclick="filterByDept('Water & Drainage')">Water & Drainage</span>
-        <span class="dept-filter-chip" id="dept-electrical" onclick="filterByDept('Electrical Services')">Electrical Services</span>
-        <span class="dept-filter-chip" id="dept-sanitation" onclick="filterByDept('Sanitation')">Sanitation</span>
-        <span class="dept-filter-chip" id="dept-publicworks" onclick="filterByDept('Public Works')">Public Works</span>
+        <span class="dept-filter-chip" id="dept-roads" onclick="filterByDept('Roads & Transport')">🚧 Roads & Transport</span>
+        <span class="dept-filter-chip" id="dept-water" onclick="filterByDept('Water & Drainage')">💧 Water & Drainage</span>
+        <span class="dept-filter-chip" id="dept-electrical" onclick="filterByDept('Electrical Services')">⚡ Electrical Services</span>
+        <span class="dept-filter-chip" id="dept-sanitation" onclick="filterByDept('Sanitation')">🧹 Sanitation</span>
+        <span class="dept-filter-chip" id="dept-publicworks" onclick="filterByDept('Public Works')">🏛️ Public Works</span>
+        <span class="dept-filter-chip" id="dept-assigned-me" onclick="filterByAssignedToMe()" style="display: none; background: #FEF3C7; color: #92400E; border-color: #FDE68A;">
+          👷 Assigned to Me
+        </span>
       </div>
     </div>
 
-    <!-- 3. VIEW MODE A: DYNAMIC MONTH CALENDAR GRID -->
+    <!-- 5. VIEW MODE A: DYNAMIC MONTH CALENDAR GRID (FIXED 7-COLUMN RESPONSIVE LAYOUT) -->
     <div id="maint-grid-view" style="display: block;">
       <div class="card" style="padding: 1.25rem; margin-bottom: 2rem;">
         
         <!-- Month Navigator -->
         <div class="cal-nav-bar">
-          <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
             <button type="button" class="btn btn-secondary btn-sm" onclick="changeMonth(-1)" title="Previous Month">
-              ◀
+              ◀ Prev
             </button>
-            <strong style="color: var(--primary-deep); font-size: 1.2rem; min-width: 180px; text-align: center;" id="cal-month-display">
+            <strong style="color: var(--primary-deep); font-size: 1.25rem; min-width: 190px; text-align: center;" id="cal-month-display">
               Loading Month...
             </strong>
             <button type="button" class="btn btn-secondary btn-sm" onclick="changeMonth(1)" title="Next Month">
-              ▶
+              Next ▶
             </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="goToToday()" style="font-size: 0.78rem; padding: 0.25rem 0.6rem;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="goToToday()" style="font-size: 0.78rem; padding: 0.25rem 0.65rem;">
               Today
             </button>
           </div>
 
           <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; align-items: center;">
-            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #0284C7;"></span> Scheduled</span>
-            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #D97706;"></span> In Progress</span>
-            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #DC2626;"></span> Overdue / Delayed</span>
-            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A;"></span> Completed</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #0284C7;"></span> Scheduled</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #D97706;"></span> In Progress</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #DC2626;"></span> Overdue / Delayed</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #16A34A;"></span> Completed</span>
           </div>
         </div>
 
-        <!-- 7-Column Month Day Grid -->
-        <div class="cal-grid-month" id="cal-month-container">
-          <div class="cal-day-header">Sun</div>
-          <div class="cal-day-header">Mon</div>
-          <div class="cal-day-header">Tue</div>
-          <div class="cal-day-header">Wed</div>
-          <div class="cal-day-header">Thu</div>
-          <div class="cal-day-header">Fri</div>
-          <div class="cal-day-header">Sat</div>
-          <!-- Dynamically populated by renderDynamicMonthGrid() -->
+        <!-- 7-Column Month Day Grid with horizontal scroll protection -->
+        <div class="cal-grid-wrapper">
+          <div class="cal-grid-month" id="cal-month-container">
+            <div class="cal-day-header">Sun</div>
+            <div class="cal-day-header">Mon</div>
+            <div class="cal-day-header">Tue</div>
+            <div class="cal-day-header">Wed</div>
+            <div class="cal-day-header">Thu</div>
+            <div class="cal-day-header">Fri</div>
+            <div class="cal-day-header">Sat</div>
+            <!-- Dynamically populated by renderDynamicMonthGrid() -->
+          </div>
         </div>
 
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; text-align: right;">
-          💡 <em>Tip: Click any event pill in the calendar to view full work scope, authority ref, and update status.</em>
-        </p>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+          <span>💡 <em>Click any activity pill in the grid to view details, authority reference, assigned staff, and live execution status.</em></span>
+          <span id="grid-status-count-label">Loaded from database</span>
+        </div>
       </div>
     </div>
 
-    <!-- 4. VIEW MODE B: DETAILED WORK ORDERS LIST VIEW -->
+    <!-- 6. VIEW MODE B: DETAILED WORK ORDERS LIST VIEW -->
     <div id="maint-list-view" style="display: none; margin-bottom: 2rem;">
       <div id="maint-cards-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
-        <div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1 / -1;">Loading maintenance activities...</div>
+        <div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1 / -1;">
+          Loading maintenance activities from database...
+        </div>
       </div>
     </div>
 
-    <!-- 5. VIEW MODE C: FEATURE 3 (PRD SECTION 4) — CIVIC GLASS CALENDAR -->
+    <!-- 7. VIEW MODE C: CIVIC GLASS CALENDAR (PRD FEATURE 3) -->
     <div id="maint-glass-view" style="display: none; margin-bottom: 2rem;">
-      <div class="glass-calendar-container" style="background-image: linear-gradient(rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.90)), url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1920&q=80');">
+      <div class="glass-calendar-container" style="background-image: linear-gradient(rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.92)), url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1920&q=80');">
         
         <div class="glass-calendar-card">
           <!-- Header: Tabs and Settings -->
@@ -534,49 +755,48 @@
               <button type="button" class="glass-tab-btn active" id="glass-tab-monthly" onclick="setGlassTab('monthly')">Monthly</button>
             </div>
             <button type="button" class="glass-nav-btn" onclick="openGlassSettings()" title="Calendar Settings" aria-label="Calendar Settings">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
           </div>
 
           <!-- Date Display & Navigation -->
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
-            <p class="glass-month-title" id="glass-month-display">October</p>
+            <p class="glass-month-title" id="glass-month-display">Month</p>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <button type="button" class="glass-nav-btn" onclick="changeGlassMonth(-1)" title="Previous Month" aria-label="Previous Month">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
               <button type="button" class="glass-nav-btn" onclick="changeGlassMonth(1)" title="Next Month" aria-label="Next Month">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
             </div>
           </div>
 
           <!-- Scrollable Calendar Track -->
           <div class="glass-track" id="glass-day-track">
-            <!-- Populated dynamically with monthDays -->
+            <!-- Populated dynamically with days from database -->
           </div>
 
           <!-- Divider -->
-          <div style="margin-top: 1.5rem; height: 1px; background: rgba(255, 255, 255, 0.2);"></div>
+          <div style="margin-top: 1.5rem; height: 1px; background: rgba(255, 255, 255, 0.18);"></div>
 
           <!-- Footer Actions -->
           <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
-            <button type="button" onclick="openGlassNoteModal()" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; font-weight: 500; color: rgba(255, 255, 255, 0.7); background: none; border: none; cursor: pointer;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-              <span>Add a note...</span>
+            <button type="button" onclick="goToTodayGlass()" style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; font-weight: 600; color: rgba(255, 255, 255, 0.8); background: none; border: none; cursor: pointer;">
+              <span>🗓️ Today</span>
             </button>
-            <button type="button" onclick="openScheduleModal()" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 0.5rem; background: rgba(0, 0, 0, 0.3); padding: 0.5rem 0.85rem; font-size: 0.78rem; font-weight: 700; color: #FFFFFF; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              <span>New Event</span>
+            <button type="button" onclick="triggerScheduleModal()" style="display: flex; align-items: center; gap: 0.4rem; border-radius: 0.5rem; background: rgba(255, 255, 255, 0.15); padding: 0.45rem 0.85rem; font-size: 0.78rem; font-weight: 700; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.25); cursor: pointer; backdrop-filter: blur(8px);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>Schedule Activity</span>
             </button>
           </div>
         </div>
 
         <!-- Glass Selected Date Maintenance Agenda Banner -->
-        <div style="width: 100%; max-width: 680px; margin-top: 1.5rem; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 1rem; padding: 1.25rem; color: #FFFFFF;">
+        <div style="width: 100%; max-width: 680px; margin-top: 1.5rem; background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 1rem; padding: 1.25rem; color: #FFFFFF;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-            <strong id="glass-selected-date-label" style="font-size: 1rem;">Maintenance Agenda for Selected Date</strong>
-            <span class="badge" id="glass-day-tasks-badge" style="background: rgba(255,255,255,0.15); color: #FFFFFF;">0 Scheduled</span>
+            <strong id="glass-selected-date-label" style="font-size: 1.05rem;">Scheduled Maintenance Agenda</strong>
+            <span class="badge" id="glass-day-tasks-badge" style="background: rgba(255,255,255,0.18); color: #FFFFFF;">0 Scheduled</span>
           </div>
           <div id="glass-selected-date-tasks">
             <!-- Filtered day tasks listed here -->
@@ -588,21 +808,23 @@
 
     <!-- Empty State Container -->
     <div id="maint-empty-state" class="card" style="display: none; text-align: center; padding: 3rem; margin-bottom: 2rem;">
-      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
+      <div style="font-size: 2.75rem; margin-bottom: 0.6rem;">📅</div>
       <h2 style="font-size: 1.25rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Maintenance Activities Match Your Filters</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 450px; margin: 0 auto 1.25rem auto;">Try clearing your search term, changing the department filter, or schedule a new maintenance work order.</p>
+      <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 480px; margin: 0 auto 1.25rem auto;">
+        Try clearing your search term, changing the department filter, or schedule a new maintenance activity.
+      </p>
       <button type="button" class="btn btn-secondary btn-sm" onclick="resetAllFilters()">Reset All Filters</button>
     </div>
 
   </main>
 
-  <!-- MODAL 1: Schedule Maintenance Activity Form -->
+  <!-- MODAL 1: Schedule Maintenance Activity Form (Connected to Database) -->
   <div class="modal-overlay" id="modal-schedule">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 580px;">
       <div class="modal-header">
         <div>
-          <strong style="color: var(--primary-deep); font-size: 1.1rem;">Schedule Maintenance Activity</strong>
-          <div style="font-size: 0.78rem; color: var(--text-muted);">Publish planned civil works, utility overhauls, and ward road repairs</div>
+          <strong style="color: var(--primary-deep); font-size: 1.15rem;">Schedule Municipal Maintenance Activity</strong>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">Persisted directly to the municipal database with audit logging & staff dispatch</div>
         </div>
         <button type="button" onclick="closeScheduleModal()" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.5rem; border-radius: var(--radius-full);">✕</button>
       </div>
@@ -616,7 +838,8 @@
           <div class="modal-grid-2col">
             <div>
               <label class="form-label">Responsible Department *</label>
-              <select id="input-dept" class="form-select" required>
+              <select id="input-dept" class="form-select" onchange="handleDepartmentChange()" required>
+                <!-- Populated dynamically from /api/maintenance/meta -->
                 <option value="dept-roads|Roads & Transport">Roads & Transport</option>
                 <option value="dept-water|Water & Drainage">Water & Drainage</option>
                 <option value="dept-electrical|Electrical Services">Electrical Services</option>
@@ -625,8 +848,22 @@
               </select>
             </div>
             <div>
+              <label class="form-label">Assign Field Staff Officer</label>
+              <select id="input-staff" class="form-select">
+                <option value="">-- Unassigned (Department Queue) --</option>
+                <!-- Populated dynamically from /api/maintenance/meta based on selected department -->
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-grid-2col">
+            <div>
               <label class="form-label">Target Area / Ward *</label>
               <input type="text" id="input-area" class="form-input" placeholder="e.g. Ward 18, Banjara Hills" required>
+            </div>
+            <div>
+              <label class="form-label">Official Reference / Order #</label>
+              <input type="text" id="input-ref" class="form-input" placeholder="e.g. MW-2026-RDS-102">
             </div>
           </div>
 
@@ -641,29 +878,23 @@
             </div>
           </div>
 
-          <div class="modal-grid-2col">
-            <div>
-              <label class="form-label">Initial Status</label>
-              <select id="input-status" class="form-select">
-                <option value="Scheduled">Scheduled</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Delayed">Delayed</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Official Reference #</label>
-              <input type="text" id="input-ref" class="form-input" placeholder="e.g. MW-2026-WTR-402">
-            </div>
+          <div style="margin-bottom: 1rem;">
+            <label class="form-label">Initial Status</label>
+            <select id="input-status" class="form-select">
+              <option value="Scheduled">Scheduled</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Delayed">Delayed</option>
+            </select>
           </div>
 
           <div style="margin-bottom: 0.5rem;">
-            <label class="form-label">Work Scope & Disruption Advisory *</label>
-            <textarea id="input-desc" class="form-textarea" placeholder="Detail the planned work, anticipated lane closures, expected disruption hours, or detour instructions..." style="min-height: 85px;" required></textarea>
+            <label class="form-label">Work Scope & Public Advisory *</label>
+            <textarea id="input-desc" class="form-textarea" placeholder="Detail the planned work, anticipated lane closures, expected disruption hours, or detour instructions..." style="min-height: 90px;" required></textarea>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeScheduleModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="btn-submit-maint">Publish Scheduled Activity</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-maint">Publish to Database</button>
         </div>
       </form>
     </div>
@@ -671,11 +902,11 @@
 
   <!-- MODAL 2: Task Inspection & Management Modal -->
   <div class="modal-overlay" id="modal-task-detail">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 560px;">
       <div class="modal-header">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
           <span id="detail-status-badge" class="badge badge-assigned">Status</span>
-          <strong style="color: var(--primary-deep); font-size: 1.05rem;" id="detail-title">Task Details</strong>
+          <strong style="color: var(--primary-deep); font-size: 1.1rem;" id="detail-title">Task Details</strong>
         </div>
         <button type="button" onclick="closeDetailModal()" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.5rem; border-radius: var(--radius-full);">✕</button>
       </div>
@@ -688,6 +919,30 @@
     </div>
   </div>
 
+  <!-- MODAL 3: Privilege Advisory Modal (Shown when non-admin citizen attempts scheduling) -->
+  <div class="modal-overlay" id="modal-auth-advisory">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <strong style="color: var(--primary-deep); font-size: 1.1rem;">Municipal Privileges Required</strong>
+        <button type="button" onclick="closeAuthAdvisory()" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.5rem; border-radius: var(--radius-full);">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-main); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem;">
+          Publishing official maintenance schedules requires a <strong>Municipal Admin Officer</strong> account. As a citizen, you can view all public civil works and subscribe to notifications for disruptions in your ward.
+        </p>
+        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 0.85rem; font-size: 0.82rem; margin-bottom: 1rem;">
+          <strong>Quick Evaluation Access:</strong> Switch to the Municipal Admin role below to create, edit, or cancel activities in the database.
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-primary btn-sm" onclick="quickLoginRole('admin'); closeAuthAdvisory(); openScheduleModal();">
+            👑 Switch to Admin Officer
+          </button>
+          <a href="/#report" class="btn btn-secondary btn-sm">Report a Civic Issue Instead</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/api.js"></script>
   <script src="/js/i18n.js"></script>
   <script src="/js/glass-nav.js"></script>
@@ -695,15 +950,19 @@
   <script>
     // State
     let allSchedules = [];
+    let metaDepartments = [];
+    let metaStaff = [];
     let currentStatusFilter = 'all';
     let currentDeptFilter = 'all';
     let currentSearchTerm = '';
-    let currentMode = 'grid'; // 'grid' or 'list'
+    let filterAssignedToMeOnly = false;
+    let currentMode = 'grid'; // 'grid', 'list', or 'glass'
     let currentMonthDate = new Date(); // Active viewing month
     let selectedTaskId = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       CivicAuth.bootNav();
+      updateUserSessionUI();
 
       // Pre-fill default dates for schedule form
       const todayStr = new Date().toISOString().split('T')[0];
@@ -711,27 +970,165 @@
       document.getElementById('input-start-date').value = todayStr;
       document.getElementById('input-end-date').value = nextWeek;
 
-      await loadMaintenanceData();
+      // Load metadata (departments & staff) and schedules concurrently from database
+      await Promise.all([
+        loadMaintenanceMeta(),
+        loadMaintenanceData()
+      ]);
     });
 
     /**
-     * Load maintenance activities from backend API
+     * Update session pill and UI role indicators
      */
-    async function loadMaintenanceData() {
+    function updateUserSessionUI() {
+      const user = CivicAuth.getUser();
+      const pill = document.getElementById('current-user-pill');
+      const detail = document.getElementById('current-user-detail');
+      const assignedMeBtn = document.getElementById('dept-assigned-me');
+
+      if (!pill) return;
+
+      if (!user) {
+        pill.textContent = 'Guest (Read-Only)';
+        pill.className = 'badge badge-assigned';
+        if (detail) detail.textContent = 'Viewing public confirmed schedules';
+        if (assignedMeBtn) assignedMeBtn.style.display = 'none';
+        return;
+      }
+
+      if (user.role === 'admin') {
+        pill.textContent = '👑 Admin: ' + (user.displayName || user.email);
+        pill.className = 'badge badge-urgent';
+        if (detail) detail.textContent = 'Full Database Schedule & Mutation Privileges';
+        if (assignedMeBtn) assignedMeBtn.style.display = 'none';
+      } else if (user.role === 'staff') {
+        pill.textContent = '👷 Staff: ' + (user.displayName || user.email);
+        pill.className = 'badge badge-progress';
+        if (detail) detail.textContent = 'Department Queue & Execution Status Privileges';
+        if (assignedMeBtn) assignedMeBtn.style.display = 'inline-flex';
+      } else {
+        pill.textContent = '👤 Citizen: ' + (user.displayName || user.email);
+        pill.className = 'badge badge-resolved';
+        if (detail) detail.textContent = 'Public Read & Alert Subscription';
+        if (assignedMeBtn) assignedMeBtn.style.display = 'none';
+      }
+    }
+
+    /**
+     * 1-Click Role Switcher for instant evaluator testing
+     */
+    async function quickLoginRole(roleKey) {
+      const roleCredentials = {
+        'admin': { email: 'admin@civicsync.demo', password: 'DemoAdmin123!' },
+        'staff-roads': { email: 'staff.roads@civicsync.demo', password: 'DemoStaff123!' },
+        'staff-water': { email: 'staff.water@civicsync.demo', password: 'DemoStaff123!' },
+        'staff-electrical': { email: 'staff.electrical@civicsync.demo', password: 'DemoStaff123!' },
+        'citizen': { email: 'citizen@civicsync.demo', password: 'DemoCitizen123!' }
+      };
+
+      const creds = roleCredentials[roleKey];
+      if (!creds) return;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(creds)
+        });
+        const data = await res.json();
+        if (data.token && data.user) {
+          CivicAuth.setSession(data.token, data.user);
+          CivicAuth.bootNav();
+          updateUserSessionUI();
+          await loadMaintenanceData(true);
+        }
+      } catch (err) {
+        console.error('Role quick switch error:', err);
+      }
+    }
+
+    function quickLogout() {
+      CivicAuth.logout();
+    }
+
+    /**
+     * Load departments and field staff profiles from /api/maintenance/meta
+     */
+    async function loadMaintenanceMeta() {
+      try {
+        const res = await CivicAPI.request('/api/maintenance/meta');
+        if (res && res.success) {
+          metaDepartments = res.departments || [];
+          metaStaff = res.staff || [];
+          populateDepartmentSelect();
+          populateStaffSelect();
+        }
+      } catch (err) {
+        console.warn('Metadata load notice:', err.message);
+      }
+    }
+
+    function populateDepartmentSelect() {
+      const select = document.getElementById('input-dept');
+      if (!select || metaDepartments.length === 0) return;
+
+      select.innerHTML = metaDepartments.map(d => `
+        <option value="${d.id}|${d.name}">${escapeHtml(d.name)}</option>
+      `).join('');
+    }
+
+    function populateStaffSelect(filteredDeptId) {
+      const select = document.getElementById('input-staff');
+      if (!select) return;
+
+      const deptVal = document.getElementById('input-dept')?.value;
+      const targetDeptId = filteredDeptId || (deptVal ? deptVal.split('|')[0] : null);
+
+      let eligibleStaff = metaStaff;
+      if (targetDeptId) {
+        eligibleStaff = metaStaff.filter(s => s.role === 'admin' || s.department_id === targetDeptId);
+      }
+
+      select.innerHTML = '<option value="">-- Unassigned (Department Queue) --</option>' +
+        eligibleStaff.map(s => `
+          <option value="${s.id}|${s.display_name}">${escapeHtml(s.display_name)} (${s.role.toUpperCase()})</option>
+        `).join('');
+    }
+
+    function handleDepartmentChange() {
+      populateStaffSelect();
+    }
+
+    /**
+     * Load maintenance activities from database API
+     */
+    async function loadMaintenanceData(isSyncNotice = false) {
+      const syncBtnText = document.getElementById('btn-sync-text');
+      if (syncBtnText && isSyncNotice) syncBtnText.textContent = 'Syncing...';
+
       try {
         const res = await CivicAPI.request('/api/maintenance');
         if (res && res.schedules) {
           allSchedules = res.schedules;
           updateKpis(res.stats);
           renderViews();
+          const countLabel = document.getElementById('grid-status-count-label');
+          if (countLabel) {
+            countLabel.textContent = `🟢 Connected to Live DB • ${allSchedules.length} confirmed activities loaded`;
+          }
         }
       } catch (err) {
         console.error('Failed to load maintenance schedules:', err);
-        document.getElementById('maint-cards-container').innerHTML = `
-          <div style="color: var(--danger); text-align: center; grid-column: 1 / -1; padding: 2rem;">
-            Failed to load maintenance calendar: ${escapeHtml(err.message)}
-          </div>
-        `;
+        const container = document.getElementById('maint-cards-container');
+        if (container) {
+          container.innerHTML = `
+            <div style="color: var(--danger); text-align: center; grid-column: 1 / -1; padding: 2rem;">
+              Failed to load maintenance calendar: ${escapeHtml(err.message)}
+            </div>
+          `;
+        }
+      } finally {
+        if (syncBtnText) syncBtnText.textContent = 'Sync Live DB';
       }
     }
 
@@ -743,13 +1140,13 @@
       document.getElementById('kpi-total-tasks').textContent = stats.total || 0;
       document.getElementById('kpi-in-progress').textContent = stats.inProgress || 0;
       document.getElementById('kpi-upcoming').textContent = stats.upcoming || 0;
-      document.getElementById('kpi-overdue').textContent = stats.overdue || 0;
+      document.getElementById('kpi-overdue').textContent = (stats.overdue || 0) + (stats.delayed || 0);
 
       // Update tab count badges
       document.getElementById('count-tab-all').textContent = stats.total || 0;
       document.getElementById('count-tab-progress').textContent = stats.inProgress || 0;
       document.getElementById('count-tab-upcoming').textContent = stats.upcoming || 0;
-      document.getElementById('count-tab-overdue').textContent = stats.overdue || 0;
+      document.getElementById('count-tab-overdue').textContent = (stats.overdue || 0) + (stats.delayed || 0);
       document.getElementById('count-tab-completed').textContent = stats.completed || 0;
     }
 
@@ -766,6 +1163,7 @@
 
     function filterByDept(dept) {
       currentDeptFilter = dept;
+      filterAssignedToMeOnly = false;
       document.querySelectorAll('.dept-filter-chip').forEach(c => c.classList.remove('active'));
       const idMap = {
         'all': 'dept-all',
@@ -780,6 +1178,17 @@
       renderViews();
     }
 
+    function filterByAssignedToMe() {
+      const user = CivicAuth.getUser();
+      if (!user) return;
+      filterAssignedToMeOnly = true;
+      currentDeptFilter = 'all';
+      document.querySelectorAll('.dept-filter-chip').forEach(c => c.classList.remove('active'));
+      const meChip = document.getElementById('dept-assigned-me');
+      if (meChip) meChip.classList.add('active');
+      renderViews();
+    }
+
     function handleSearch(term) {
       currentSearchTerm = term.trim().toLowerCase();
       renderViews();
@@ -789,6 +1198,7 @@
       currentStatusFilter = 'all';
       currentDeptFilter = 'all';
       currentSearchTerm = '';
+      filterAssignedToMeOnly = false;
       document.getElementById('maint-search-input').value = '';
       document.querySelectorAll('.maint-filter-pill').forEach(p => p.classList.remove('active'));
       document.getElementById('tab-status-all').classList.add('active');
@@ -798,7 +1208,7 @@
     }
 
     /**
-     * Switch view between dynamic month grid, detailed work orders list, and glass calendar
+     * View mode switcher
      */
     function setCalendarMode(mode) {
       currentMode = mode;
@@ -834,12 +1244,20 @@
     }
 
     /**
-     * Filter all schedules according to active criteria
+     * Filter active schedules
      */
     function getFilteredSchedules() {
       const todayStr = new Date().toISOString().split('T')[0];
+      const user = CivicAuth.getUser();
 
       return allSchedules.filter(item => {
+        // Assigned to me filter
+        if (filterAssignedToMeOnly && user) {
+          const isMyAssignment = item.assigned_staff_id === user.id;
+          const isMyDept = user.department_id && item.department_id === user.department_id;
+          if (!isMyAssignment && !isMyDept) return false;
+        }
+
         // Department filter
         if (currentDeptFilter !== 'all') {
           if (!item.department_name || !item.department_name.toLowerCase().includes(currentDeptFilter.toLowerCase())) {
@@ -852,7 +1270,7 @@
           if (currentStatusFilter === 'in_progress') {
             if (item.status !== 'In Progress') return false;
           } else if (currentStatusFilter === 'upcoming') {
-            if (item.status !== 'Scheduled') return false;
+            if (item.status !== 'Scheduled' || item.start_date <= todayStr) return false;
           } else if (currentStatusFilter === 'overdue') {
             const isOverdue = (item.status === 'Delayed' || item.status === 'Overdue' || (item.end_date < todayStr && item.status !== 'Completed'));
             if (!isOverdue) return false;
@@ -863,7 +1281,7 @@
 
         // Search term filter
         if (currentSearchTerm) {
-          const haystack = `${item.title} ${item.area} ${item.official_source || ''} ${item.description || ''}`.toLowerCase();
+          const haystack = `${item.title} ${item.area} ${item.official_source || ''} ${item.description || ''} ${item.assigned_staff_name || ''} ${item.department_name || ''}`.toLowerCase();
           if (!haystack.includes(currentSearchTerm)) return false;
         }
 
@@ -882,12 +1300,12 @@
       const viewGlass = document.getElementById('maint-glass-view');
 
       if (filtered.length === 0 && currentMode !== 'glass') {
-        emptyState.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'block';
         if (viewGrid) viewGrid.style.display = 'none';
         if (viewList) viewList.style.display = 'none';
         if (viewGlass) viewGlass.style.display = 'none';
       } else {
-        emptyState.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
         if (currentMode === 'grid') {
           if (viewGrid) viewGrid.style.display = 'block';
           if (viewList) viewList.style.display = 'none';
@@ -907,158 +1325,14 @@
       }
     }
 
-    // Glass Calendar State (Feature 3 - PRD Section 4)
-    let glassSelectedDate = new Date();
-    let currentGlassMonthDate = new Date();
-    let glassActiveTab = 'monthly';
-
-    function setGlassTab(tab) {
-      glassActiveTab = tab;
-      const btnWeekly = document.getElementById('glass-tab-weekly');
-      const btnMonthly = document.getElementById('glass-tab-monthly');
-      if (btnWeekly && btnMonthly) {
-        if (tab === 'weekly') {
-          btnWeekly.classList.add('active');
-          btnMonthly.classList.remove('active');
-        } else {
-          btnMonthly.classList.add('active');
-          btnWeekly.classList.remove('active');
-        }
-      }
-      renderGlassCalendar();
-    }
-
-    function changeGlassMonth(delta) {
-      currentGlassMonthDate.setMonth(currentGlassMonthDate.getMonth() + delta);
-      renderGlassCalendar();
-    }
-
-    function selectGlassDate(dateStr) {
-      glassSelectedDate = new Date(dateStr);
-      renderGlassCalendar();
-    }
-
-    function renderGlassCalendar(filteredList) {
-      const list = filteredList || getFilteredSchedules();
-      const monthDisplay = document.getElementById('glass-month-display');
-      const dayTrack = document.getElementById('glass-day-track');
-      if (!monthDisplay || !dayTrack) return;
-
-      const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ];
-      const year = currentGlassMonthDate.getFullYear();
-      const month = currentGlassMonthDate.getMonth();
-      monthDisplay.textContent = `${monthNames[month]}`;
-
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const today = new Date();
-      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-      const todayDateNum = today.getDate();
-
-      let daysToRender = [];
-      const weekdayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const d = new Date(year, month, day);
-        const dayOfWeek = weekdayNames[d.getDay()];
-        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isToday = isCurrentMonth && day === todayDateNum;
-        const isSelected = glassSelectedDate &&
-          glassSelectedDate.getFullYear() === year &&
-          glassSelectedDate.getMonth() === month &&
-          glassSelectedDate.getDate() === day;
-
-        const hasTasks = list.some(item => (item.start_date <= dStr && item.end_date >= dStr));
-
-        daysToRender.push({
-          day,
-          dateStr: dStr,
-          dayOfWeek,
-          isToday,
-          isSelected,
-          hasTasks
-        });
-      }
-
-      if (glassActiveTab === 'weekly') {
-        const selDayNum = (glassSelectedDate && glassSelectedDate.getMonth() === month) ? glassSelectedDate.getDate() : (isCurrentMonth ? todayDateNum : 1);
-        const startDayIndex = Math.max(0, selDayNum - 4);
-        daysToRender = daysToRender.slice(startDayIndex, startDayIndex + 7);
-      }
-
-      dayTrack.innerHTML = daysToRender.map(d => `
-        <div class="glass-day-item">
-          <span class="glass-weekday-label">${d.dayOfWeek}</span>
-          <button type="button" class="glass-day-btn ${d.isSelected ? 'selected' : ''}" onclick="selectGlassDate('${d.dateStr}')" title="${d.dateStr}">
-            ${d.hasTasks && !d.isSelected ? '<span class="glass-has-events-dot"></span>' : ''}
-            ${d.isToday && !d.isSelected ? '<span class="glass-today-dot"></span>' : ''}
-            ${d.day}
-          </button>
-        </div>
-      `).join('');
-
-      // Update Selected Date Agenda section below
-      const selStr = `${glassSelectedDate.getFullYear()}-${String(glassSelectedDate.getMonth() + 1).padStart(2, '0')}-${String(glassSelectedDate.getDate()).padStart(2, '0')}`;
-      const selLabel = document.getElementById('glass-selected-date-label');
-      const countBadge = document.getElementById('glass-day-tasks-badge');
-      const tasksContainer = document.getElementById('glass-selected-date-tasks');
-
-      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      if (selLabel) selLabel.textContent = `Scheduled Maintenance for ${glassSelectedDate.toLocaleDateString('en-US', dateOptions)}`;
-
-      const dayTasks = list.filter(item => item.start_date <= selStr && item.end_date >= selStr);
-      if (countBadge) countBadge.textContent = `${dayTasks.length} Scheduled`;
-
-      if (tasksContainer) {
-        if (dayTasks.length === 0) {
-          tasksContainer.innerHTML = `
-            <div style="padding: 1.5rem; text-align: center; color: rgba(255, 255, 255, 0.65); font-size: 0.88rem;">
-              No municipal civil works scheduled for this date.
-              <div style="margin-top: 0.5rem;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="openScheduleModal()" style="color: #FFFFFF; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.12);">
-                  + Schedule Maintenance on this date
-                </button>
-              </div>
-            </div>
-          `;
-        } else {
-          tasksContainer.innerHTML = dayTasks.map(t => `
-            <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 0.5rem; padding: 0.85rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-              <div>
-                <strong style="color: #FFFFFF; font-size: 0.95rem;">${escapeHtml(t.title)}</strong>
-                <div style="font-size: 0.78rem; color: rgba(255,255,255,0.7); margin-top: 0.2rem;">
-                  📍 ${escapeHtml(t.area)} • 🏢 ${escapeHtml(t.department_name)}
-                </div>
-              </div>
-              <div style="display: flex; gap: 0.4rem; align-items: center;">
-                <span class="badge ${t.status === 'In Progress' ? 'badge-progress' : (t.status === 'Delayed' ? 'badge-blocked' : 'badge-assigned')}">${t.status}</span>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="openTaskDetail('${t.id}')" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF;">
-                  Inspect
-                </button>
-              </div>
-            </div>
-          `).join('');
-        }
-      }
-    }
-
-    function openGlassNoteModal() {
-      openInspectionModal();
-    }
-
-    function openGlassSettings() {
-      alert("Civic Maintenance Calendar: Glass UI synchronized with real-time municipal database.");
-    }
-
     /**
-     * Render Month Calendar Grid dynamically based on active month
+     * Render Month Calendar Grid (Production Fixed 7-Column Layout)
      */
     function renderDynamicMonthGrid(filteredList) {
       const schedules = filteredList || getFilteredSchedules();
       const container = document.getElementById('cal-month-container');
       const monthTitle = document.getElementById('cal-month-display');
+      if (!container || !monthTitle) return;
 
       const year = currentMonthDate.getFullYear();
       const month = currentMonthDate.getMonth(); // 0-indexed
@@ -1069,7 +1343,6 @@
       ];
       monthTitle.textContent = `${monthNames[month]} ${year}`;
 
-      // Calculate days in month & starting day of week
       const firstDayIndex = new Date(year, month, 1).getDay(); // 0 = Sun
       const daysInCurrentMonth = new Date(year, month + 1, 0).getDate();
       const daysInPrevMonth = new Date(year, month, 0).getDate();
@@ -1123,9 +1396,9 @@
           }
 
           pillsHtml += `
-            <div class="cal-event-pill ${pillClass}" onclick="openTaskDetail('${t.id}')" title="${escapeHtml(t.title)} (${t.department_name})">
+            <div class="cal-event-pill ${pillClass}" onclick="openTaskDetail('${t.id}')" title="${escapeHtml(t.title)} (${escapeHtml(t.department_name)}) — Assigned: ${escapeHtml(t.assigned_staff_name || 'Unassigned')}">
               <span>${icon}</span>
-              <span style="overflow: hidden; text-overflow: ellipsis;">${escapeHtml(t.title)}</span>
+              <span>${escapeHtml(t.title)}</span>
             </div>
           `;
         });
@@ -1153,9 +1426,14 @@
      */
     function renderWorkOrdersList(filteredList) {
       const container = document.getElementById('maint-cards-container');
+      if (!container) return;
+
       const schedules = filteredList || getFilteredSchedules();
       const todayStr = new Date().toISOString().split('T')[0];
       const subscribedIds = JSON.parse(localStorage.getItem('civic_subscribed_maint_ids') || '[]');
+      const user = CivicAuth.getUser();
+      const isAdmin = user && user.role === 'admin';
+      const isStaff = user && user.role === 'staff';
 
       container.innerHTML = schedules.map(item => {
         const isSubscribed = subscribedIds.includes(item.id);
@@ -1174,30 +1452,39 @@
           statusBadgeClass = 'badge-resolved';
         }
 
-        // Timing badge calculation
+        // Timing badge
         let timingBadge = '';
         if (isOverdue) {
           const daysOver = Math.max(1, Math.floor((new Date(todayStr) - new Date(item.end_date)) / 86400000));
-          timingBadge = `<span class="badge badge-urgent" style="font-size: 0.72rem;">⚠️ Overdue by ${daysOver} day${daysOver > 1 ? 's' : ''}</span>`;
+          timingBadge = `<span class="badge badge-urgent" style="font-size: 0.72rem;">⚠️ Overdue by ${daysOver}d</span>`;
         } else if (item.status === 'In Progress') {
           const daysLeft = Math.max(0, Math.floor((new Date(item.end_date) - new Date(todayStr)) / 86400000));
-          timingBadge = `<span class="badge badge-progress" style="font-size: 0.72rem;">⚡ In Progress (${daysLeft} day${daysLeft !== 1 ? 's' : ''} left)</span>`;
+          timingBadge = `<span class="badge badge-progress" style="font-size: 0.72rem;">⚡ In Progress (${daysLeft}d left)</span>`;
         } else if (item.status === 'Completed') {
           timingBadge = `<span class="badge badge-resolved" style="font-size: 0.72rem;">✓ Completed</span>`;
         } else {
           const daysTill = Math.max(0, Math.floor((new Date(item.start_date) - new Date(todayStr)) / 86400000));
-          timingBadge = `<span class="badge badge-assigned" style="font-size: 0.72rem;">📅 Starts in ${daysTill} day${daysTill !== 1 ? 's' : ''}</span>`;
+          timingBadge = `<span class="badge badge-assigned" style="font-size: 0.72rem;">📅 Starts in ${daysTill}d</span>`;
         }
+
+        // Department badge class
+        let deptClass = 'badge-dept-publicworks';
+        if (item.department_id === 'dept-roads') deptClass = 'badge-dept-roads';
+        if (item.department_id === 'dept-water') deptClass = 'badge-dept-water';
+        if (item.department_id === 'dept-electrical') deptClass = 'badge-dept-electrical';
+        if (item.department_id === 'dept-sanitation') deptClass = 'badge-dept-sanitation';
+
+        const canUpdate = isAdmin || (isStaff && (item.department_id === user.department_id || item.assigned_staff_id === user.id));
 
         return `
           <div class="maint-card ${cardStatusClass}">
             <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.35rem;">
-                <div style="display: flex; gap: 0.4rem; align-items: center;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.4rem;">
+                <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
                   <span class="badge ${statusBadgeClass}" style="font-size: 0.72rem;">${item.status}</span>
                   ${timingBadge}
                 </div>
-                <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700;">${escapeHtml(item.department_name)}</span>
+                <span class="badge-dept ${deptClass}">${escapeHtml(item.department_name)}</span>
               </div>
 
               <strong style="font-size: 1.05rem; color: var(--primary-deep); display: block; margin-bottom: 0.4rem; line-height: 1.35;">
@@ -1208,18 +1495,19 @@
                 ${escapeHtml(item.description)}
               </p>
 
-              <div style="background: var(--bg-main); border-radius: var(--radius-sm); padding: 0.65rem 0.75rem; font-size: 0.78rem; display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem;">
+              <div style="background: var(--bg-main); border-radius: var(--radius-sm); padding: 0.65rem 0.75rem; font-size: 0.78rem; display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.85rem;">
                 <div>📍 <strong>Location / Ward:</strong> ${escapeHtml(item.area)}</div>
                 <div>📅 <strong>Schedule:</strong> ${item.start_date} → ${item.end_date}</div>
+                <div>👷 <strong>Officer:</strong> ${escapeHtml(item.assigned_staff_name || 'Unassigned (Department Dispatch)')}</div>
                 ${item.official_source ? `<div>📜 <strong>Authority Ref:</strong> ${escapeHtml(item.official_source)}</div>` : ''}
               </div>
             </div>
 
-            <!-- Task Action Controls -->
+            <!-- Task Controls -->
             <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
                 <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Status:</label>
-                <select class="form-select" style="font-size: 0.78rem; padding: 0.25rem 0.5rem; width: auto;" onchange="updateTaskStatus('${item.id}', this.value)">
+                <select class="form-select" style="font-size: 0.78rem; padding: 0.25rem 0.5rem; width: auto;" ${canUpdate ? '' : 'disabled title="Sign in as Admin or Department Staff to update status"'} onchange="updateTaskStatus('${item.id}', this.value)">
                   <option value="Scheduled" ${item.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
                   <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                   <option value="Delayed" ${item.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
@@ -1234,9 +1522,11 @@
                 <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSubscribe('${item.id}', '${item.title.replace(/'/g, "\\'")}')" style="flex: 1; font-size: 0.76rem; ${isSubscribed ? 'color: #065F46; border-color: #A7F3D0; background: #ECFDF5;' : ''}">
                   ${isSubscribed ? '✓ Alert On' : '🔔 Alert Me'}
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="deleteTask('${item.id}', '${item.title.replace(/'/g, "\\'")}')" style="color: var(--danger); font-size: 0.76rem; padding: 0.25rem 0.5rem;" title="Cancel Maintenance">
-                  ✕
-                </button>
+                ${isAdmin ? `
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="deleteTask('${item.id}', '${item.title.replace(/'/g, "\\'")}')" style="color: var(--danger); font-size: 0.76rem; padding: 0.25rem 0.5rem;" title="Cancel Maintenance Order">
+                    ✕
+                  </button>
+                ` : ''}
               </div>
             </div>
           </div>
@@ -1245,8 +1535,175 @@
     }
 
     /**
+     * Glass Calendar State & Rendering (PRD Feature 3)
+     */
+    let glassSelectedDate = new Date();
+    let currentGlassMonthDate = new Date();
+    let glassActiveTab = 'monthly';
+
+    function setGlassTab(tab) {
+      glassActiveTab = tab;
+      const btnWeekly = document.getElementById('glass-tab-weekly');
+      const btnMonthly = document.getElementById('glass-tab-monthly');
+      if (btnWeekly && btnMonthly) {
+        if (tab === 'weekly') {
+          btnWeekly.classList.add('active');
+          btnMonthly.classList.remove('active');
+        } else {
+          btnMonthly.classList.add('active');
+          btnWeekly.classList.remove('active');
+        }
+      }
+      renderGlassCalendar();
+    }
+
+    function changeGlassMonth(delta) {
+      currentGlassMonthDate.setMonth(currentGlassMonthDate.getMonth() + delta);
+      renderGlassCalendar();
+    }
+
+    function selectGlassDate(dateStr) {
+      glassSelectedDate = new Date(dateStr);
+      renderGlassCalendar();
+    }
+
+    function goToTodayGlass() {
+      glassSelectedDate = new Date();
+      currentGlassMonthDate = new Date();
+      renderGlassCalendar();
+    }
+
+    function renderGlassCalendar(filteredList) {
+      const list = filteredList || getFilteredSchedules();
+      const monthDisplay = document.getElementById('glass-month-display');
+      const dayTrack = document.getElementById('glass-day-track');
+      if (!monthDisplay || !dayTrack) return;
+
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const year = currentGlassMonthDate.getFullYear();
+      const month = currentGlassMonthDate.getMonth();
+      monthDisplay.textContent = `${monthNames[month]} ${year}`;
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+      const todayDateNum = today.getDate();
+
+      let daysToRender = [];
+      const weekdayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(year, month, day);
+        const dayOfWeek = weekdayNames[d.getDay()];
+        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = isCurrentMonth && day === todayDateNum;
+        const isSelected = glassSelectedDate &&
+          glassSelectedDate.getFullYear() === year &&
+          glassSelectedDate.getMonth() === month &&
+          glassSelectedDate.getDate() === day;
+
+        const hasTasks = list.some(item => (item.start_date <= dStr && item.end_date >= dStr));
+
+        daysToRender.push({
+          day,
+          dateStr: dStr,
+          dayOfWeek,
+          isToday,
+          isSelected,
+          hasTasks
+        });
+      }
+
+      if (glassActiveTab === 'weekly') {
+        const selDayNum = (glassSelectedDate && glassSelectedDate.getMonth() === month) ? glassSelectedDate.getDate() : (isCurrentMonth ? todayDateNum : 1);
+        const startDayIndex = Math.max(0, selDayNum - 4);
+        daysToRender = daysToRender.slice(startDayIndex, startDayIndex + 7);
+      }
+
+      dayTrack.innerHTML = daysToRender.map(d => `
+        <div class="glass-day-item">
+          <span class="glass-weekday-label">${d.dayOfWeek}</span>
+          <button type="button" class="glass-day-btn ${d.isSelected ? 'selected' : ''}" onclick="selectGlassDate('${d.dateStr}')" title="${d.dateStr}">
+            ${d.hasTasks && !d.isSelected ? '<span class="glass-has-events-dot"></span>' : ''}
+            ${d.isToday && !d.isSelected ? '<span class="glass-today-dot"></span>' : ''}
+            ${d.day}
+          </button>
+        </div>
+      `).join('');
+
+      // Selected Date Agenda section below
+      const selYear = glassSelectedDate.getFullYear();
+      const selMonth = String(glassSelectedDate.getMonth() + 1).padStart(2, '0');
+      const selDay = String(glassSelectedDate.getDate()).padStart(2, '0');
+      const selStr = `${selYear}-${selMonth}-${selDay}`;
+
+      const selLabel = document.getElementById('glass-selected-date-label');
+      const countBadge = document.getElementById('glass-day-tasks-badge');
+      const tasksContainer = document.getElementById('glass-selected-date-tasks');
+
+      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      if (selLabel) selLabel.textContent = `Scheduled Maintenance for ${glassSelectedDate.toLocaleDateString('en-US', dateOptions)}`;
+
+      const dayTasks = list.filter(item => item.start_date <= selStr && item.end_date >= selStr);
+      if (countBadge) countBadge.textContent = `${dayTasks.length} Scheduled`;
+
+      if (tasksContainer) {
+        if (dayTasks.length === 0) {
+          tasksContainer.innerHTML = `
+            <div style="padding: 1.5rem; text-align: center; color: rgba(255, 255, 255, 0.65); font-size: 0.88rem;">
+              No municipal civil works scheduled for this date.
+              <div style="margin-top: 0.75rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="triggerScheduleModal('${selStr}')" style="color: #FFFFFF; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.12);">
+                  + Schedule Maintenance on this date
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          tasksContainer.innerHTML = dayTasks.map(t => `
+            <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 0.5rem; padding: 0.85rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <strong style="color: #FFFFFF; font-size: 0.95rem;">${escapeHtml(t.title)}</strong>
+                <div style="font-size: 0.78rem; color: rgba(255,255,255,0.75); margin-top: 0.2rem;">
+                  📍 ${escapeHtml(t.area)} • 🏢 ${escapeHtml(t.department_name)} • 👷 ${escapeHtml(t.assigned_staff_name || 'Unassigned')}
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.4rem; align-items: center;">
+                <span class="badge ${t.status === 'In Progress' ? 'badge-progress' : (t.status === 'Delayed' ? 'badge-urgent' : 'badge-assigned')}">${t.status}</span>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="openTaskDetail('${t.id}')" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF;">
+                  Inspect
+                </button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    function openGlassSettings() {
+      alert("Civic Maintenance Calendar: Glass Engine synchronized with real-time municipal database.");
+    }
+
+    /**
      * Modal Operations
      */
+    function triggerScheduleModal(defaultStartDate) {
+      const user = CivicAuth.getUser();
+      if (!user || user.role !== 'admin') {
+        document.getElementById('modal-auth-advisory').classList.add('active');
+        return;
+      }
+      if (defaultStartDate) {
+        document.getElementById('input-start-date').value = defaultStartDate;
+        const nextWeek = new Date(new Date(defaultStartDate).getTime() + 7 * 86400000).toISOString().split('T')[0];
+        document.getElementById('input-end-date').value = nextWeek;
+      }
+      openScheduleModal();
+    }
+
     function openScheduleModal() {
       document.getElementById('modal-schedule').classList.add('active');
     }
@@ -1259,6 +1716,10 @@
       document.getElementById('modal-task-detail').classList.remove('active');
     }
 
+    function closeAuthAdvisory() {
+      document.getElementById('modal-auth-advisory').classList.remove('active');
+    }
+
     /**
      * Inspect task in detailed modal
      */
@@ -1269,6 +1730,10 @@
       selectedTaskId = id;
       const todayStr = new Date().toISOString().split('T')[0];
       const isOverdue = (item.status === 'Delayed' || item.status === 'Overdue' || (item.end_date < todayStr && item.status !== 'Completed'));
+      const user = CivicAuth.getUser();
+      const isAdmin = user && user.role === 'admin';
+      const isStaff = user && user.role === 'staff';
+      const canUpdateStatus = isAdmin || (isStaff && (item.department_id === user.department_id || item.assigned_staff_id === user.id));
 
       document.getElementById('detail-title').textContent = item.title;
       const statusBadge = document.getElementById('detail-status-badge');
@@ -1283,20 +1748,24 @@
         </div>
 
         <div style="background: var(--bg-main); border-radius: var(--radius-md); padding: 1rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem;">
-          <div>📍 <strong>Target Location:</strong> ${escapeHtml(item.area)}</div>
+          <div>📍 <strong>Target Location / Ward:</strong> ${escapeHtml(item.area)}</div>
           <div>📅 <strong>Planned Schedule:</strong> ${item.start_date} to ${item.end_date}</div>
+          <div>👷 <strong>Assigned Field Staff:</strong> ${escapeHtml(item.assigned_staff_name || 'Unassigned (Department Dispatch)')}</div>
           <div>📜 <strong>Authority Reference:</strong> ${escapeHtml(item.official_source || 'Municipal Works Notice')}</div>
           <div>⚡ <strong>Current Operational State:</strong> <span style="font-weight: 700;">${item.status}</span></div>
         </div>
 
         <div style="margin-bottom: 1.25rem;">
-          <strong style="color: var(--primary-deep); font-size: 0.9rem; display: block; margin-bottom: 0.35rem;">Work Scope & Advisory</strong>
+          <strong style="color: var(--primary-deep); font-size: 0.9rem; display: block; margin-bottom: 0.35rem;">Work Scope & Disruption Advisory</strong>
           <p style="font-size: 0.86rem; color: var(--text-main); line-height: 1.5; margin: 0;">${escapeHtml(item.description)}</p>
         </div>
 
-        <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
-          <label style="font-size: 0.85rem; font-weight: 600; color: var(--primary-deep);">Update Execution Status:</label>
-          <select id="detail-status-select" class="form-select" style="width: auto; font-size: 0.85rem;" onchange="updateTaskStatus('${item.id}', this.value)">
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--primary-deep); display: block;">Update Execution Status:</label>
+            ${!canUpdateStatus ? '<span style="font-size: 0.74rem; color: var(--text-muted);">Requires Admin or Department Staff session</span>' : ''}
+          </div>
+          <select id="detail-status-select" class="form-select" style="width: auto; font-size: 0.85rem;" ${canUpdateStatus ? '' : 'disabled'} onchange="updateTaskStatus('${item.id}', this.value)">
             <option value="Scheduled" ${item.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
             <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
             <option value="Delayed" ${item.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
@@ -1313,9 +1782,11 @@
         <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSubscribe('${item.id}', '${item.title.replace(/'/g, "\\'")}')">
           ${isSub ? '✓ Subscribed to Alerts' : '🔔 Subscribe Alerts'}
         </button>
-        <button type="button" class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="deleteTask('${item.id}', '${item.title.replace(/'/g, "\\'")}')">
-          Cancel Work Order
-        </button>
+        ${isAdmin ? `
+          <button type="button" class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="deleteTask('${item.id}', '${item.title.replace(/'/g, "\\'")}')">
+            Cancel Work Order
+          </button>
+        ` : ''}
         <button type="button" class="btn btn-primary btn-sm" onclick="closeDetailModal()">
           Done
         </button>
@@ -1331,14 +1802,18 @@
       e.preventDefault();
       const btn = document.getElementById('btn-submit-maint');
       btn.disabled = true;
-      btn.textContent = 'Publishing...';
+      btn.textContent = 'Publishing to Database...';
 
       const deptParts = document.getElementById('input-dept').value.split('|');
+      const staffVal = document.getElementById('input-staff').value;
+      const staffParts = staffVal ? staffVal.split('|') : [null, null];
 
       const payload = {
         title: document.getElementById('input-title').value.trim(),
         departmentId: deptParts[0],
         departmentName: deptParts[1],
+        assignedStaffId: staffParts[0] || null,
+        assignedStaffName: staffParts[1] || null,
         area: document.getElementById('input-area').value.trim(),
         startDate: document.getElementById('input-start-date').value,
         endDate: document.getElementById('input-end-date').value,
@@ -1353,28 +1828,33 @@
           body: JSON.stringify(payload)
         });
 
-        alert(`✓ Maintenance work order scheduled successfully! Reference: ${res.schedule.official_source}`);
+        alert(`✓ Maintenance work order scheduled successfully!\nReference: ${res.schedule.official_source}\nAssigned: ${res.schedule.assigned_staff_name || 'Unassigned'}`);
         closeScheduleModal();
         document.getElementById('form-create-maintenance').reset();
-        await loadMaintenanceData();
+        await loadMaintenanceData(true);
       } catch (err) {
         alert('Error scheduling maintenance: ' + err.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Publish Scheduled Activity';
+        btn.textContent = 'Publish to Database';
       }
     }
 
     /**
-     * Update Task Status
+     * Update Task Status directly in database
      */
     async function updateTaskStatus(id, newStatus) {
+      const user = CivicAuth.getUser();
+      const endpoint = (user && user.role === 'staff')
+        ? `/api/staff/maintenance/${id}/status`
+        : `/api/maintenance/${id}/status`;
+
       try {
-        await CivicAPI.request(`/api/maintenance/${id}/status`, {
+        await CivicAPI.request(endpoint, {
           method: 'POST',
           body: JSON.stringify({ status: newStatus })
         });
-        await loadMaintenanceData();
+        await loadMaintenanceData(true);
         if (selectedTaskId === id) {
           openTaskDetail(id);
         }
@@ -1384,10 +1864,10 @@
     }
 
     /**
-     * Delete Task
+     * Delete Task directly from database
      */
     async function deleteTask(id, title) {
-      if (!confirm(`Are you sure you want to cancel and remove scheduled activity:\n"${title}"?`)) {
+      if (!confirm(`Are you sure you want to cancel and remove scheduled activity:\n"${title}"?\n\nThis will remove it from the municipal database.`)) {
         return;
       }
       try {
@@ -1395,7 +1875,7 @@
           method: 'DELETE'
         });
         closeDetailModal();
-        await loadMaintenanceData();
+        await loadMaintenanceData(true);
       } catch (err) {
         alert('Failed to cancel maintenance: ' + err.message);
       }

@@ -123,6 +123,30 @@ router.get('/', optionalAuth, async (req, res) => {
  * GET /api/maintenance/:id
  * Retrieve specific maintenance activity details (Public Read)
  */
+/**
+ * GET /api/maintenance/meta
+ * Retrieve active municipal departments and field staff profiles for assignment (Public Read)
+ */
+router.get('/meta', optionalAuth, async (req, res) => {
+  try {
+    const departments = await db.all('SELECT id, name FROM departments WHERE active = 1 ORDER BY name ASC');
+    const staff = await db.all(`
+      SELECT id, display_name, email, department_id, role
+      FROM profiles
+      WHERE role IN ('staff', 'admin') AND active = 1
+      ORDER BY display_name ASC
+    `);
+
+    res.json({
+      success: true,
+      departments,
+      staff
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve maintenance metadata: ' + err.message });
+  }
+});
+
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
