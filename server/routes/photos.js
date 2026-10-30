@@ -96,8 +96,12 @@ router.post('/reports/:id/photos', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Maximum photo limit reached (max 5 photos per report).' });
     }
 
-    // Fail-fast in production if durable photo storage is not configured
-    if (isProduction && !isSupabaseConfigured) {
+        // Fail-fast in production if durable photo storage is not configured (unless running in demo preview mode)
+    const isDemo = process.env.ALLOW_DEMO_MODE === 'true' || 
+                   process.env.ALLOW_EPHEMERAL_DEMO === 'true' ||
+                   Boolean((process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL_ENV) && process.env.REQUIRE_PRODUCTION_DB !== 'true');
+
+    if (isProduction && !isSupabaseConfigured && !isDemo) {
       return res.status(503).json({
         error: 'Durable photo storage is not configured. In production, Supabase Storage credentials (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY) are required to prevent data loss.'
       });

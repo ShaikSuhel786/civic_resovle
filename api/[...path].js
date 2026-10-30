@@ -1,6 +1,4 @@
 // Civic Resolve AI: Vercel Serverless Function Catch-All Entrypoint
-// Routes all /api/* requests directly into the Express backend.
+// Routes all /api/* requests directly through the resilient error-boundary entrypoint.
 
-const app = require('../server/index.js');
-
-module.exports = app;
+module.exports = require('./index.js');

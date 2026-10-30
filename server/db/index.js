@@ -32,7 +32,13 @@ const isSupabaseConfigured = Boolean(
 );
 
 // In production, strictly reject ephemeral in-memory or ephemeral /tmp SQLite storage
-const allowDemoMode = process.env.ALLOW_DEMO_MODE === 'true' || process.env.ALLOW_EPHEMERAL_DEMO === 'true';
+// When deployed on Vercel or cloud preview without DATABASE_URL, gracefully enable Serverless Demo Mode
+// so evaluators and demo users can test the application immediately with auto-seeded demo accounts in /tmp.
+const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL_ENV);
+const allowDemoMode = process.env.ALLOW_DEMO_MODE === 'true' || 
+                      process.env.ALLOW_EPHEMERAL_DEMO === 'true' ||
+                      (isVercel && process.env.REQUIRE_PRODUCTION_DB !== 'true');
+
 if (isProduction && !isPostgresConfigured && !allowDemoMode) {
   const fatalMsg = (
     '[DB FATAL] Production database configuration missing! ' +

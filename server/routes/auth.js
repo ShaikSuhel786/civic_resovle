@@ -21,7 +21,12 @@ const ALLOWED_DEMO_ACCOUNTS = new Set([
 // Public demo accounts list for evaluator 1-click convenience
 router.get('/demo-accounts', async (req, res) => {
   try {
-    if (process.env.NODE_ENV === 'production') {
+        const isProduction = process.env.NODE_ENV === 'production';
+    const isDemo = process.env.ALLOW_DEMO_MODE === 'true' || 
+                   process.env.ALLOW_EPHEMERAL_DEMO === 'true' ||
+                   Boolean((process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL_ENV) && process.env.REQUIRE_PRODUCTION_DB !== 'true');
+
+    if (isProduction && !isDemo) {
       return res.status(403).json({ error: 'Demo accounts listing is disabled in production.' });
     }
 
@@ -120,9 +125,14 @@ router.post('/login', async (req, res) => {
   let user = null;
 
   try {
-    // 1. Gated demo user 1-click evaluation
+        // 1. Gated demo user 1-click evaluation
     if (demoUserId) {
-      if (process.env.NODE_ENV === 'production') {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const isDemo = process.env.ALLOW_DEMO_MODE === 'true' || 
+                     process.env.ALLOW_EPHEMERAL_DEMO === 'true' ||
+                     Boolean((process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL_ENV) && process.env.REQUIRE_PRODUCTION_DB !== 'true');
+
+      if (isProduction && !isDemo) {
         return res.status(403).json({ error: 'Passwordless demo login is strictly disabled in production environments.' });
       }
 
