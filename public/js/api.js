@@ -33,6 +33,29 @@ const CivicAPI = {
           errData = await response.json();
           if (errData && (errData.error || errData.message)) {
             errorMessage = errData.error || errData.message;
+            if (errData.hint) {
+              errorMessage += ` (${errData.hint})`;
+            }
+          }
+        } catch (_) {}
+      } else {
+        try {
+          const rawText = await response.text();
+          if (rawText) {
+            try {
+              const parsed = JSON.parse(rawText);
+              if (parsed && (parsed.error || parsed.message)) {
+                errData = parsed;
+                errorMessage = parsed.error || parsed.message;
+                if (parsed.hint) errorMessage += ` (${parsed.hint})`;
+              }
+            } catch (_) {
+              if (rawText.includes('FUNCTION_INVOCATION_FAILED')) {
+                errorMessage = 'Serverless deployment startup failure (FUNCTION_INVOCATION_FAILED): The server crashed during initialization. Please check database and environment configuration.';
+              } else if (rawText.trim().length > 0 && rawText.trim().length < 250) {
+                errorMessage = rawText.trim();
+              }
+            }
           }
         } catch (_) {}
       }

@@ -45,9 +45,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Restore original client request path if altered by Vercel rewrites
 app.use((req, res, next) => {
-  const matched = req.headers['x-matched-path'];
-  if (matched) {
-    if (req.url.startsWith('/api/index') || req.url === '/api' || req.url === '/api/' || req.url.includes('[...path]') || (!req.url.startsWith('/api/') && matched.startsWith('/api/'))) {
+  const forwardedUri = req.headers['x-forwarded-uri'] || req.headers['x-original-url'];
+  if (forwardedUri && forwardedUri.startsWith('/api/')) {
+    req.url = forwardedUri;
+  } else {
+    const matched = req.headers['x-matched-path'];
+    if (matched && matched.startsWith('/api/') && matched !== '/api' && matched !== '/api/') {
       req.url = matched;
     }
   }
