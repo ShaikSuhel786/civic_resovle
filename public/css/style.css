@@ -2953,6 +2953,81 @@ a:hover {
   transform: translateY(0);
 }
 
+/* Location Autocomplete & Search Dropdown */
+.location-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.location-autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.16), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+  z-index: 2000;
+  max-height: 270px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.location-suggest-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  border-bottom: 1px solid #F1F5F9;
+  transition: all 0.15s ease;
+  font-size: 0.84rem;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.location-suggest-item:last-child {
+  border-bottom: none;
+}
+
+.location-suggest-item:hover,
+.location-suggest-item.highlighted {
+  background: #F0F9FF;
+  color: var(--interactive-blue);
+}
+
+.location-suggest-icon {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--interactive-blue);
+}
+
+.location-suggest-main {
+  font-weight: 600;
+  color: var(--primary-deep);
+  display: block;
+}
+
+.location-suggest-item:hover .location-suggest-main,
+.location-suggest-item.highlighted .location-suggest-main {
+  color: var(--interactive-blue);
+}
+
+.location-suggest-sub {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 1px;
+}
+
+.location-suggest-empty {
+  padding: 0.85rem 1rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* Map View Switcher (Street / Satellite) */
 .map-view-toggle {
   display: inline-flex;

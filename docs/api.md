@@ -1064,3 +1064,57 @@ Sample Response (200):
 ```
 
 Error Codes: 500 (server)
+
+---
+
+## 11. Geolocation & Spatial Addressing
+
+### GET /api/geocode/reverse
+Description: Resolves GPS coordinates (latitude and longitude) into verified street address, landmark, and locality details. Combines a local spatial landmark index (<600m), OpenStreetMap reverse geocoding proxy with server-side caching, and graceful coordinate fallback.
+
+```bash
+curl -X GET "http://localhost:3050/api/geocode/reverse?lat=17.4401&lng=78.3489" \
+  -H "Accept: application/json"
+```
+
+Sample Response (200):
+```json
+{
+  "success": true,
+  "displayName": "Gachibowli, ORR Junction & DLF, Hyderabad",
+  "locality": "Gachibowli",
+  "city": "Hyderabad",
+  "latitude": 17.4401,
+  "longitude": 78.3489,
+  "source": "local_spatial_index"
+}
+```
+
+Error Codes: 400 (missing or invalid coordinates), 500 (server)
+
+---
+
+### GET /api/geocode/search
+Description: Real-time autocomplete and location search for civic reporting. Matches input query against 50+ local Hyderabad landmarks, colonies, and pin codes, with fallback to bounded OpenStreetMap search.
+
+```bash
+curl -X GET "http://localhost:3050/api/geocode/search?q=gachibowli" \
+  -H "Accept: application/json"
+```
+
+Sample Response (200):
+```json
+{
+  "results": [
+    {
+      "name": "Gachibowli, ORR Junction & DLF, Hyderabad (500032)",
+      "locality": "Gachibowli",
+      "latitude": 17.4401,
+      "longitude": 78.3489,
+      "source": "local_verified"
+    }
+  ]
+}
+```
+
+Error Codes: 500 (server)

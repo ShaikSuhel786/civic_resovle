@@ -107,8 +107,11 @@
                   <span>Use My Location</span>
                 </button>
               </div>
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
-                <input type="text" id="report-location" class="form-input" style="flex: 1;" placeholder="Enter street, landmark, or search..." required autocomplete="off">
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem; position: relative;">
+                <div class="location-input-container" style="flex: 1; position: relative;">
+                  <input type="text" id="report-location" class="form-input" style="width: 100%;" placeholder="Search colony, street, landmark, or area..." required autocomplete="off">
+                  <div id="location-autocomplete-dropdown" class="location-autocomplete-dropdown" style="display: none;" role="listbox"></div>
+                </div>
                 <button type="button" class="btn btn-secondary btn-sm" id="btn-search-location" style="padding: 0.5rem 0.85rem;" title="Locate on map">
                   <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                   <span>Locate</span>
@@ -116,10 +119,13 @@
               </div>
               <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; align-items: center;">
                 <span style="font-size: 0.74rem; color: var(--text-muted);">Quick pick:</span>
-                <button type="button" class="location-chip" data-lat="17.4156" data-lng="78.4750" data-loc="Banjara Hills, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Banjara Hills</button>
-                <button type="button" class="location-chip" data-lat="17.4483" data-lng="78.3915" data-loc="Hitech City, Madhapur"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Hitech City</button>
-                <button type="button" class="location-chip" data-lat="17.3616" data-lng="78.4747" data-loc="Charminar, Old City"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Charminar</button>
-                <button type="button" class="location-chip" data-lat="17.4399" data-lng="78.4983" data-loc="Secunderabad Clock Tower"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Secunderabad</button>
+                <button type="button" class="location-chip" data-lat="17.4177" data-lng="78.4399" data-loc="Banjara Hills, Road No. 12, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Banjara Hills</button>
+                <button type="button" class="location-chip" data-lat="17.4504" data-lng="78.3808" data-loc="Hitech City, Cyber Towers, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Hitech City</button>
+                <button type="button" class="location-chip" data-lat="17.4401" data-lng="78.3489" data-loc="Gachibowli, ORR Junction, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Gachibowli</button>
+                <button type="button" class="location-chip" data-lat="17.4615" data-lng="78.3672" data-loc="Kondapur, Botanical Garden, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Kondapur</button>
+                <button type="button" class="location-chip" data-lat="17.4875" data-lng="78.3953" data-loc="Kukatpally, KPHB Colony, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Kukatpally</button>
+                <button type="button" class="location-chip" data-lat="17.3616" data-lng="78.4747" data-loc="Charminar, Old City, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Charminar</button>
+                <button type="button" class="location-chip" data-lat="17.4399" data-lng="78.4983" data-loc="Secunderabad Clock Tower, Hyderabad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:3px;vertical-align:-1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Secunderabad</button>
               </div>
               <div id="location-status-msg" style="display: none; font-size: 0.78rem; padding: 0.35rem 0.6rem; border-radius: var(--radius-sm); margin-top: 0.4rem;"></div>
             </div>
@@ -327,6 +333,18 @@
       // Initialize Leaflet Map (Hyderabad Default Center)
       initMap(currentLat, currentLng);
 
+      // Initialize location search & landmark autocomplete
+      setupLocationAutocomplete();
+
+      // Silent GPS lock if user previously granted browser location permission
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+          if (result.state === 'granted') {
+            locateUser({ silent: true });
+          }
+        }).catch(() => {});
+      }
+
       // Initialize Voice Assistant (PRD F6)
       const btnVoiceTitle = document.getElementById('btn-voice-title');
       const btnVoiceDesc = document.getElementById('btn-voice-desc');
@@ -382,35 +400,45 @@
       }
     });
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     // Map & Geocoding Engine
     let reverseGeocodeTimer = null;
+    let searchDebounceTimer = null;
+    let highlightedSuggestIndex = -1;
 
-    function reverseGeocode(lat, lng) {
+    async function reverseGeocode(lat, lng, forceUpdate = true) {
       clearTimeout(reverseGeocodeTimer);
       reverseGeocodeTimer = setTimeout(async () => {
         try {
-          const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+          const resp = await fetch(`/api/geocode/reverse?lat=${lat}&lng=${lng}`);
           if (resp.ok) {
             const data = await resp.json();
-            if (data && data.display_name) {
-              const addr = data.address || {};
-              const parts = [
-                addr.road || addr.pedestrian || addr.suburb || addr.neighbourhood,
-                addr.city || addr.town || addr.county || 'Hyderabad'
-              ].filter(Boolean);
-              const label = parts.length > 0 ? parts.join(', ') : data.display_name.split(',').slice(0, 3).join(',');
-              document.getElementById('report-location').value = label;
+            if (data && data.displayName) {
+              const locInput = document.getElementById('report-location');
+              locInput.value = data.displayName;
+              showLocationStatus(`📍 Pinned: ${data.displayName}`, 'info');
               return;
             }
           }
         } catch (e) {
-          console.warn('Reverse geocode error, using pin fallback:', e);
+          console.warn('[Geocode Notice] Server reverse geocode fallback:', e);
         }
+
+        // Coordinate fallback if reverse geocoding request fails
         const locInput = document.getElementById('report-location');
-        if (!locInput.value || locInput.value.startsWith('GPS Pin:') || locInput.value.includes('Dropped Pin')) {
-          locInput.value = `Dropped Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        if (!locInput.value || locInput.value.startsWith('GPS Pin:') || locInput.value.includes('Dropped Pin') || forceUpdate) {
+          locInput.value = `Location (${lat.toFixed(4)}, ${lng.toFixed(4)}), Hyderabad`;
         }
-      }, 350);
+      }, 250);
     }
 
     async function searchLocation(query) {
@@ -420,19 +448,21 @@
       const originalHtml = searchBtn.innerHTML;
       searchBtn.disabled = true;
       searchBtn.innerHTML = '<span>Searching...</span>';
+      closeAutocompleteDropdown();
 
       try {
-        const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`);
+        const resp = await fetch(`/api/geocode/search?q=${encodeURIComponent(q)}`);
         if (resp.ok) {
-          const results = await resp.json();
-          if (results && results.length > 0) {
-            const item = results[0];
-            const lat = parseFloat(item.lat);
-            const lng = parseFloat(item.lon);
+          const data = await resp.json();
+          if (data && data.results && data.results.length > 0) {
+            const item = data.results[0];
+            const lat = parseFloat(item.latitude);
+            const lng = parseFloat(item.longitude);
             map.flyTo([lat, lng], 16, { duration: 1.2 });
             marker.setLatLng([lat, lng]);
             updateCoordinates(lat, lng, false);
-            showLocationStatus(`Located: ${item.display_name.split(',').slice(0, 2).join(',')}`, 'success');
+            document.getElementById('report-location').value = item.name;
+            showLocationStatus(`📍 Located: ${item.name}`, 'success');
             searchBtn.innerHTML = originalHtml;
             searchBtn.disabled = false;
             return;
@@ -442,29 +472,7 @@
         console.warn('Search geocode error:', e);
       }
 
-      // Built-in Municipal Landmarks fallback
-      const knownLandmarks = {
-        'banjara hills': [17.4156, 78.4750],
-        'hitech city': [17.4483, 78.3915],
-        'madhapur': [17.4483, 78.3915],
-        'charminar': [17.3616, 78.4747],
-        'secunderabad': [17.4399, 78.4983],
-        'kukatpally': [17.4875, 78.3953],
-        'gachibowli': [17.4401, 78.3489],
-        'jubilee hills': [17.4319, 78.4073],
-        'ameerpet': [17.4375, 78.4483]
-      };
-
-      const match = Object.keys(knownLandmarks).find(k => q.toLowerCase().includes(k));
-      if (match) {
-        const [lat, lng] = knownLandmarks[match];
-        map.flyTo([lat, lng], 16, { duration: 1.2 });
-        marker.setLatLng([lat, lng]);
-        updateCoordinates(lat, lng, false);
-        showLocationStatus(`Located ${match.toUpperCase()}`, 'success');
-      } else {
-        showLocationStatus('Could not find exact address. Drag the map pin to position precisely.', 'warning');
-      }
+      showLocationStatus('Could not locate exact landmark. Please pick from suggestions or drag the map pin.', 'warning');
       searchBtn.innerHTML = originalHtml;
       searchBtn.disabled = false;
     }
@@ -477,16 +485,135 @@
       if (type === 'success') {
         el.style.background = '#ECFDF5';
         el.style.color = '#065F46';
+        el.style.border = '1px solid #A7F3D0';
       } else if (type === 'warning') {
         el.style.background = '#FEF3C7';
         el.style.color = '#92400E';
+        el.style.border = '1px solid #FDE68A';
       } else {
         el.style.background = '#EFF6FF';
         el.style.color = '#1E40AF';
+        el.style.border = '1px solid #BFDBFE';
       }
       setTimeout(() => {
         el.style.display = 'none';
       }, 5000);
+    }
+
+    // Autocomplete Dropdown Engine
+    function closeAutocompleteDropdown() {
+      const dd = document.getElementById('location-autocomplete-dropdown');
+      if (dd) {
+        dd.style.display = 'none';
+        dd.innerHTML = '';
+        highlightedSuggestIndex = -1;
+      }
+    }
+
+    function setupLocationAutocomplete() {
+      const input = document.getElementById('report-location');
+      const dropdown = document.getElementById('location-autocomplete-dropdown');
+      if (!input || !dropdown) return;
+
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        clearTimeout(searchDebounceTimer);
+
+        if (val.length < 2) {
+          closeAutocompleteDropdown();
+          return;
+        }
+
+        searchDebounceTimer = setTimeout(async () => {
+          try {
+            const resp = await fetch(`/api/geocode/search?q=${encodeURIComponent(val)}`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+            const results = data.results || [];
+
+            if (results.length === 0) {
+              dropdown.innerHTML = '<div class="location-suggest-empty">No matching Hyderabad landmarks found. Drag map pin to set exact coordinates.</div>';
+              dropdown.style.display = 'block';
+              return;
+            }
+
+            dropdown.innerHTML = results.map((r, idx) => {
+              const parts = r.name.split(',');
+              const primary = parts[0].trim();
+              const secondary = parts.slice(1).join(',').trim() || r.locality || 'Hyderabad';
+              return `
+                <div class="location-suggest-item" data-index="${idx}" data-lat="${r.latitude}" data-lng="${r.longitude}" data-name="${escapeHtml(r.name)}" role="option">
+                  <svg class="location-suggest-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <div style="flex: 1; overflow: hidden;">
+                    <strong class="location-suggest-main">${escapeHtml(primary)}</strong>
+                    <span class="location-suggest-sub">${escapeHtml(secondary)}</span>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+            dropdown.style.display = 'block';
+            highlightedSuggestIndex = -1;
+
+            // Click listener for each item
+            dropdown.querySelectorAll('.location-suggest-item').forEach(itemEl => {
+              itemEl.addEventListener('click', () => {
+                const lat = parseFloat(itemEl.dataset.lat);
+                const lng = parseFloat(itemEl.dataset.lng);
+                const name = itemEl.dataset.name;
+                input.value = name;
+                closeAutocompleteDropdown();
+                map.flyTo([lat, lng], 16, { duration: 1 });
+                marker.setLatLng([lat, lng]);
+                updateCoordinates(lat, lng, false);
+                showLocationStatus(`📍 Selected: ${name}`, 'success');
+              });
+            });
+
+          } catch (err) {
+            console.warn('Autocomplete fetch error:', err);
+          }
+        }, 220);
+      });
+
+      // Keyboard navigation for dropdown
+      input.addEventListener('keydown', (e) => {
+        const items = dropdown.querySelectorAll('.location-suggest-item');
+        if (dropdown.style.display === 'block' && items.length > 0) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            highlightedSuggestIndex = (highlightedSuggestIndex + 1) % items.length;
+            items.forEach((it, idx) => it.classList.toggle('highlighted', idx === highlightedSuggestIndex));
+            items[highlightedSuggestIndex].scrollIntoView({ block: 'nearest' });
+            return;
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlightedSuggestIndex = (highlightedSuggestIndex - 1 + items.length) % items.length;
+            items.forEach((it, idx) => it.classList.toggle('highlighted', idx === highlightedSuggestIndex));
+            items[highlightedSuggestIndex].scrollIntoView({ block: 'nearest' });
+            return;
+          } else if (e.key === 'Enter' && highlightedSuggestIndex >= 0) {
+            e.preventDefault();
+            items[highlightedSuggestIndex].click();
+            return;
+          } else if (e.key === 'Escape') {
+            closeAutocompleteDropdown();
+            return;
+          }
+        }
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          searchLocation(input.value);
+        }
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+          closeAutocompleteDropdown();
+        }
+      });
     }
 
     // Map Mode Switcher (Street / Satellite)
@@ -556,6 +683,12 @@
         updateCoordinates(e.latlng.lat, e.latlng.lng, true);
       });
 
+      // Auto reverse-geocode initial coordinates if field is empty
+      const locInput = document.getElementById('report-location');
+      if (locInput && !locInput.value.trim()) {
+        reverseGeocode(lat, lng, false);
+      }
+
       setTimeout(() => {
         if (map) map.invalidateSize();
       }, 250);
@@ -582,70 +715,93 @@
       }
     }
 
-    // GPS "Use My Location"
-    document.getElementById('btn-use-gps').addEventListener('click', () => {
+    // GPS Geolocation Handler with Multi-Tier Fallback (PRD F1 / Precision Geocoding)
+    function locateUser(options = {}) {
+      const silent = options.silent === true;
       const gpsBtn = document.getElementById('btn-use-gps');
-      const originalHtml = gpsBtn.innerHTML;
-      gpsBtn.disabled = true;
-      gpsBtn.innerHTML = '<span>Locating...</span>';
+      const originalHtml = gpsBtn ? gpsBtn.innerHTML : '';
 
-      const applyLocation = (lat, lng, label) => {
-        map.flyTo([lat, lng], 16, { duration: 1.2 });
-        marker.setLatLng([lat, lng]);
-        updateCoordinates(lat, lng, false);
-        if (label) {
-          document.getElementById('report-location').value = label;
-        } else {
-          reverseGeocode(lat, lng);
+      if (!silent && gpsBtn) {
+        gpsBtn.disabled = true;
+        gpsBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:0.35rem;"><svg class="spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> Acquiring GPS...</span>';
+        showLocationStatus('Acquiring high-accuracy GPS fix from device...', 'info');
+      }
+
+      const onSuccess = (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const acc = pos.coords.accuracy ? Math.round(pos.coords.accuracy) : null;
+
+        if (map && marker) {
+          map.flyTo([lat, lng], 16, { duration: 1.2 });
+          marker.setLatLng([lat, lng]);
         }
-        gpsBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Located</span>';
-        setTimeout(() => {
-          gpsBtn.innerHTML = originalHtml;
-          gpsBtn.disabled = false;
-        }, 2000);
+        updateCoordinates(lat, lng, true);
+
+        const accText = acc ? ` (accuracy: ±${acc}m)` : '';
+        showLocationStatus(`📍 Locked to your exact GPS location${accText}`, 'success');
+
+        if (gpsBtn && !silent) {
+          gpsBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Located</span>';
+          setTimeout(() => {
+            gpsBtn.innerHTML = originalHtml;
+            gpsBtn.disabled = false;
+          }, 2000);
+        }
+      };
+
+      const onHighAccuracyFail = (err) => {
+        console.warn('High accuracy GPS fix unavailable:', err.message, 'Trying network triangulation...');
+        if (!silent && gpsBtn) {
+          gpsBtn.innerHTML = '<span>Trying network...</span>';
+        }
+
+        // Secondary attempt: Low accuracy network / cellular / Wi-Fi positioning
+        navigator.geolocation.getCurrentPosition(
+          onSuccess,
+          (netErr) => {
+            console.warn('Network location fix also failed:', netErr.message);
+            if (!silent) {
+              if (netErr.code === 1) { // PERMISSION_DENIED
+                showLocationStatus('Location permission was denied. Please allow location access or pick a landmark below.', 'warning');
+              } else {
+                showLocationStatus('Could not determine GPS position. Please pick a quick landmark or drag the map pin.', 'warning');
+              }
+            }
+            if (gpsBtn && !silent) {
+              gpsBtn.innerHTML = originalHtml;
+              gpsBtn.disabled = false;
+            }
+          },
+          { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
+        );
       };
 
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            applyLocation(pos.coords.latitude, pos.coords.longitude);
-          },
-          (err) => {
-            console.warn('Geolocation error:', err.message);
-            // Fallback to IP geolocation or central hub
-            fetch('https://ipapi.co/json/')
-              .then(res => res.json())
-              .then(data => {
-                if (data && data.latitude && data.longitude) {
-                  const place = [data.city, data.region].filter(Boolean).join(', ') || 'Current Location';
-                  applyLocation(data.latitude, data.longitude, place);
-                } else {
-                  applyLocation(17.4201, 78.4485, 'Banjara Hills, Hyderabad');
-                  showLocationStatus('GPS permission blocked. Centered to central hub — adjust pin as needed.', 'info');
-                }
-              })
-              .catch(() => {
-                applyLocation(17.4201, 78.4485, 'Banjara Hills, Hyderabad');
-                showLocationStatus('GPS permission blocked. Centered to central hub — adjust pin as needed.', 'info');
-              });
-          },
-          { timeout: 6000, enableHighAccuracy: true, maximumAge: 60000 }
-        );
+        navigator.geolocation.getCurrentPosition(onSuccess, onHighAccuracyFail, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
       } else {
-        applyLocation(17.4201, 78.4485, 'Banjara Hills, Hyderabad');
+        if (!silent) {
+          showLocationStatus('Geolocation is not supported by your browser.', 'warning');
+        }
+        if (gpsBtn && !silent) {
+          gpsBtn.innerHTML = originalHtml;
+          gpsBtn.disabled = false;
+        }
       }
+    }
+
+    // GPS "Use My Location"
+    document.getElementById('btn-use-gps').addEventListener('click', () => {
+      locateUser({ silent: false });
     });
 
-    // Search button and Enter key
+    // Search button
     document.getElementById('btn-search-location').addEventListener('click', () => {
       searchLocation(document.getElementById('report-location').value);
-    });
-
-    document.getElementById('report-location').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        searchLocation(e.target.value);
-      }
     });
 
     // Quick location chips

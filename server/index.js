@@ -80,6 +80,7 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/knowledge', require('./routes/knowledge'));
 app.use('/api/reports/public/knowledge', require('./routes/knowledge'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/geocode', require('./routes/geocode'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
