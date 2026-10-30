@@ -32,7 +32,8 @@ const isSupabaseConfigured = Boolean(
 );
 
 // In production, strictly reject ephemeral in-memory or ephemeral /tmp SQLite storage
-if (isProduction && !isPostgresConfigured) {
+const allowDemoMode = process.env.ALLOW_DEMO_MODE === 'true' || process.env.ALLOW_EPHEMERAL_DEMO === 'true';
+if (isProduction && !isPostgresConfigured && !allowDemoMode) {
   const fatalMsg = (
     '[DB FATAL] Production database configuration missing! ' +
     'Civic Resolve AI requires a durable shared PostgreSQL database in production (set DATABASE_URL or POSTGRES_URL). ' +
@@ -269,6 +270,14 @@ if (isPostgresConfigured) {
   if (fs.existsSync(schemaSqlPath)) {
     const schemaSql = fs.readFileSync(schemaSqlPath, 'utf8');
     sqliteDb.exec(schemaSql);
+  }
+
+  // Ensure initial demo profiles and civic data are populated for standalone/demo instances
+  try {
+    const { autoSeedSQLite } = require('./auto_seed');
+    autoSeedSQLite(sqliteDb);
+  } catch (seedErr) {
+    console.warn('[DB] Auto-seed notice:', seedErr.message);
   }
 
   // Sanitize params for SQLite (convert JS booleans to 1/0, undefined to null)
