@@ -13,6 +13,7 @@ function request(url, options = {}) {
   return new Promise((resolve, reject) => {
     const method = options.method || 'GET';
     const reqStream = new Readable({
+      destroy(err, cb) { if (cb) cb(err); },
       read() {
         if (options.body) this.push(Buffer.from(options.body));
         this.push(null);
@@ -112,7 +113,7 @@ async function runSmokeTests() {
   await step('Citizen Authentication (POST /api/auth/login)', async () => {
     const res = await request('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email: 'citizen@civicsync.demo', password: 'password123' })
+      body: JSON.stringify({ email: 'citizen@civicsync.demo', password: 'DemoCitizen123!' })
     });
     assert.strictEqual(res.status, 200);
     assert.ok(res.json.token);
@@ -123,7 +124,7 @@ async function runSmokeTests() {
   await step('Staff Authentication (POST /api/auth/login)', async () => {
     const res = await request('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email: 'staff.roads@civicsync.demo', password: 'password123' })
+      body: JSON.stringify({ email: 'staff.roads@civicsync.demo', password: 'DemoStaff123!' })
     });
     assert.strictEqual(res.status, 200);
     assert.ok(res.json.token);
@@ -134,7 +135,7 @@ async function runSmokeTests() {
   await step('Admin Authentication (POST /api/auth/login)', async () => {
     const res = await request('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email: 'admin@civicsync.demo', password: 'password123' })
+      body: JSON.stringify({ email: 'admin@civicsync.demo', password: 'DemoAdmin123!' })
     });
     assert.strictEqual(res.status, 200);
     assert.ok(res.json.token);

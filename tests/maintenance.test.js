@@ -1,7 +1,7 @@
 /**
  * Dedicated Automated Test Suite: Maintenance Calendar
  * Tests scheduling maintenance activities, viewing upcoming/overdue works,
- * status updates, cancellations, and calendar routing.
+ * status updates, cancellations, security boundaries, and calendar routing.
  */
 
 const assert = require('assert');
@@ -20,6 +20,7 @@ function request(url, options = {}) {
   return new Promise((resolve, reject) => {
     const method = options.method || 'GET';
     const reqStream = new Readable({
+      destroy(err, cb) { if (cb) cb(err); },
       read() {
         if (options.body) {
           this.push(Buffer.from(options.body));
@@ -96,6 +97,12 @@ async function runMaintenanceSuite() {
   console.log('  RUNNING CIVIC MAINTENANCE CALENDAR TEST SUITE');
   console.log('====================================================\n');
 
+  const adminUser = db.get("SELECT * FROM profiles WHERE role = 'admin' LIMIT 1");
+  const adminToken = makeToken(adminUser);
+
+  const citizenUser = db.get("SELECT * FROM profiles WHERE role = 'citizen' LIMIT 1");
+  const citizenToken = makeToken(citizenUser);
+
   // 1. Dedicated Route GET /maintenance
   await test('GET /maintenance renders Civic Maintenance Calendar page with Glass Calendar', async () => {
     const res = await request('/maintenance');
@@ -139,10 +146,35 @@ async function runMaintenanceSuite() {
     assert.ok(res.data.schedules.every(s => s.status === 'In Progress'));
   });
 
-  // 5. POST /api/maintenance validation: rejects missing title or dates
+  // 5. Security: POST /api/maintenance rejects unauthenticated and citizen users
+  await test('POST /api/maintenance rejects unauthenticated requests with 401', async () => {
+    const res = await request('/api/maintenance', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Unauthorized Road Digging',
+        departmentName: 'Roads & Transport'
+      })
+    });
+    assert.strictEqual(res.status, 401);
+  });
+
+  await test('POST /api/maintenance rejects citizen users with 403', async () => {
+    const res = await request('/api/maintenance', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${citizenToken}` },
+      body: JSON.stringify({
+        title: 'Unauthorized Road Digging',
+        departmentName: 'Roads & Transport'
+      })
+    });
+    assert.strictEqual(res.status, 403);
+  });
+
+  // 6. POST /api/maintenance validation: rejects missing title or dates for admin
   await test('POST /api/maintenance rejects missing required fields with 400', async () => {
     const res = await request('/api/maintenance', {
       method: 'POST',
+      headers: { 'Authorization': `Bearer ${adminToken}` },
       body: JSON.stringify({
         title: '',
         departmentName: 'Roads & Transport'
@@ -152,11 +184,12 @@ async function runMaintenanceSuite() {
     assert.ok(res.data.error.includes('title is required'));
   });
 
-  // 6. POST /api/maintenance schedules a new maintenance activity
+  // 7. POST /api/maintenance schedules a new maintenance activity
   let newMaintId = null;
   await test('POST /api/maintenance schedules new municipal maintenance activity', async () => {
     const res = await request('/api/maintenance', {
       method: 'POST',
+      headers: { 'Authorization': `Bearer ${adminToken}` },
       body: JSON.stringify({
         title: 'Hitec City Junction Flyover Expansion Joint Servicing',
         departmentId: 'dept-roads',
@@ -176,21 +209,23 @@ async function runMaintenanceSuite() {
     newMaintId = res.data.schedule.id;
   });
 
-  // 7. PATCH /api/maintenance/:id/status updates task status
+  // 8. PATCH /api/maintenance/:id/status updates task status
   await test('PATCH /api/maintenance/:id/status updates status to In Progress', async () => {
     const res = await request(`/api/maintenance/${newMaintId}/status`, {
       method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${adminToken}` },
       body: JSON.stringify({ status: 'In Progress' })
     });
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.schedule.status, 'In Progress');
   });
 
-  // 8. Overdue task detection
+  // 9. Overdue task detection
   await test('Maintenance stats accurately track overdue tasks', async () => {
     // Schedule a past date task that is not completed
     const pastTaskRes = await request('/api/maintenance', {
       method: 'POST',
+      headers: { 'Authorization': `Bearer ${adminToken}` },
       body: JSON.stringify({
         title: 'Overdue Drainage Canal Clearing Test',
         departmentId: 'dept-sanitation',
@@ -210,13 +245,17 @@ async function runMaintenanceSuite() {
     assert.ok(listRes.data.schedules.some(s => s.id === pastTaskId));
 
     // Clean up past task
-    await request(`/api/maintenance/${pastTaskId}`, { method: 'DELETE' });
+    await request(`/api/maintenance/${pastTaskId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
   });
 
-  // 9. DELETE /api/maintenance/:id cancels scheduled task
+  // 10. DELETE /api/maintenance/:id cancels scheduled task
   await test('DELETE /api/maintenance/:id removes scheduled maintenance activity', async () => {
     const res = await request(`/api/maintenance/${newMaintId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
     });
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
@@ -226,10 +265,9 @@ async function runMaintenanceSuite() {
     assert.strictEqual(getRes.status, 404);
   });
 
-  // 10. GET /api/staff/maintenance returns maintenance activities for staff's department
+  // 11. GET /api/staff/maintenance returns maintenance activities for staff's department
   await test('GET /api/staff/maintenance returns assigned department tasks for staff', async () => {
     const staffRoads = db.get("SELECT * FROM profiles WHERE role = 'staff' AND department_id = 'dept-roads' LIMIT 1");
-    assert.ok(staffRoads, 'Staff member for Roads must exist');
     const token = makeToken(staffRoads);
 
     const res = await request('/api/staff/maintenance', {
@@ -238,13 +276,10 @@ async function runMaintenanceSuite() {
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
     assert.ok(Array.isArray(res.data.schedules));
-    // Must only contain tasks for dept-roads or assigned to this staff member
-    for (const item of res.data.schedules) {
-      assert.ok(item.department_id === 'dept-roads' || item.assigned_staff_id === staffRoads.id);
-    }
+    assert.ok(res.data.schedules.every(s => s.department_id === 'dept-roads'));
   });
 
-  // 11. POST /api/staff/maintenance/:id/status updates task status within staff department
+  // 12. Staff updates status of task within their department
   await test('POST /api/staff/maintenance/:id/status updates execution status within department', async () => {
     const staffRoads = db.get("SELECT * FROM profiles WHERE role = 'staff' AND department_id = 'dept-roads' LIMIT 1");
     const token = makeToken(staffRoads);
@@ -252,15 +287,16 @@ async function runMaintenanceSuite() {
     // Create a temporary task in dept-roads
     const createRes = await request('/api/maintenance', {
       method: 'POST',
+      headers: { 'Authorization': `Bearer ${adminToken}` },
       body: JSON.stringify({
-        title: 'Road Pavement Core Sampling',
+        title: 'Road Surface Inspection & Curb Painting',
         departmentId: 'dept-roads',
         departmentName: 'Roads & Transport',
-        area: 'Banjara Hills Rd 12',
+        area: 'Banjara Hills Road 12',
         startDate: '2026-11-01',
-        endDate: '2026-11-05',
+        endDate: '2026-11-08',
         status: 'Scheduled',
-        description: 'Pavement depth evaluation before monsoon resurfacing.'
+        description: 'Inspection of road curbs and applying reflective yellow thermoplastic paint.'
       })
     });
     assert.strictEqual(createRes.status, 201);
@@ -277,10 +313,13 @@ async function runMaintenanceSuite() {
     assert.strictEqual(updateRes.data.schedule.assigned_staff_id, staffRoads.id);
 
     // Clean up
-    await request(`/api/maintenance/${tempTaskId}`, { method: 'DELETE' });
+    await request(`/api/maintenance/${tempTaskId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
   });
 
-  // 12. Security boundary: Staff cannot update maintenance task of another department
+  // 13. Security boundary: Staff cannot update maintenance task of another department
   await test('POST /api/staff/maintenance/:id/status rejects staff from a different department (403)', async () => {
     const staffRoads = db.get("SELECT * FROM profiles WHERE role = 'staff' AND department_id = 'dept-roads' LIMIT 1");
     const token = makeToken(staffRoads);
@@ -308,4 +347,3 @@ async function runMaintenanceSuite() {
 }
 
 runMaintenanceSuite();
-

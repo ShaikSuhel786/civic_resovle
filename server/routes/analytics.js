@@ -25,7 +25,7 @@ function getSlaDaysForReport(categoryId) {
 // --------------------------------------------------------------------------
 // 1. GET /api/analytics/scorecard (PRD F8 — Civic Transparency Scorecard)
 // --------------------------------------------------------------------------
-router.get('/scorecard', (req, res) => {
+router.get('/scorecard', async (req, res) => {
   try {
     const { period = 'all' } = req.query;
 
@@ -39,18 +39,27 @@ router.get('/scorecard', (req, res) => {
     }
 
     // 1. Core Issue Counts
-    const totalReports = db.get(`SELECT COUNT(*) as c FROM reports r WHERE 1=1 ${dateCondition}`, dateParams).c;
-    const resolvedReports = db.get(`SELECT COUNT(*) as c FROM reports r WHERE r.status = 'Resolved' ${dateCondition}`, dateParams).c;
-    const inProgressReports = db.get(`SELECT COUNT(*) as c FROM reports r WHERE r.status = 'In Progress' ${dateCondition}`, dateParams).c;
-    const pendingReports = db.get(`SELECT COUNT(*) as c FROM reports r WHERE r.status IN ('Submitted', 'Under Review', 'Assigned') ${dateCondition}`, dateParams).c;
-    const blockedReports = db.get(`SELECT COUNT(*) as c FROM reports r WHERE r.status = 'Blocked' ${dateCondition}`, dateParams).c;
+    const totalReportsRes = await db.get(`SELECT COUNT(*) as c FROM reports r WHERE 1=1 ${dateCondition}`, dateParams);
+    const totalReports = totalReportsRes?.c || 0;
+
+    const resolvedReportsRes = await db.get(`SELECT COUNT(*) as c FROM reports r WHERE r.status = 'Resolved' ${dateCondition}`, dateParams);
+    const resolvedReports = resolvedReportsRes?.c || 0;
+
+    const inProgressReportsRes = await db.get(`SELECT COUNT(*) as c FROM reports r WHERE r.status = 'In Progress' ${dateCondition}`, dateParams);
+    const inProgressReports = inProgressReportsRes?.c || 0;
+
+    const pendingReportsRes = await db.get(`SELECT COUNT(*) as c FROM reports r WHERE r.status IN ('Submitted', 'Under Review', 'Assigned') ${dateCondition}`, dateParams);
+    const pendingReports = pendingReportsRes?.c || 0;
+
+    const blockedReportsRes = await db.get(`SELECT COUNT(*) as c FROM reports r WHERE r.status = 'Blocked' ${dateCondition}`, dateParams);
+    const blockedReports = blockedReportsRes?.c || 0;
 
     // 2. Verified Resolution Rate
     const resolutionRateNum = totalReports > 0 ? Math.round((resolvedReports / totalReports) * 100) : 0;
     const resolutionRate = `${resolutionRateNum}%`;
 
     // 3. Average Resolution Turnaround in Days (computed from real resolved reports)
-    const resolvedRows = db.all(`
+    const resolvedRows = await db.all(`
       SELECT r.id, r.category_id, r.created_at, r.updated_at
       FROM reports r
       WHERE r.status = 'Resolved' ${dateCondition}
@@ -80,7 +89,7 @@ router.get('/scorecard', (req, res) => {
     const slaAdherenceRate = `${slaAdherenceNum}%`;
 
     // 5. Category Breakdown (real counts)
-    const categoryStats = db.all(`
+    const categoryStats = await db.all(`
       SELECT c.id, c.name, COUNT(r.id) as count
       FROM categories c
       LEFT JOIN reports r ON r.category_id = c.id ${dateCondition}
@@ -89,7 +98,7 @@ router.get('/scorecard', (req, res) => {
     `, dateParams);
 
     // 6. Department Workload & Resolution Throughput
-    const departmentStats = db.all(`
+    const departmentStats = await db.all(`
       SELECT d.id, d.name,
              COUNT(r.id) as total_assigned,
              COUNT(CASE WHEN r.status = 'Resolved' THEN 1 END) as resolved_count,
@@ -101,13 +110,17 @@ router.get('/scorecard', (req, res) => {
     `, dateParams);
 
     // 7. Monthly Trends (aggregated by calendar month)
-    const monthlyRaw = db.all(`
-      SELECT strftime('%Y-%m', r.created_at) as ym,
+    const ymExpr = db.isPostgres
+      ? "TO_CHAR(r.created_at, 'YYYY-MM')"
+      : "strftime('%Y-%m', r.created_at)";
+
+    const monthlyRaw = await db.all(`
+      SELECT ${ymExpr} as ym,
              COUNT(*) as reported,
              COUNT(CASE WHEN r.status = 'Resolved' THEN 1 END) as resolved
       FROM reports r
       WHERE r.created_at IS NOT NULL
-      GROUP BY ym
+      GROUP BY ${ymExpr}
       ORDER BY ym ASC
     `);
 
@@ -154,9 +167,9 @@ router.get('/scorecard', (req, res) => {
 // --------------------------------------------------------------------------
 // 2. GET /api/analytics/radar (PRD F3 — Predictive Problem Radar)
 // --------------------------------------------------------------------------
-router.get('/radar', (req, res) => {
+router.get('/radar', async (req, res) => {
   try {
-    const rawReports = db.all(`
+    const rawReports = await db.all(`
       SELECT r.id, r.reference_number, r.title, r.category_id, c.name as category_name,
              r.department_id, d.name as department_name,
              r.latitude, r.longitude, r.location_text, r.status,
@@ -234,7 +247,6 @@ router.get('/radar', (req, res) => {
       const avgSeverity = Math.round(cl.reduce((acc, r) => acc + (r.severity_factor || 50), 0) / count);
 
       // Deterministic PRD F3 Predicted Risk Score (0 - 100)
-      // Risk = 0.35 * DensityFactor + 0.30 * AvgSeverity + 0.25 * UnresolvedRatio + 0.10 * AvgPriority
       const densityFactor = Math.min(100, count * 22);
       const unresolvedRatio = count > 0 ? (unresolvedCount / count) * 100 : 0;
       const rawRisk = (0.35 * densityFactor) + (0.30 * avgSeverity) + (0.25 * unresolvedRatio) + (0.10 * avgPriority);
@@ -244,7 +256,6 @@ router.get('/radar', (req, res) => {
       const riskLevel = isHigh ? 'High Risk' : (predictedRiskScore >= 50 ? 'Medium Risk' : 'Low Risk');
       const confidenceScore = count >= 3 ? '84% Confidence (High Sample)' : '68% Confidence (Moderate Sample)';
 
-      // Contextual preventive recommendation based on category
       let recommendedAction = 'Dispatch municipal inspection team to assess structural integrity.';
       if (dominantCat.toLowerCase().includes('road') || dominantCat.toLowerCase().includes('pothole')) {
         recommendedAction = 'Schedule pre-emptive milling and asphalt resurfacing during evening lane diversion window.';
@@ -256,7 +267,6 @@ router.get('/radar', (req, res) => {
         recommendedAction = 'Increase commercial bin capacity and schedule twice-daily mechanized compactor collection.';
       }
 
-      // Zone name sanitized to neighborhood level for privacy
       const zoneClean = (primary.location_text || 'Metropolitan Ward Cluster')
         .split(',')
         .slice(0, 2)
@@ -299,50 +309,60 @@ router.get('/radar', (req, res) => {
 // --------------------------------------------------------------------------
 // 3. GET /api/analytics/summary (Backward-compatible alias)
 // --------------------------------------------------------------------------
-router.get('/summary', (req, res) => {
-  // Delegate directly to scorecard calculation to avoid duplicate business logic
-  const totalReports = db.get('SELECT COUNT(*) as c FROM reports').c;
-  const resolvedReports = db.get("SELECT COUNT(*) as c FROM reports WHERE status = 'Resolved'").c;
-  const inProgressReports = db.get("SELECT COUNT(*) as c FROM reports WHERE status = 'In Progress'").c;
-  const pendingReports = db.get("SELECT COUNT(*) as c FROM reports WHERE status IN ('Submitted', 'Under Review', 'Assigned')").c;
+router.get('/summary', async (req, res) => {
+  try {
+    const totalReportsRes = await db.get('SELECT COUNT(*) as c FROM reports');
+    const totalReports = totalReportsRes?.c || 0;
 
-  const resolutionRateNum = totalReports > 0 ? Math.round((resolvedReports / totalReports) * 100) : 0;
+    const resolvedReportsRes = await db.get("SELECT COUNT(*) as c FROM reports WHERE status = 'Resolved'");
+    const resolvedReports = resolvedReportsRes?.c || 0;
 
-  const categoryStats = db.all(`
-    SELECT c.name, COUNT(r.id) as count
-    FROM categories c
-    LEFT JOIN reports r ON r.category_id = c.id
-    GROUP BY c.id, c.name
-    ORDER BY count DESC
-  `);
+    const inProgressReportsRes = await db.get("SELECT COUNT(*) as c FROM reports WHERE status = 'In Progress'");
+    const inProgressReports = inProgressReportsRes?.c || 0;
 
-  const departmentStats = db.all(`
-    SELECT d.name, 
-           COUNT(r.id) as total_assigned,
-           COUNT(CASE WHEN r.status = 'Resolved' THEN 1 END) as resolved_count,
-           COUNT(CASE WHEN r.status IN ('Assigned', 'In Progress', 'Blocked') THEN 1 END) as active_count
-    FROM departments d
-    LEFT JOIN reports r ON r.department_id = d.id
-    GROUP BY d.id, d.name
-    ORDER BY active_count DESC
-  `);
+    const pendingReportsRes = await db.get("SELECT COUNT(*) as c FROM reports WHERE status IN ('Submitted', 'Under Review', 'Assigned')");
+    const pendingReports = pendingReportsRes?.c || 0;
 
-  res.json({
-    kpis: {
-      totalIssues: totalReports,
-      pendingIssues: pendingReports,
-      inProgressIssues: inProgressReports,
-      resolvedIssues: resolvedReports,
-      resolutionRate: `${resolutionRateNum}%`,
-      avgResolutionDays: 6,
-      improvementRate: '+15%'
-    },
-    categoryDistribution: categoryStats,
-    departmentWorkload: departmentStats,
-    monthlyTrend: [
-      { month: 'Oct 2026', reported: totalReports, resolved: resolvedReports }
-    ]
-  });
+    const resolutionRateNum = totalReports > 0 ? Math.round((resolvedReports / totalReports) * 100) : 0;
+
+    const categoryStats = await db.all(`
+      SELECT c.name, COUNT(r.id) as count
+      FROM categories c
+      LEFT JOIN reports r ON r.category_id = c.id
+      GROUP BY c.id, c.name
+      ORDER BY count DESC
+    `);
+
+    const departmentStats = await db.all(`
+      SELECT d.name, 
+             COUNT(r.id) as total_assigned,
+             COUNT(CASE WHEN r.status = 'Resolved' THEN 1 END) as resolved_count,
+             COUNT(CASE WHEN r.status IN ('Assigned', 'In Progress', 'Blocked') THEN 1 END) as active_count
+      FROM departments d
+      LEFT JOIN reports r ON r.department_id = d.id
+      GROUP BY d.id, d.name
+      ORDER BY active_count DESC
+    `);
+
+    res.json({
+      kpis: {
+        totalIssues: totalReports,
+        pendingIssues: pendingReports,
+        inProgressIssues: inProgressReports,
+        resolvedIssues: resolvedReports,
+        resolutionRate: `${resolutionRateNum}%`,
+        avgResolutionDays: 6,
+        improvementRate: '+15%'
+      },
+      categoryDistribution: categoryStats,
+      departmentWorkload: departmentStats,
+      monthlyTrend: [
+        { month: 'Oct 2026', reported: totalReports, resolved: resolvedReports }
+      ]
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to compute analytics summary: ' + err.message });
+  }
 });
 
 module.exports = router;

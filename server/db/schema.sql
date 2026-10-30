@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     active INTEGER NOT NULL DEFAULT 1,
     preferred_language TEXT NOT NULL DEFAULT 'en' CHECK(preferred_language IN ('en', 'te')),
     password_hash TEXT,
+    phone TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

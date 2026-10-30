@@ -58,10 +58,10 @@
         </div>
 
         <div class="card glass-nav-card" style="padding: 1rem; font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">
-          <strong style="color: var(--primary-deep); display: block; margin-bottom: 0.35rem;">Staff Access Boundaries:</strong>
-          <p style="margin-bottom: 0.5rem;">• You can view and update <strong>only reports currently assigned to you</strong>.</p>
-          <p style="margin-bottom: 0.5rem;">• Unassigned reports and former assignments are restricted.</p>
-          <p>• Internal notes are visible only to authorized staff and Municipal Administrators.</p>
+          <strong style="color: var(--primary-deep); display: block; margin-bottom: 0.35rem;">Field Staff Workflow:</strong>
+          <p style="margin-bottom: 0.5rem;">• <strong>Department Inbox:</strong> Browse and claim unassigned civic issues routed to your department.</p>
+          <p style="margin-bottom: 0.5rem;">• <strong>Active Tasks:</strong> Execute assigned repairs, report delays, attach photo proof, and resolve complaints.</p>
+          <p>• <strong>Internal Notes:</strong> Private to assigned staff and Municipal Administrators.</p>
         </div>
       </div>
 
@@ -70,13 +70,16 @@
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
           <div>
-            <h1 style="font-size: 1.5rem; color: var(--primary-deep);" id="staff-queue-heading">My Assigned Field Queue</h1>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Manage civic issue reports and scheduled municipal maintenance work orders.</p>
+            <h1 style="font-size: 1.5rem; color: var(--primary-deep);" id="staff-queue-heading">Department Field Queue</h1>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Claim unassigned department issues and execute active field repair work orders.</p>
           </div>
           <button class="btn btn-secondary btn-sm" onclick="refreshActiveQueue()">
             Refresh Tasks
           </button>
         </div>
+
+        <!-- Action Feedback Banner -->
+        <div id="staff-action-alert" style="display: none; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: var(--radius-md); font-size: 0.88rem; font-weight: 500;"></div>
 
         <!-- Queue Switcher Tabs -->
         <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.75rem; flex-wrap: wrap;">
@@ -90,9 +93,22 @@
           </button>
         </div>
 
+        <!-- Sub-filter bar for reported issues -->
+        <div id="reports-subfilter-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm btn-primary" id="subfilter-btn-all" onclick="setReportsFilter('all')">
+            All Items (<span id="count-all">0</span>)
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-assigned" onclick="setReportsFilter('assigned')">
+            👤 My Assigned (<span id="count-assigned">0</span>)
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-available" onclick="setReportsFilter('available')">
+            📥 Available to Claim (<span id="count-available">0</span>)
+          </button>
+        </div>
+
         <!-- Container 1: Reported Issues -->
         <div id="assigned-reports-container">
-          <div style="padding: 3rem; text-align: center; color: var(--text-muted);">Loading assigned tasks...</div>
+          <div style="padding: 3rem; text-align: center; color: var(--text-muted);">Loading department tasks...</div>
         </div>
 
         <!-- Container 2: Scheduled Maintenance Orders -->
@@ -197,10 +213,55 @@
   <script>
     let activeActionReportId = null;
     let currentStaffTab = 'reports';
+    let currentReportsFilter = 'all';
+    let cachedReports = [];
+    let cachedAssignedReports = [];
+    let cachedAvailableReports = [];
 
     function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showStaffAlert(msg, type = 'info') {
+      const alertBox = document.getElementById('staff-action-alert');
+      if (!alertBox) return;
+      alertBox.textContent = msg;
+      alertBox.style.display = 'block';
+      if (type === 'success') {
+        alertBox.style.background = 'var(--success-bg, #DCFCE7)';
+        alertBox.style.color = 'var(--success, #16A34A)';
+        alertBox.style.border = '1px solid #BBF7D0';
+      } else if (type === 'error') {
+        alertBox.style.background = 'var(--danger-bg, #FEE2E2)';
+        alertBox.style.color = 'var(--danger, #DC2626)';
+        alertBox.style.border = '1px solid #FECACA';
+      } else {
+        alertBox.style.background = '#EFF6FF';
+        alertBox.style.color = '#1D4ED8';
+        alertBox.style.border = '1px solid #BFDBFE';
+      }
+      setTimeout(() => {
+        if (alertBox.textContent === msg) {
+          alertBox.style.display = 'none';
+        }
+      }, 5000);
+    }
+
+    function setReportsFilter(filter) {
+      currentReportsFilter = filter;
+      ['all', 'assigned', 'available'].forEach(f => {
+        const btn = document.getElementById(`subfilter-btn-${f}`);
+        if (btn) {
+          btn.className = (f === filter) ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary';
+        }
+      });
+      renderReportsList();
     }
 
     function switchStaffTab(tab) {
@@ -209,6 +270,7 @@
       const maintBtn = document.getElementById('tab-btn-maintenance');
       const reportsContainer = document.getElementById('assigned-reports-container');
       const maintContainer = document.getElementById('assigned-maintenance-container');
+      const subfilterBar = document.getElementById('reports-subfilter-bar');
       const heading = document.getElementById('staff-queue-heading');
 
       if (tab === 'reports') {
@@ -216,13 +278,15 @@
         maintBtn.className = 'btn btn-sm btn-secondary';
         reportsContainer.style.display = 'block';
         maintContainer.style.display = 'none';
-        if (heading) heading.textContent = 'My Assigned Field Reports';
+        if (subfilterBar) subfilterBar.style.display = 'flex';
+        if (heading) heading.textContent = 'Department Field Queue';
         loadAssignedReports();
       } else {
         reportsBtn.className = 'btn btn-sm btn-secondary';
         maintBtn.className = 'btn btn-sm btn-primary';
         reportsContainer.style.display = 'none';
         maintContainer.style.display = 'block';
+        if (subfilterBar) subfilterBar.style.display = 'none';
         if (heading) heading.textContent = 'Scheduled Maintenance Works';
         loadStaffMaintenance();
       }
@@ -262,108 +326,260 @@
       const container = document.getElementById('assigned-reports-container');
       try {
         const res = await CivicAPI.request('/api/staff/reports');
-        const reports = res.reports || [];
-        const badge = document.getElementById('badge-count-reports');
-        if (badge) badge.textContent = reports.length;
+        cachedReports = res.reports || [];
+        const user = CivicAuth.getUser();
+        cachedAssignedReports = res.assignedReports || cachedReports.filter(r => r.assigned_staff_id === user.id);
+        cachedAvailableReports = res.availableReports || cachedReports.filter(r => r.assigned_staff_id === null);
 
-        if (reports.length === 0) {
+        // Update badge counts
+        const badge = document.getElementById('badge-count-reports');
+        if (badge) badge.textContent = cachedReports.length;
+
+        const countAll = document.getElementById('count-all');
+        if (countAll) countAll.textContent = cachedReports.length;
+
+        const countAssigned = document.getElementById('count-assigned');
+        if (countAssigned) countAssigned.textContent = cachedAssignedReports.length;
+
+        const countAvailable = document.getElementById('count-available');
+        if (countAvailable) countAvailable.textContent = cachedAvailableReports.length;
+
+        // Department display
+        if (res.department && res.department.name) {
+          const deptBadge = document.getElementById('staff-dept-badge');
+          if (deptBadge) deptBadge.textContent = res.department.name + ' Department';
+        }
+
+        renderReportsList();
+      } catch (err) {
+        container.innerHTML = `<div style="padding: 2rem; color: var(--danger); text-align: center;">Error: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderClaimableCard(r) {
+      return `
+        <div class="assigned-card" style="border-left: 4px solid var(--interactive-blue, #2563EB); background: #F8FAFC;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase;">${escapeHtml(r.reference_number)}</span>
+                <span class="badge" style="background: #E0E7FF; color: #3730A3; font-size: 0.72rem;">Available to Claim</span>
+                <span class="badge" style="background: #F1F5F9; color: var(--text-muted); font-size: 0.72rem;">${escapeHtml(r.category_name || 'Civic Issue')}</span>
+              </div>
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-top: 0.15rem;">${escapeHtml(r.title)}</h3>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span class="badge badge-${escapeHtml((r.priority_level || 'Medium').toLowerCase())}">${escapeHtml(r.priority_level || 'Medium')} Priority</span>
+            </div>
+          </div>
+
+          <p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 1rem; line-height: 1.5;">${escapeHtml(r.description)}</p>
+
+          <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+            <span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <strong>Location:</strong> ${escapeHtml(r.location_text)}</span>
+            <span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <strong>Citizen:</strong> ${escapeHtml(r.citizen_name || 'Resident')}</span>
+            ${r.sla_deadline ? `
+              <span style="display:inline-flex;align-items:center;gap:0.3rem; color: ${r.escalation_level >= 2 ? '#DC2626' : (r.escalation_level >= 1 ? '#D97706' : 'var(--text-muted)')}; font-weight: 600;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <strong>SLA:</strong> ${new Date(r.sla_deadline).toLocaleDateString()} ${r.escalation_level >= 2 ? '(OVERDUE)' : (r.escalation_level >= 1 ? '(WARNING)' : '')}
+              </span>
+            ` : ''}
+          </div>
+
+          <!-- Claim Action -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.85rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Unassigned in your department queue</span>
+            <button class="btn btn-primary btn-sm" id="btn-claim-${escapeHtml(r.id)}" onclick="claimReport('${escapeHtml(r.id)}')" style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>Claim Report</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAssignedCard(r) {
+      let statusBadgeClass = 'badge-assigned';
+      if (r.status === 'In Progress') statusBadgeClass = 'badge-progress';
+      else if (r.status === 'Blocked') statusBadgeClass = 'badge-blocked';
+      else if (r.status === 'Resolved') statusBadgeClass = 'badge-resolved';
+
+      const isAssigned = r.status === 'Assigned';
+      const isInProgress = r.status === 'In Progress';
+      const isBlocked = r.status === 'Blocked';
+      const isResolved = r.status === 'Resolved';
+
+      return `
+        <div class="assigned-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase;">${escapeHtml(r.reference_number)}</span>
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-top: 0.15rem;">${escapeHtml(r.title)}</h3>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span class="badge badge-${escapeHtml((r.priority_level || 'Medium').toLowerCase())}">${escapeHtml(r.priority_level || 'Medium')} Priority</span>
+              <span class="badge ${statusBadgeClass}">${escapeHtml(r.status)}</span>
+            </div>
+          </div>
+
+          <p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 1rem; line-height: 1.5;">${escapeHtml(r.description)}</p>
+
+          <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+            <span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <strong>Location:</strong> ${escapeHtml(r.location_text)}</span>
+            <span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <strong>Citizen:</strong> ${escapeHtml(r.citizen_name || 'Resident')}</span>
+            ${r.sla_deadline ? `
+              <span style="display:inline-flex;align-items:center;gap:0.3rem; color: ${r.escalation_level >= 2 ? '#DC2626' : (r.escalation_level >= 1 ? '#D97706' : 'var(--text-muted)')}; font-weight: 600;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <strong>SLA:</strong> ${new Date(r.sla_deadline).toLocaleDateString()} ${r.escalation_level >= 2 ? '(OVERDUE)' : (r.escalation_level >= 1 ? '(WARNING)' : '')}
+              </span>
+            ` : ''}
+          </div>
+
+          ${isBlocked && r.blocked_reason ? `
+            <div style="margin-bottom: 1.25rem; padding: 0.75rem; background: var(--danger-bg); border-radius: var(--radius-md); font-size: 0.82rem; color: var(--danger);">
+              <strong>Recorded Delay:</strong> ${escapeHtml(r.blocked_reason)}
+            </div>
+          ` : ''}
+
+          <!-- Action Controls -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
+            <button class="btn btn-secondary btn-sm" onclick="openNotesModal('${escapeHtml(r.id)}')" style="display:inline-flex;align-items:center;gap:0.35rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <span>Internal Notes</span>
+            </button>
+
+            <div style="display: flex; gap: 0.5rem;">
+              ${isAssigned ? `
+                <button class="btn btn-primary btn-sm" onclick="updateStatus('${escapeHtml(r.id)}', 'In Progress')">
+                  Start Work (In Progress)
+                </button>
+              ` : ''}
+
+              ${isInProgress ? `
+                <button class="btn btn-secondary btn-sm" onclick="openBlockModal('${escapeHtml(r.id)}')" style="color: var(--danger);">
+                  Mark Blocked
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="openResolveModal('${escapeHtml(r.id)}')" style="background: var(--success); border-color: var(--success); display:inline-flex;align-items:center;gap:0.35rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Resolve Issue</span>
+                </button>
+              ` : ''}
+
+              ${isBlocked ? `
+                <button class="btn btn-primary btn-sm" onclick="updateStatus('${escapeHtml(r.id)}', 'In Progress')">
+                  Resume Work (Unblock)
+                </button>
+              ` : ''}
+
+              ${isResolved ? `
+                <span style="font-size: 0.82rem; color: var(--success); font-weight: 600; display:inline-flex;align-items:center;gap:0.35rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Issue Resolved & Closed</span>
+                </span>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderReportsList() {
+      const container = document.getElementById('assigned-reports-container');
+      if (!container) return;
+
+      if (currentReportsFilter === 'assigned') {
+        if (cachedAssignedReports.length === 0) {
           container.innerHTML = `
             <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
-              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Current Field Assignments</h3>
-              <p style="font-size: 0.88rem;">You have completed all assigned tasks or no new issues are assigned to your queue.</p>
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Current Active Assignments</h3>
+              <p style="font-size: 0.88rem;">You have no issues assigned to you. Switch to <strong>Available to Claim</strong> to pick up department reports.</p>
             </div>
           `;
           return;
         }
+        container.innerHTML = cachedAssignedReports.map(renderAssignedCard).join('');
+        return;
+      }
 
-        container.innerHTML = reports.map(r => {
-          let statusBadgeClass = 'badge-assigned';
-          if (r.status === 'In Progress') statusBadgeClass = 'badge-progress';
-          else if (r.status === 'Blocked') statusBadgeClass = 'badge-blocked';
-          else if (r.status === 'Resolved') statusBadgeClass = 'badge-resolved';
-
-          const isAssigned = r.status === 'Assigned';
-          const isInProgress = r.status === 'In Progress';
-          const isBlocked = r.status === 'Blocked';
-          const isResolved = r.status === 'Resolved';
-
-          return `
-            <div class="assigned-card">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                <div>
-                  <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase;">${r.reference_number}</span>
-                  <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-top: 0.15rem;">${r.title}</h3>
-                </div>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                  <span class="badge badge-${r.priority_level.toLowerCase()}">${r.priority_level} Priority</span>
-                  <span class="badge ${statusBadgeClass}">${r.status}</span>
-                </div>
-              </div>
-
-              <p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 1rem; line-height: 1.5;">${r.description}</p>
-
-              <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-                <span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <strong>Location:</strong> ${r.location_text}</span>
-                <span style="display:inline-flex;align-items:center;gap:0.3rem;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <strong>Citizen:</strong> ${r.citizen_name || 'Resident'}</span>
-                ${r.sla_deadline ? `
-                  <span style="display:inline-flex;align-items:center;gap:0.3rem; color: ${r.escalation_level >= 2 ? '#DC2626' : (r.escalation_level >= 1 ? '#D97706' : 'var(--text-muted)')}; font-weight: 600;">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <strong>SLA:</strong> ${new Date(r.sla_deadline).toLocaleDateString()} ${r.escalation_level >= 2 ? '(OVERDUE)' : (r.escalation_level >= 1 ? '(WARNING)' : '')}
-                  </span>
-                ` : ''}
-              </div>
-
-              ${isBlocked ? `
-                <div style="margin-bottom: 1.25rem; padding: 0.75rem; background: var(--danger-bg); border-radius: var(--radius-md); font-size: 0.82rem; color: var(--danger);">
-                  <strong>Recorded Delay:</strong> ${r.blocked_reason}
-                </div>
-              ` : ''}
-
-              <!-- Action Controls -->
-              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
-                <button class="btn btn-secondary btn-sm" onclick="openNotesModal('${r.id}')" style="display:inline-flex;align-items:center;gap:0.35rem;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  <span>Internal Notes</span>
-                </button>
-
-                <div style="display: flex; gap: 0.5rem;">
-                  ${isAssigned ? `
-                    <button class="btn btn-primary btn-sm" onclick="updateStatus('${r.id}', 'In Progress')">
-                      Start Work (In Progress)
-                    </button>
-                  ` : ''}
-
-                  ${isInProgress ? `
-                    <button class="btn btn-secondary btn-sm" onclick="openBlockModal('${r.id}')" style="color: var(--danger);">
-                      Mark Blocked
-                    </button>
-                    <button class="btn btn-primary btn-sm" onclick="openResolveModal('${r.id}')" style="background: var(--success); border-color: var(--success); display:inline-flex;align-items:center;gap:0.35rem;">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      <span>Resolve Issue</span>
-                    </button>
-                  ` : ''}
-
-                  ${isBlocked ? `
-                    <button class="btn btn-primary btn-sm" onclick="updateStatus('${r.id}', 'In Progress')">
-                      Resume Work (Unblock)
-                    </button>
-                  ` : ''}
-
-                  ${isResolved ? `
-                    <span style="font-size: 0.82rem; color: var(--success); font-weight: 600; display:inline-flex;align-items:center;gap:0.35rem;">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      <span>Issue Resolved & Closed</span>
-                    </span>
-                  ` : ''}
-                </div>
-              </div>
-
+      if (currentReportsFilter === 'available') {
+        if (cachedAvailableReports.length === 0) {
+          container.innerHTML = `
+            <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">Department Inbox Empty</h3>
+              <p style="font-size: 0.88rem;">All current issues in your department have been claimed or assigned.</p>
             </div>
           `;
-        }).join('');
+          return;
+        }
+        container.innerHTML = cachedAvailableReports.map(renderClaimableCard).join('');
+        return;
+      }
 
+      // 'all' view: show available section (if any) and assigned section
+      if (cachedReports.length === 0) {
+        container.innerHTML = `
+          <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+            <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Current Field Tasks</h3>
+            <p style="font-size: 0.88rem;">No active assignments or claimable reports are present in your department.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      if (cachedAvailableReports.length > 0) {
+        html += `
+          <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+              <h2 style="font-size: 1.1rem; color: var(--primary-deep); display: flex; align-items: center; gap: 0.4rem;">
+                <span>📥 Available in Department</span>
+                <span class="badge" style="background: #E0E7FF; color: #3730A3;">${cachedAvailableReports.length}</span>
+              </h2>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Claim to assign to yourself</span>
+            </div>
+            ${cachedAvailableReports.map(renderClaimableCard).join('')}
+          </div>
+        `;
+      }
+
+      if (cachedAssignedReports.length > 0) {
+        html += `
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+              <h2 style="font-size: 1.1rem; color: var(--primary-deep); display: flex; align-items: center; gap: 0.4rem;">
+                <span>👤 My Active Assignments</span>
+                <span class="badge badge-assigned">${cachedAssignedReports.length}</span>
+              </h2>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">In-progress & assigned tasks</span>
+            </div>
+            ${cachedAssignedReports.map(renderAssignedCard).join('')}
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    async function claimReport(reportId) {
+      const btn = document.getElementById(`btn-claim-${reportId}`);
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Claiming...';
+      }
+
+      try {
+        const res = await CivicAPI.request(`/api/staff/reports/${encodeURIComponent(reportId)}/claim`, {
+          method: 'POST'
+        });
+        showStaffAlert(`Report ${res.report ? escapeHtml(res.report.reference_number) : ''} claimed successfully! Added to your active assignments.`, 'success');
+        await loadAssignedReports();
       } catch (err) {
-        container.innerHTML = `<div style="padding: 2rem; color: var(--danger); text-align: center;">Error: ${err.message}</div>`;
+        showStaffAlert(err.message || 'Unable to claim report.', 'error');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '⚡ Claim Report';
+        }
       }
     }
 
@@ -504,8 +720,8 @@
         }
         list.innerHTML = res.notes.map(n => `
           <div style="padding: 0.5rem; background: var(--bg-main); border-radius: var(--radius-sm); margin-bottom: 0.5rem; font-size: 0.82rem;">
-            <div style="font-weight: 600; color: var(--primary-deep); font-size: 0.75rem;">${n.author_name} • ${new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-            <div style="color: var(--text-main); margin-top: 0.15rem;">${n.note}</div>
+            <div style="font-weight: 600; color: var(--primary-deep); font-size: 0.75rem;">${escapeHtml(n.author_name)} • ${new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            <div style="color: var(--text-main); margin-top: 0.15rem;">${escapeHtml(n.note)}</div>
           </div>
         `).join('');
       } catch (e) {

@@ -13,6 +13,7 @@ function request(url, options = {}) {
   return new Promise((resolve, reject) => {
     const method = options.method || 'GET';
     const reqStream = new Readable({
+      destroy(err, cb) { if (cb) cb(err); },
       read() {
         if (options.body) {
           this.push(Buffer.from(options.body));
