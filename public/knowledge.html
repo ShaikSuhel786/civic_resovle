@@ -89,7 +89,7 @@
     </div>
 
     <!-- Search / Question Input Bar with Voice Support (PRD F6) -->
-    <div class="knowledge-search-wrapper" style="display: flex; gap: 0.5rem; align-items: center;">
+    <div class="knowledge-search-wrapper">
       <div style="position: relative; flex: 1;">
         <span class="knowledge-search-icon">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -97,7 +97,7 @@
         <input type="text" id="knowledge-query-input" class="knowledge-search-input" placeholder="Search bylaws or ask a civic question (e.g. pothole repair SLA, waste segregation rule, water leak hotline)..." oninput="handleKnowledgeSearch(this.value)">
       </div>
 
-      <div style="display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0;">
+      <div class="knowledge-voice-controls">
         <select id="voice-know-lang" style="font-size: 0.82rem; padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 2px solid var(--border-color); background: #FFFFFF; cursor: pointer;">
           <option value="en-IN">EN (India)</option>
           <option value="te-IN">తెలుగు (TE)</option>

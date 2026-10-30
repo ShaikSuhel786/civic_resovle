@@ -348,11 +348,11 @@
     }
 
     @media (max-width: 900px) {
-      .maint-kpi-grid { grid-template-columns: 1fr 1fr; }
+      .maint-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
     }
-    @media (max-width: 600px) {
-      .maint-kpi-grid { grid-template-columns: 1fr; }
-      .cal-cell { min-height: 60px; font-size: 0.7rem; }
+    @media (max-width: 480px) {
+      .maint-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+      .cal-cell { min-height: 52px; font-size: 0.68rem; padding: 0.2rem; }
     }
   </style>
 </head>
@@ -613,7 +613,7 @@
             <input type="text" id="input-title" class="form-input" placeholder="e.g. Main Feeder Pipeline Replacement Phase 2" required>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div class="modal-grid-2col">
             <div>
               <label class="form-label">Responsible Department *</label>
               <select id="input-dept" class="form-select" required>
@@ -630,7 +630,7 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div class="modal-grid-2col">
             <div>
               <label class="form-label">Start Date *</label>
               <input type="date" id="input-start-date" class="form-input" required>
@@ -641,7 +641,7 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div class="modal-grid-2col">
             <div>
               <label class="form-label">Initial Status</label>
               <select id="input-status" class="form-select">

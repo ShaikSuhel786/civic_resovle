@@ -70,16 +70,56 @@
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
           <div>
-            <h1 style="font-size: 1.5rem; color: var(--primary-deep);" id="staff-queue-heading">Department Field Queue</h1>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Claim unassigned department issues and execute active field repair work orders.</p>
+            <h1 style="font-size: 1.6rem; color: var(--primary-deep);" id="staff-queue-heading">My Field Queue</h1>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">Field operations & dispatch: Claim unassigned department issues, navigate directly to repair sites, record delay blockers, and submit photo-verified completions.</p>
           </div>
           <button class="btn btn-secondary btn-sm" onclick="refreshActiveQueue()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             Refresh Tasks
           </button>
         </div>
 
         <!-- Action Feedback Banner -->
         <div id="staff-action-alert" style="display: none; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: var(--radius-md); font-size: 0.88rem; font-weight: 500;"></div>
+
+        <!-- Top Real-time Field KPI Metric Cards -->
+        <div class="staff-kpi-grid">
+          <div class="kpi-stat-card" onclick="setReportsFilter('assigned')" style="cursor: pointer; border-left: 4px solid var(--interactive-blue);" title="View tasks assigned to you">
+            <div class="kpi-stat-header">
+              <span class="kpi-stat-title">👤 My Claimed Tasks</span>
+              <div class="kpi-stat-icon" style="background: #EFF6FF; color: var(--interactive-blue);">📋</div>
+            </div>
+            <div class="kpi-stat-num" id="kpi-assigned">0</div>
+            <div class="kpi-stat-subtitle">Currently assigned to you</div>
+          </div>
+
+          <div class="kpi-stat-card" onclick="setReportsFilter('available')" style="cursor: pointer; border-left: 4px solid #8B5CF6;" title="View unassigned department issues">
+            <div class="kpi-stat-header">
+              <span class="kpi-stat-title">📥 Available to Claim</span>
+              <div class="kpi-stat-icon" style="background: #F5F3FF; color: #8B5CF6;">⚡</div>
+            </div>
+            <div class="kpi-stat-num" id="kpi-available">0</div>
+            <div class="kpi-stat-subtitle">Unassigned in department</div>
+          </div>
+
+          <div class="kpi-stat-card" onclick="setReportsFilter('progress')" style="cursor: pointer; border-left: 4px solid #EA580C;" title="View active in-progress repairs">
+            <div class="kpi-stat-header">
+              <span class="kpi-stat-title">⚙️ Active In-Progress</span>
+              <div class="kpi-stat-icon" style="background: #FFF7ED; color: #EA580C;">🔧</div>
+            </div>
+            <div class="kpi-stat-num" id="kpi-progress">0</div>
+            <div class="kpi-stat-subtitle">Under active repair</div>
+          </div>
+
+          <div class="kpi-stat-card" onclick="setReportsFilter('urgent')" style="cursor: pointer; border-left: 4px solid var(--danger);" title="View urgent and SLA escalated issues">
+            <div class="kpi-stat-header">
+              <span class="kpi-stat-title">🚨 SLA Urgent & Warnings</span>
+              <div class="kpi-stat-icon" style="background: #FEF2F2; color: var(--danger);">⏱️</div>
+            </div>
+            <div class="kpi-stat-num" id="kpi-urgent" style="color: var(--danger);">0</div>
+            <div class="kpi-stat-subtitle">Escalated or breached</div>
+          </div>
+        </div>
 
         <!-- Queue Switcher Tabs -->
         <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.75rem; flex-wrap: wrap;">
@@ -93,17 +133,51 @@
           </button>
         </div>
 
-        <!-- Sub-filter bar for reported issues -->
-        <div id="reports-subfilter-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-          <button type="button" class="btn btn-sm btn-primary" id="subfilter-btn-all" onclick="setReportsFilter('all')">
-            All Items (<span id="count-all">0</span>)
-          </button>
-          <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-assigned" onclick="setReportsFilter('assigned')">
-            👤 My Assigned (<span id="count-assigned">0</span>)
-          </button>
-          <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-available" onclick="setReportsFilter('available')">
-            📥 Available to Claim (<span id="count-available">0</span>)
-          </button>
+        <!-- Search & Multi-Filter Control Panel -->
+        <div class="card" id="staff-filter-card" style="margin-bottom: 1.25rem; padding: 1rem 1.15rem; background: #FFFFFF; border-color: var(--border-color);">
+          <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap;">
+            <div style="position: relative; flex: 1; min-width: 220px;">
+              <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-light); display: inline-flex;">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input type="text" id="staff-search-input" class="form-input" style="padding-left: 2.2rem; font-size: 0.85rem;" placeholder="Search task by title, reference #, location landmark, citizen..." oninput="handleStaffSearch(this.value)">
+            </div>
+            <select id="staff-priority-filter" class="form-select" style="width: auto; font-size: 0.82rem; padding: 0.45rem 0.75rem;" onchange="handlePriorityFilter(this.value)">
+              <option value="all">All Priorities</option>
+              <option value="Urgent">Urgent Priority Only</option>
+              <option value="High">High Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="Low">Low Priority</option>
+            </select>
+            <select id="staff-sort-select" class="form-select" style="width: auto; font-size: 0.82rem; padding: 0.45rem 0.75rem;" onchange="handleSortChange(this.value)">
+              <option value="sla">Sort: Urgent SLA First</option>
+              <option value="priority">Sort: Priority Score (High)</option>
+              <option value="newest">Sort: Newest First</option>
+              <option value="oldest">Sort: Oldest First</option>
+            </select>
+          </div>
+
+          <!-- Sub-filter bar for reported issues -->
+          <div id="reports-subfilter-bar" style="display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn btn-sm btn-primary" id="subfilter-btn-all" onclick="setReportsFilter('all')">
+              All Items (<span id="count-all">0</span>)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-assigned" onclick="setReportsFilter('assigned')">
+              👤 My Claimed (<span id="count-assigned">0</span>)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-available" onclick="setReportsFilter('available')">
+              📥 Available to Claim (<span id="count-available">0</span>)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-progress" onclick="setReportsFilter('progress')">
+              ⚙️ In Progress (<span id="count-progress">0</span>)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-blocked" onclick="setReportsFilter('blocked')">
+              ⚠️ Blocked (<span id="count-blocked">0</span>)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" id="subfilter-btn-resolved" onclick="setReportsFilter('resolved')">
+              ✅ Resolved (<span id="count-resolved">0</span>)
+            </button>
+          </div>
         </div>
 
         <!-- Container 1: Reported Issues -->
@@ -170,6 +244,10 @@
           <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;">
             Upload photographic proof of completed work (JPG, PNG, WebP up to 5MB).
           </div>
+          <div id="resolve-photo-preview-wrap" style="display: none; margin-top: 0.75rem; text-align: center; background: #F8FAFC; border: 1px dashed var(--border-color); border-radius: var(--radius-md); padding: 0.75rem;">
+            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">Preview of Uploaded Proof:</div>
+            <img id="resolve-photo-preview" src="" alt="Proof Preview" style="max-height: 180px; max-width: 100%; border-radius: var(--radius-sm); object-fit: contain; box-shadow: var(--shadow-sm);">
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -214,6 +292,9 @@
     let activeActionReportId = null;
     let currentStaffTab = 'reports';
     let currentReportsFilter = 'all';
+    let staffSearchQuery = '';
+    let staffPriorityFilter = 'all';
+    let staffSortOrder = 'sla';
     let cachedReports = [];
     let cachedAssignedReports = [];
     let cachedAvailableReports = [];
@@ -253,15 +334,56 @@
       }, 5000);
     }
 
+    function handleStaffSearch(query) {
+      staffSearchQuery = (query || '').toLowerCase().trim();
+      renderReportsList();
+    }
+
+    function handlePriorityFilter(priority) {
+      staffPriorityFilter = priority || 'all';
+      renderReportsList();
+    }
+
+    function handleSortChange(sort) {
+      staffSortOrder = sort || 'sla';
+      renderReportsList();
+    }
+
     function setReportsFilter(filter) {
       currentReportsFilter = filter;
-      ['all', 'assigned', 'available'].forEach(f => {
+      const filters = ['all', 'assigned', 'available', 'progress', 'blocked', 'resolved'];
+      filters.forEach(f => {
         const btn = document.getElementById(`subfilter-btn-${f}`);
         if (btn) {
           btn.className = (f === filter) ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary';
         }
       });
       renderReportsList();
+    }
+
+    function formatSlaBadge(slaDeadline, escalationLevel) {
+      if (!slaDeadline) return '';
+      const diff = new Date(slaDeadline).getTime() - Date.now();
+      const hours = Math.round(diff / (1000 * 60 * 60));
+      const isOverdue = diff < 0 || escalationLevel >= 2;
+      const isWarning = !isOverdue && (hours <= 24 || escalationLevel >= 1);
+
+      let bg = '#F1F5F9';
+      let color = 'var(--text-muted)';
+      let text = `${Math.abs(hours)}h remaining`;
+      if (isOverdue) {
+        bg = '#FEE2E2';
+        color = '#DC2626';
+        text = `${Math.abs(hours)}h OVERDUE`;
+      } else if (isWarning) {
+        bg = '#FEF3C7';
+        color = '#D97706';
+        text = `${hours}h remaining`;
+      }
+      return `<span class="badge" style="background: ${bg}; color: ${color}; font-weight: 600; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        SLA: ${text}
+      </span>`;
     }
 
     function switchStaffTab(tab) {
@@ -307,6 +429,22 @@
       const user = CivicAuth.getUser();
       document.getElementById('staff-name').textContent = user.displayName;
 
+      // Setup image preview listener for resolution proof
+      const photoInput = document.getElementById('resolve-photo-input');
+      const previewWrap = document.getElementById('resolve-photo-preview-wrap');
+      const previewImg = document.getElementById('resolve-photo-preview');
+      if (photoInput && previewWrap && previewImg) {
+        photoInput.addEventListener('change', () => {
+          const file = photoInput.files[0];
+          if (file) {
+            previewImg.src = URL.createObjectURL(file);
+            previewWrap.style.display = 'block';
+          } else {
+            previewWrap.style.display = 'none';
+          }
+        });
+      }
+
       await Promise.all([
         loadAssignedReports(),
         preloadMaintenanceCount()
@@ -331,18 +469,43 @@
         cachedAssignedReports = res.assignedReports || cachedReports.filter(r => r.assigned_staff_id === user.id);
         cachedAvailableReports = res.availableReports || cachedReports.filter(r => r.assigned_staff_id === null);
 
-        // Update badge counts
+        // Detailed count aggregations
+        const inProgressCount = cachedAssignedReports.filter(r => r.status === 'In Progress').length;
+        const blockedCount = cachedAssignedReports.filter(r => r.status === 'Blocked').length;
+        const resolvedCount = cachedAssignedReports.filter(r => r.status === 'Resolved').length;
+      const urgentCount = cachedReports.filter(r =>
+        r.priority_level === 'High' ||
+        r.escalation_level >= 1 ||
+        (r.sla_deadline && new Date(r.sla_deadline).getTime() < Date.now())
+      ).length;
+
+        // Top KPI Stat Cards
+        const kpiAssigned = document.getElementById('kpi-assigned');
+        if (kpiAssigned) kpiAssigned.textContent = cachedAssignedReports.length;
+        const kpiAvailable = document.getElementById('kpi-available');
+        if (kpiAvailable) kpiAvailable.textContent = cachedAvailableReports.length;
+        const kpiProgress = document.getElementById('kpi-progress');
+        if (kpiProgress) kpiProgress.textContent = inProgressCount;
+        const kpiUrgent = document.getElementById('kpi-urgent');
+        if (kpiUrgent) kpiUrgent.textContent = urgentCount;
+
+        // Navigation Badge count
         const badge = document.getElementById('badge-count-reports');
         if (badge) badge.textContent = cachedReports.length;
 
+        // Filter Pills counts
         const countAll = document.getElementById('count-all');
         if (countAll) countAll.textContent = cachedReports.length;
-
         const countAssigned = document.getElementById('count-assigned');
         if (countAssigned) countAssigned.textContent = cachedAssignedReports.length;
-
         const countAvailable = document.getElementById('count-available');
         if (countAvailable) countAvailable.textContent = cachedAvailableReports.length;
+        const countProgress = document.getElementById('count-progress');
+        if (countProgress) countProgress.textContent = inProgressCount;
+        const countBlocked = document.getElementById('count-blocked');
+        if (countBlocked) countBlocked.textContent = blockedCount;
+        const countResolved = document.getElementById('count-resolved');
+        if (countResolved) countResolved.textContent = resolvedCount;
 
         // Department display
         if (res.department && res.department.name) {
@@ -356,7 +519,53 @@
       }
     }
 
+    function matchesFilters(r) {
+      // 1. Priority filter
+      if (staffPriorityFilter !== 'all' && (r.priority_level || 'Medium') !== staffPriorityFilter) {
+        return false;
+      }
+      // 2. Search query
+      if (staffSearchQuery) {
+        const q = staffSearchQuery;
+        const matchTitle = (r.title || '').toLowerCase().includes(q);
+        const matchDesc = (r.description || '').toLowerCase().includes(q);
+        const matchRef = (r.reference_number || '').toLowerCase().includes(q);
+        const matchLoc = (r.location_text || '').toLowerCase().includes(q);
+        const matchCat = (r.category_name || '').toLowerCase().includes(q);
+        const matchCitizen = (r.citizen_name || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc && !matchRef && !matchLoc && !matchCat && !matchCitizen) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function sortReportList(list) {
+      const copy = [...list];
+      if (staffSortOrder === 'sla') {
+        copy.sort((a, b) => {
+          const aTime = a.sla_deadline ? new Date(a.sla_deadline).getTime() : Infinity;
+          const bTime = b.sla_deadline ? new Date(b.sla_deadline).getTime() : Infinity;
+          if (aTime !== bTime) return aTime - bTime;
+          return (b.escalation_level || 0) - (a.escalation_level || 0);
+        });
+      } else if (staffSortOrder === 'priority') {
+        const rank = { 'High': 3, 'Medium': 2, 'Low': 1 };
+        copy.sort((a, b) => (rank[b.priority_level] || 2) - (rank[a.priority_level] || 2));
+      } else if (staffSortOrder === 'newest') {
+        copy.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      } else if (staffSortOrder === 'oldest') {
+        copy.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
+      }
+      return copy;
+    }
+
     function renderClaimableCard(r) {
+      const hasCoords = r.latitude && r.longitude;
+      const directionsUrl = hasCoords
+        ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(r.latitude)},${encodeURIComponent(r.longitude)}`
+        : null;
+
       return `
         <div class="assigned-card" style="border-left: 4px solid var(--interactive-blue, #2563EB); background: #F8FAFC;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
@@ -368,8 +577,9 @@
               </div>
               <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-top: 0.15rem;">${escapeHtml(r.title)}</h3>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
               <span class="badge badge-${escapeHtml((r.priority_level || 'Medium').toLowerCase())}">${escapeHtml(r.priority_level || 'Medium')} Priority</span>
+              ${formatSlaBadge(r.sla_deadline, r.escalation_level)}
             </div>
           </div>
 
@@ -381,14 +591,22 @@
             ${r.sla_deadline ? `
               <span style="display:inline-flex;align-items:center;gap:0.3rem; color: ${r.escalation_level >= 2 ? '#DC2626' : (r.escalation_level >= 1 ? '#D97706' : 'var(--text-muted)')}; font-weight: 600;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                <strong>SLA:</strong> ${new Date(r.sla_deadline).toLocaleDateString()} ${r.escalation_level >= 2 ? '(OVERDUE)' : (r.escalation_level >= 1 ? '(WARNING)' : '')}
+                <strong>Deadline:</strong> ${new Date(r.sla_deadline).toLocaleDateString()}
               </span>
             ` : ''}
           </div>
 
-          <!-- Claim Action -->
+          <!-- Claim Action & GPS -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.85rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Unassigned in your department queue</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Unassigned in your department queue</span>
+              ${directionsUrl ? `
+                <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.75rem;padding:0.25rem 0.55rem;" title="Get GPS directions">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                  <span>Directions ↗</span>
+                </a>
+              ` : ''}
+            </div>
             <button class="btn btn-primary btn-sm" id="btn-claim-${escapeHtml(r.id)}" onclick="claimReport('${escapeHtml(r.id)}')" style="display:inline-flex;align-items:center;gap:0.35rem;font-weight:600;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               <span>Claim Report</span>
@@ -400,25 +618,42 @@
 
     function renderAssignedCard(r) {
       let statusBadgeClass = 'badge-assigned';
-      if (r.status === 'In Progress') statusBadgeClass = 'badge-progress';
-      else if (r.status === 'Blocked') statusBadgeClass = 'badge-blocked';
-      else if (r.status === 'Resolved') statusBadgeClass = 'badge-resolved';
+      let cardBorder = 'border-left: 4px solid #6366F1;';
+      if (r.status === 'In Progress') {
+        statusBadgeClass = 'badge-progress';
+        cardBorder = 'border-left: 4px solid #F59E0B; background: #FFFCF7;';
+      } else if (r.status === 'Blocked') {
+        statusBadgeClass = 'badge-blocked';
+        cardBorder = 'border-left: 4px solid var(--danger, #DC2626); background: #FFF5F5;';
+      } else if (r.status === 'Resolved') {
+        statusBadgeClass = 'badge-resolved';
+        cardBorder = 'border-left: 4px solid var(--success, #16A34A); background: #F0FDF4;';
+      }
 
       const isAssigned = r.status === 'Assigned';
       const isInProgress = r.status === 'In Progress';
       const isBlocked = r.status === 'Blocked';
       const isResolved = r.status === 'Resolved';
 
+      const hasCoords = r.latitude && r.longitude;
+      const directionsUrl = hasCoords
+        ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(r.latitude)},${encodeURIComponent(r.longitude)}`
+        : null;
+
       return `
-        <div class="assigned-card">
+        <div class="assigned-card" style="${cardBorder}">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
             <div>
-              <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase;">${escapeHtml(r.reference_number)}</span>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase;">${escapeHtml(r.reference_number)}</span>
+                <span class="badge" style="background: #F1F5F9; color: var(--text-muted); font-size: 0.72rem;">${escapeHtml(r.category_name || 'Civic Issue')}</span>
+              </div>
               <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-top: 0.15rem;">${escapeHtml(r.title)}</h3>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
               <span class="badge badge-${escapeHtml((r.priority_level || 'Medium').toLowerCase())}">${escapeHtml(r.priority_level || 'Medium')} Priority</span>
               <span class="badge ${statusBadgeClass}">${escapeHtml(r.status)}</span>
+              ${formatSlaBadge(r.sla_deadline, r.escalation_level)}
             </div>
           </div>
 
@@ -430,7 +665,7 @@
             ${r.sla_deadline ? `
               <span style="display:inline-flex;align-items:center;gap:0.3rem; color: ${r.escalation_level >= 2 ? '#DC2626' : (r.escalation_level >= 1 ? '#D97706' : 'var(--text-muted)')}; font-weight: 600;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                <strong>SLA:</strong> ${new Date(r.sla_deadline).toLocaleDateString()} ${r.escalation_level >= 2 ? '(OVERDUE)' : (r.escalation_level >= 1 ? '(WARNING)' : '')}
+                <strong>Deadline:</strong> ${new Date(r.sla_deadline).toLocaleDateString()}
               </span>
             ` : ''}
           </div>
@@ -441,14 +676,22 @@
             </div>
           ` : ''}
 
-          <!-- Action Controls -->
+          <!-- Action Controls & Navigation -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
-            <button class="btn btn-secondary btn-sm" onclick="openNotesModal('${escapeHtml(r.id)}')" style="display:inline-flex;align-items:center;gap:0.35rem;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              <span>Internal Notes</span>
-            </button>
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="openNotesModal('${escapeHtml(r.id)}')" style="display:inline-flex;align-items:center;gap:0.35rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>Internal Notes</span>
+              </button>
+              ${directionsUrl ? `
+                <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:0.3rem;" title="Get GPS directions">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                  <span>GPS Directions ↗</span>
+                </a>
+              ` : ''}
+            </div>
 
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               ${isAssigned ? `
                 <button class="btn btn-primary btn-sm" onclick="updateStatus('${escapeHtml(r.id)}', 'In Progress')">
                   Start Work (In Progress)
@@ -487,40 +730,88 @@
       const container = document.getElementById('assigned-reports-container');
       if (!container) return;
 
+      const filteredAssigned = sortReportList(cachedAssignedReports.filter(matchesFilters));
+      const filteredAvailable = sortReportList(cachedAvailableReports.filter(matchesFilters));
+
       if (currentReportsFilter === 'assigned') {
-        if (cachedAssignedReports.length === 0) {
+        if (filteredAssigned.length === 0) {
           container.innerHTML = `
             <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
-              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Current Active Assignments</h3>
-              <p style="font-size: 0.88rem;">You have no issues assigned to you. Switch to <strong>Available to Claim</strong> to pick up department reports.</p>
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Matching Claimed Assignments</h3>
+              <p style="font-size: 0.88rem;">No assigned issues match your current search/filter settings. Try clearing your filters or switch to <strong>Available to Claim</strong>.</p>
             </div>
           `;
           return;
         }
-        container.innerHTML = cachedAssignedReports.map(renderAssignedCard).join('');
+        container.innerHTML = filteredAssigned.map(renderAssignedCard).join('');
         return;
       }
 
       if (currentReportsFilter === 'available') {
-        if (cachedAvailableReports.length === 0) {
+        if (filteredAvailable.length === 0) {
           container.innerHTML = `
             <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
               <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">Department Inbox Empty</h3>
-              <p style="font-size: 0.88rem;">All current issues in your department have been claimed or assigned.</p>
+              <p style="font-size: 0.88rem;">No unassigned department issues match your current search/filter criteria.</p>
             </div>
           `;
           return;
         }
-        container.innerHTML = cachedAvailableReports.map(renderClaimableCard).join('');
+        container.innerHTML = filteredAvailable.map(renderClaimableCard).join('');
+        return;
+      }
+
+      if (currentReportsFilter === 'progress') {
+        const inProgressList = filteredAssigned.filter(r => r.status === 'In Progress');
+        if (inProgressList.length === 0) {
+          container.innerHTML = `
+            <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No In-Progress Tasks</h3>
+              <p style="font-size: 0.88rem;">You have no tasks actively under repair. Start work on one of your claimed assignments.</p>
+            </div>
+          `;
+          return;
+        }
+        container.innerHTML = inProgressList.map(renderAssignedCard).join('');
+        return;
+      }
+
+      if (currentReportsFilter === 'blocked') {
+        const blockedList = filteredAssigned.filter(r => r.status === 'Blocked');
+        if (blockedList.length === 0) {
+          container.innerHTML = `
+            <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Blocked Tasks</h3>
+              <p style="font-size: 0.88rem;">All current assignments are progressing smoothly without recorded obstacles.</p>
+            </div>
+          `;
+          return;
+        }
+        container.innerHTML = blockedList.map(renderAssignedCard).join('');
+        return;
+      }
+
+      if (currentReportsFilter === 'resolved') {
+        const resolvedList = filteredAssigned.filter(r => r.status === 'Resolved');
+        if (resolvedList.length === 0) {
+          container.innerHTML = `
+            <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+              <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Resolved Tasks</h3>
+              <p style="font-size: 0.88rem;">Completed and verified resolutions for this work shift will appear here.</p>
+            </div>
+          `;
+          return;
+        }
+        container.innerHTML = resolvedList.map(renderAssignedCard).join('');
         return;
       }
 
       // 'all' view: show available section (if any) and assigned section
-      if (cachedReports.length === 0) {
+      if (filteredAvailable.length === 0 && filteredAssigned.length === 0) {
         container.innerHTML = `
           <div class="card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
-            <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Current Field Tasks</h3>
-            <p style="font-size: 0.88rem;">No active assignments or claimable reports are present in your department.</p>
+            <h3 style="font-size: 1.15rem; color: var(--primary-deep); margin-bottom: 0.35rem;">No Matching Field Tasks</h3>
+            <p style="font-size: 0.88rem;">No active assignments or claimable reports match your current search/filter settings.</p>
           </div>
         `;
         return;
@@ -528,32 +819,32 @@
 
       let html = '';
 
-      if (cachedAvailableReports.length > 0) {
+      if (filteredAvailable.length > 0) {
         html += `
           <div style="margin-bottom: 1.5rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
               <h2 style="font-size: 1.1rem; color: var(--primary-deep); display: flex; align-items: center; gap: 0.4rem;">
                 <span>📥 Available in Department</span>
-                <span class="badge" style="background: #E0E7FF; color: #3730A3;">${cachedAvailableReports.length}</span>
+                <span class="badge" style="background: #E0E7FF; color: #3730A3;">${filteredAvailable.length}</span>
               </h2>
               <span style="font-size: 0.8rem; color: var(--text-muted);">Claim to assign to yourself</span>
             </div>
-            ${cachedAvailableReports.map(renderClaimableCard).join('')}
+            ${filteredAvailable.map(renderClaimableCard).join('')}
           </div>
         `;
       }
 
-      if (cachedAssignedReports.length > 0) {
+      if (filteredAssigned.length > 0) {
         html += `
           <div>
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
               <h2 style="font-size: 1.1rem; color: var(--primary-deep); display: flex; align-items: center; gap: 0.4rem;">
                 <span>👤 My Active Assignments</span>
-                <span class="badge badge-assigned">${cachedAssignedReports.length}</span>
+                <span class="badge badge-assigned">${filteredAssigned.length}</span>
               </h2>
               <span style="font-size: 0.8rem; color: var(--text-muted);">In-progress & assigned tasks</span>
             </div>
-            ${cachedAssignedReports.map(renderAssignedCard).join('')}
+            ${filteredAssigned.map(renderAssignedCard).join('')}
           </div>
         `;
       }
