@@ -90,3 +90,4 @@ function autoSeedSQLite(sqliteDb) {
 }
 
 module.exports = { autoSeedSQLite };
+
