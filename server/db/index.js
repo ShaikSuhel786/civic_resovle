@@ -190,7 +190,29 @@ if (isPostgresConfigured) {
     pool,
     db: pool,
 
+    schemaInitialized: false,
+    async ensureSchema() {
+      if (this.schemaInitialized) return;
+      try {
+        const check = await pool.query("SELECT to_regclass('public.profiles') as exists;");
+        if (!check.rows[0]?.exists) {
+          const schemaSqlPath = path.join(__dirname, 'postgres_schema.sql');
+          if (fs.existsSync(schemaSqlPath)) {
+            const schemaSql = fs.readFileSync(schemaSqlPath, 'utf8');
+            await pool.query(schemaSql);
+            console.log('[DB] PostgreSQL production schema initialized automatically.');
+          }
+        }
+        this.schemaInitialized = true;
+      } catch (err) {
+        console.warn('[DB Warning] PostgreSQL schema verification note:', err.message);
+      }
+    },
+
     async query(sql, params = []) {
+      if (!this.schemaInitialized && typeof sql === 'string' && !sql.includes('to_regclass')) {
+        await this.ensureSchema();
+      }
       const store = asyncLocalStorage.getStore();
       const client = store?.client || pool;
       const pgSql = toPgSql(sql);

@@ -115,7 +115,7 @@ router.post('/register', async (req, res) => {
 
 // Sign-in endpoint (Strict password verification; demo shortcuts gated to non-production)
 router.post('/login', async (req, res) => {
-  const { email, password, demoUserId } = req.body;
+  const { email, password, demoUserId } = req.body || {};
 
   let user = null;
 
@@ -126,26 +126,26 @@ router.post('/login', async (req, res) => {
         return res.status(403).json({ error: 'Passwordless demo login is strictly disabled in production environments.' });
       }
 
-      if (!ALLOWED_DEMO_ACCOUNTS.has(demoUserId)) {
+      if (typeof demoUserId !== 'string' || !ALLOWED_DEMO_ACCOUNTS.has(demoUserId)) {
         return res.status(403).json({ error: 'Unauthorized demo account identifier.' });
       }
 
-      user = await db.get('SELECT * FROM profiles WHERE id = ? AND active = TRUE', [demoUserId]);
+      user = await db.get('SELECT * FROM profiles WHERE id = ? AND active = 1', [demoUserId]);
       if (!user) {
         return res.status(404).json({ error: 'Demo account not found.' });
       }
     } else if (email) {
       // 2. Standard email + password authentication
-      if (!password) {
+      if (!password || typeof password !== 'string') {
         return res.status(400).json({ error: 'Password is required to sign in.' });
       }
 
-      const cleanEmail = email.trim().toLowerCase();
+      const cleanEmail = (typeof email === 'string' ? email : '').trim().toLowerCase();
       const altEmail = cleanEmail.includes('@civicresolve.demo') 
         ? cleanEmail.replace('@civicresolve.demo', '@civicsync.demo')
         : cleanEmail.replace('@civicsync.demo', '@civicresolve.demo');
 
-      user = await db.get('SELECT * FROM profiles WHERE (LOWER(email) = ? OR LOWER(email) = ?) AND active = TRUE', [
+      user = await db.get('SELECT * FROM profiles WHERE (LOWER(email) = ? OR LOWER(email) = ?) AND active = 1', [
         cleanEmail,
         altEmail
       ]);
@@ -154,7 +154,14 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ error: 'Invalid email or password.' });
       }
 
-      const isMatch = bcrypt.compareSync(password, user.password_hash);
+      let isMatch = false;
+      try {
+        isMatch = bcrypt.compareSync(password, user.password_hash);
+      } catch (bErr) {
+        console.warn('[Auth Warning] Password comparison error:', bErr.message);
+        isMatch = false;
+      }
+
       if (!isMatch) {
         return res.status(401).json({ error: 'Invalid email or password.' });
       }
@@ -185,6 +192,7 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
+    console.error('[Auth Error] /api/auth/login failed:', err);
     res.status(500).json({ error: 'Sign in failed: ' + err.message });
   }
 });

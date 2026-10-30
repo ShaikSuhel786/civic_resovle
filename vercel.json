@@ -3,6 +3,9 @@
   "version": 2,
   "cleanUrls": true,
   "functions": {
+    "api/*.js": {
+      "includeFiles": "{server/**,public/**}"
+    },
     "api/**/*.js": {
       "includeFiles": "{server/**,public/**}"
     }
